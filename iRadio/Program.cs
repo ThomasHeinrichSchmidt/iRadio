@@ -9,6 +9,9 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // ToDo: parse Telnet.xml w/o <root>
+    // ToDo: switch on messages while parsing
+
 
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
@@ -37,7 +40,7 @@ namespace iRadio
                 select (string)el.Element("GrandChild");
 
             IEnumerable<string> playData =
-                from el in StreamiRadioDoc(new StringReader(markup))
+                from el in StreamiRadioDoc(new StreamReader("Telnet.xml"))
                 where (string)el.Attribute("id") == "play"
                 select (string)el.Element("value");
 
@@ -51,7 +54,7 @@ namespace iRadio
             }
         }
 
-        static IEnumerable<XElement> StreamiRadioDoc(StringReader stringReader)
+        static IEnumerable<XElement> StreamiRadioDoc(StreamReader stringReader)
         {
             using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(stringReader))
             {
