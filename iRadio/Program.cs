@@ -18,32 +18,21 @@ namespace iRadio
     {
         static void Main(string[] args)
         {
-            string markup_child = @"<Root>  
-                  <Child Key=""01"">  
-                    <GrandChild>aaa</GrandChild>  
-                  </Child>  
-                  <Child Key=""02"">  
-                    <GrandChild>bbb</GrandChild>  
-                  </Child>  
-                  <Child Key=""03"">  
-                    <GrandChild>ccc</GrandChild>  
-                  </Child>  
-                </Root>";
-
             string markup = @"
                                 <update id=""play"" > <value id =""timep"" min=""0"" max=""65535"" > 1698 </value > </update >  
                                 <update id=""play"" > <value id =""timep"" min=""0"" max=""65535"" > 1699 </value > </update >  
                              ";   //  if missing: unexpected end of file. Elements not closed: Root.
 
-            IEnumerable<string> grandChildData =
-                from el in StreamRootChildDoc(new StringReader(markup_child))
-                where (int)el.Attribute("Key") > 1
-                select (string)el.Element("GrandChild");
-
             IEnumerable<string> playData =
                 from el in StreamiRadioDoc(new StringReader(markup))
                 where (string)el.Attribute("id") == "play"
                 select (string)el.Element("value");
+
+            Console.WriteLine("iRadio test data:");
+            foreach (string str in playData)
+            {
+                Console.WriteLine(str);
+            }
 
             StreamReader TelnetFile = new StreamReader("Telnet.xml");
             IEnumerable<string> iRadioData =
@@ -51,16 +40,6 @@ namespace iRadio
                 where (string)el.Attribute("id") == "play"
                 select (string)el.Element("value");
 
-            Console.WriteLine("Child data:");
-            foreach (string str in grandChildData)
-            {
-                Console.WriteLine(str);
-            }
-            Console.WriteLine("iRadio test data:");
-            foreach (string str in playData)
-            {
-                Console.WriteLine(str);
-            }
             Console.WriteLine("Telnet.xml:");
             foreach (string str in iRadioData)
             {
@@ -73,7 +52,7 @@ namespace iRadio
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
             using (XmlReader reader = XmlReader.Create(stringReader, settings))
             {
-                // reader.MoveToContent();
+                reader.MoveToContent();
                 while (reader.Read())
                 {
                     switch (reader.NodeType)
@@ -90,28 +69,5 @@ namespace iRadio
                 }
             }
         }
-
-        static IEnumerable<XElement> StreamRootChildDoc(StringReader stringReader)
-        {
-            using (XmlReader reader = XmlReader.Create(stringReader))
-            {
-                reader.MoveToContent();
-                // Parse the file and display each of the nodes.  
-                while (reader.Read())
-                {
-                    switch (reader.NodeType)
-                    {
-                        case XmlNodeType.Element:
-                            if (reader.Name == "Child")
-                            {
-                                XElement el = XElement.ReadFrom(reader) as XElement;
-                                if (el != null)
-                                    yield return el;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-    }
+     }
 }
