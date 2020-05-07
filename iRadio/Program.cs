@@ -40,21 +40,33 @@ namespace iRadio
                 select (string)el.Element("GrandChild");
 
             IEnumerable<string> playData =
+                from el in StreamiRadioDoc(new StringReader(markup))
+                where (string)el.Attribute("id") == "play"
+                select (string)el.Element("value");
+
+            IEnumerable<string> iRadioData =
                 from el in StreamiRadioDoc(new StreamReader("Telnet.xml"))
                 where (string)el.Attribute("id") == "play"
                 select (string)el.Element("value");
 
+            Console.WriteLine("Child data:");
             foreach (string str in grandChildData)
             {
                 Console.WriteLine(str);
             }
+            Console.WriteLine("iRadio test data:");
             foreach (string str in playData)
+            {
+                Console.WriteLine(str);
+            }
+            Console.WriteLine("Telnet.xml:");
+            foreach (string str in iRadioData)
             {
                 Console.WriteLine(str);
             }
         }
 
-        static IEnumerable<XElement> StreamiRadioDoc(StreamReader stringReader)
+        static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
         {
             using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(stringReader))
             {
