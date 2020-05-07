@@ -15,7 +15,7 @@ namespace iRadio
     {
         static void Main(string[] args)
         {
-            string markup = @"<Root>  
+            string markup_child = @"<Root>  
                   <Child Key=""01"">  
                     <GrandChild>aaa</GrandChild>  
                   </Child>  
@@ -27,17 +27,52 @@ namespace iRadio
                   </Child>  
                 </Root>";
 
-            IEnumerable<string> grandChildData =
-                from el in StreamRootChildDoc(new StringReader(markup))
+            string markup = @"<iRadio> 
+                                <update id=""play"" > <value id =""timep"" min=""0"" max=""65535"" > 1698 </value > </update >  
+                             </iRadio>";
+
+            IEnumerable <string> grandChildData =
+                from el in StreamRootChildDoc(new StringReader(markup_child))
                 where (int)el.Attribute("Key") > 1
                 select (string)el.Element("GrandChild");
+
+            IEnumerable<string> playData =
+                from el in StreamiRadioDoc(new StringReader(markup))
+                where (string)el.Attribute("id") == "play"
+                select (string)el.Element("value");
 
             foreach (string str in grandChildData)
             {
                 Console.WriteLine(str);
             }
+            foreach (string str in playData)
+            {
+                Console.WriteLine(str);
+            }
         }
 
+        static IEnumerable<XElement> StreamiRadioDoc(StringReader stringReader)
+        {
+            using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(stringReader))
+            {
+                reader.MoveToContent();
+                // Parse the file and display each of the nodes.  
+                while (reader.Read())
+                {
+                    switch (reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            if (reader.Name == "update")
+                            {
+                                XElement el = XElement.ReadFrom(reader) as XElement;
+                                if (el != null)
+                                    yield return el;
+                            }
+                            break;
+                    }
+                }
+            }
+        }
         static IEnumerable<XElement> StreamRootChildDoc(StringReader stringReader)
         {
             using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(stringReader))
