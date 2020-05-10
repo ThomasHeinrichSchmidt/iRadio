@@ -55,13 +55,12 @@ namespace iRadio
             // Uses the GetStream public method to return the NetworkStream.
             NetworkStream netStream = tcpClient.GetStream();
 
-            IEnumerable<string> iRadioNetData =
+            IEnumerable<XElement> iRadioNetData =
                 from el in StreamiRadioNet(netStream)
-                where (string)el.Attribute("id") == "play"
-                select (string)el.Element("value");
-            foreach (string str in iRadioNetData)
+                select el;
+            foreach (XElement el in iRadioNetData)
             {
-                Console.WriteLine(str);
+                Console.WriteLine("{0}: {1}, {2}", el.NodeType, el.Name, el.Value);
             }
             tcpClient.Close();
             netStream.Close();
@@ -99,16 +98,13 @@ namespace iRadio
                 reader.MoveToContent();
                 while (reader.Read())
                 {
-                    Console.WriteLine(reader.Value); 
+                    // Console.WriteLine(reader.Value); 
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
-                            if (reader.Name == "update")
-                            {
-                                XElement el = XElement.ReadFrom(reader) as XElement;
-                                if (el != null)
-                                    yield return el;
-                            }
+                            XElement el = XElement.ReadFrom(reader) as XElement;
+                            if (el != null)
+                                yield return el;
                             break;
                     }
                 }
