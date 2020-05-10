@@ -11,7 +11,7 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
+    // Done: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
     // ToDo: switch on messages while parsing
 
 
@@ -36,14 +36,27 @@ namespace iRadio
 
             Console.WriteLine("iRadio Telnet.xml:");
             StreamReader TelnetFile = new StreamReader("Telnet.xml");
-            IEnumerable<string> iRadioData =
+            IEnumerable<XElement> iRadioData =
                 from el in StreamiRadioDoc(TelnetFile)
-                where (string)el.Attribute("id") == "play"
-                select (string)el.Element("value");
-            foreach (string str in iRadioData)
+                select el;
+            foreach (XElement el  in iRadioData)
             {
-                Console.WriteLine(str);
+                switch (el.Name.ToString())
+                {
+                    case "update":
+                        if (el.Attribute("id").ToString() == "play") Console.WriteLine("Playing : {0}", el.Nodes().ElementAt(0));  // TodO: find out how to enumerate child data 
+                        ;
+                        break;
+                    default:
+                        Console.WriteLine("{0}: {1}, {2} = {3}", el.NodeType, el.Name, el.Attribute("id"), el.Value);
+                        break;
+                }
+                
             }
+
+            // Console.ReadLine();
+            Environment.Exit(1);
+
 
             Console.WriteLine("iRadio Telnet port 10100:");
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
@@ -60,7 +73,7 @@ namespace iRadio
                 select el;
             foreach (XElement el in iRadioNetData)
             {
-                Console.WriteLine("{0}: {1}, {2}", el.NodeType, el.Name, el.Value);
+                if (el.NodeType != XmlNodeType.EndElement) Console.WriteLine("{0}: {1}, {2}", el.NodeType, el.Name, el.Value);
             }
             tcpClient.Close();
             netStream.Close();
@@ -74,21 +87,14 @@ namespace iRadio
                 reader.MoveToContent();
                 while (reader.Read())
                 {
-                    switch (reader.NodeType)
-                    {
-                        case XmlNodeType.Element:
-                            if (reader.Name == "update")
-                            {
-                                XElement el = XElement.ReadFrom(reader) as XElement;
-                                if (el != null)
-                                    yield return el;
-                            }
-                            break;
+                    if (reader.NodeType != XmlNodeType.EndElement) { 
+                        XElement el = XElement.ReadFrom(reader) as XElement;
+                        if (el != null)
+                            yield return el;
                     }
                 }
             }
         }
-
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
