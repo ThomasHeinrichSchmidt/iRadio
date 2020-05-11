@@ -44,11 +44,26 @@ namespace iRadio
                 switch (el.Name.ToString())
                 {
                     case "update":
-                        if (el.Attribute("id").ToString() == "play") Console.WriteLine("Playing : {0}", el.Nodes().ElementAt(0));  // TodO: find out how to enumerate child data 
+                        if (el.Attribute("id").Value == "play")
+                        {
+                            if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
+                            {
+                                int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
+                                Console.WriteLine("Playing for {0}:{1:00}", s / 60, s % 60);
+                            }
+                            else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
+                            {
+                                Console.WriteLine("Playing track '{0}'", el.Value.Trim('\r', '\n').Trim());
+                            }
+
+                        }
+                        break;
+                    case "view":
+                        if (el.Attribute("id").Value == "status") Console.WriteLine("Status: value = {0}", el.Element("value").Value);  // TodO: find out how to enumerate child data   
                         ;
                         break;
                     default:
-                        Console.WriteLine("{0}: {1}, {2} = {3}", el.NodeType, el.Name, el.Attribute("id"), el.Value);
+                        Console.WriteLine("{0}: {1}, {2} = {3}", el.NodeType, el.Name, el.Attribute("id"), el.Value.Trim());
                         break;
                 }
                 
@@ -84,13 +99,17 @@ namespace iRadio
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
             using (XmlReader reader = XmlReader.Create(stringReader, settings))
             {
-                reader.MoveToContent();
-                while (reader.Read())
+                // reader.MoveToContent();
+                while (!reader.EOF)
                 {
-                    if (reader.NodeType != XmlNodeType.EndElement) { 
+                    if (reader.NodeType == XmlNodeType.Element) { 
                         XElement el = XElement.ReadFrom(reader) as XElement;
                         if (el != null)
                             yield return el;
+                    }
+                    else
+                    {
+                        reader.Read();
                     }
                 }
             }
