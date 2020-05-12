@@ -57,11 +57,8 @@ namespace iRadio
 
             Console.WriteLine("iRadio Telnet.xml:");
             Console.SetOut(stdOut); // stop re-direct
-            // use Console cursor control from now on 
-            Console.Clear();
-            Console.CursorTop = 0;
-            Console.CursorLeft = 0;
-            Console.WriteLine("NOXON iRadio");
+                                    // use Console cursor control from now on 
+            ShowHeader();
 
             StreamReader TelnetFile = new StreamReader("Telnet.xml");
             IEnumerable<XElement> iRadioData =
@@ -69,8 +66,6 @@ namespace iRadio
                 select el;
             Parse(iRadioData, writer, stdOut);
 
-            writer.Close();
-            ostrm.Close();
             Environment.Exit(1);
 
 
@@ -90,8 +85,28 @@ namespace iRadio
             Parse(iRadioNetData, writer, stdOut);
             tcpClient.Close();
             netStream.Close();
+
+            writer.Close();
+            ostrm.Close();
+            // Environment.Exit(1);
+
         }
 
+        private static void ShowHeader()
+        {
+            Console.Clear();
+            Console.Title = "NOXON iRadio";
+            Console.CursorVisible = false;
+            Console.CursorTop = 0;
+            Console.CursorLeft = 10;
+            ConsoleColor bg = Console.BackgroundColor;
+            ConsoleColor fg = Console.ForegroundColor;
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.WriteLine("NOXON iRadio");
+            Console.BackgroundColor = bg;
+            Console.ForegroundColor = fg;
+        }
 
         private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter writer, TextWriter stdOut)
         {
@@ -101,7 +116,7 @@ namespace iRadio
                 // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
-                Thread.Sleep(100); // 100ms
+                Thread.Sleep(50); // 50ms  
 
                 switch (el.Name.ToString())
                 {
@@ -180,47 +195,44 @@ namespace iRadio
 
         private static void ShowAlbum(XElement e)
         {
-            Console.CursorTop = 1;
-            Console.CursorLeft = 0;
-            Console.WriteLine(new String(' ', 50));
-            Console.CursorTop = 1;
+            int line = 1;
+            ClearLine(line);
+            Console.CursorTop = line;
             Console.CursorLeft = 0;
             Console.WriteLine("Album '{0}'", e.Value.Trim('\r', '\n').Trim());
         }
 
-        private static void ShowArtist(XElement e)
-        {
-            Console.CursorTop = 2;
-            Console.CursorLeft = 0;
-            Console.WriteLine(new String(' ', 50));
-            Console.CursorTop = 2;
-            Console.CursorLeft = 0;
-            Console.WriteLine("Artist '{0}'", e.Value.Trim('\r', '\n').Trim());
-        }
-
         private static void ShowTitle(XElement e)
         {
-            Console.CursorTop = 3;
-            Console.CursorLeft = 0;
-            Console.WriteLine(new String(' ', 50));
-            Console.CursorTop = 3;
+            int line = 2;
+            ClearLine(line);
+            Console.CursorTop = line;
             Console.CursorLeft = 0;
             Console.WriteLine("Title '{0}'", e.Value.Trim('\r', '\n').Trim());
         }
 
+        private static void ShowArtist(XElement e)
+        {
+            int line = 3;
+            ClearLine(line);
+            Console.CursorTop = line;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Artist '{0}'", e.Value.Trim('\r', '\n').Trim());
+        }
+
         private static void ShowTrack(XElement el)
         {
-            Console.CursorTop = 4;
-            Console.CursorLeft = 0;
-            Console.WriteLine(new String(' ', 50));
-            Console.CursorTop = 4;
+            int line = 4;
+            ClearLine(line);
+            Console.CursorTop = line;
             Console.CursorLeft = 0;
             Console.WriteLine("Playing track '{0}'", el.Value.Trim('\r', '\n').Trim());
         }
 
         private static void ShowPlayingTime(XElement el)
         {
-            Console.CursorTop = 5;
+            int line = 5;
+            Console.CursorTop = line;
             Console.CursorLeft = 0;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
             Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
@@ -231,6 +243,20 @@ namespace iRadio
             Console.CursorTop = 10;
             Console.CursorLeft = 0;
             Console.WriteLine("Status Icon '{0}'", e.Value.Trim('\r', '\n').Trim());
+            if (e.Value.Contains("empty"))
+            {
+                for (int i = 1; i < 10; i++)
+                {
+                    ClearLine(i);
+                }
+            }
+        }
+
+        private static void ClearLine(int line)
+        {
+            Console.CursorTop = line;
+            Console.CursorLeft = 0;
+            Console.WriteLine(new String(' ', Console.WindowWidth));
         }
 
 
