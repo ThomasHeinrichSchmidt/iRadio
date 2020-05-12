@@ -5,14 +5,19 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace iRadio
 {
+    // ToDo: display source messages if not detected/parsed
+
+
+    // Done: use LINQ for spotting data in XMLs
+    // Done: switch on messages while parsing
     // Done: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
-    // ToDo: switch on messages while parsing
 
 
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
@@ -20,6 +25,22 @@ namespace iRadio
     {
         static void Main(string[] args)
         {
+            FileStream ostrm;  // pepare to re-direct Console.WriteLine
+            StreamWriter writer;
+            TextWriter stdOut = Console.Out;
+            try
+            {
+                ostrm = new FileStream("./iRadio.txt", FileMode.Create, FileAccess.Write);
+                writer = new StreamWriter(ostrm);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Cannot open iRadio.txt for writing");
+                Console.WriteLine(e.Message);
+                return;
+            }
+
+            Console.SetOut(writer); // re-direct to file 
             Console.WriteLine("iRadio play data:");
             string markup = @"
                                 <update id=""play"" > <value id =""timep"" min=""0"" max=""65535"" > 1698 </value > </update >  
@@ -35,13 +56,21 @@ namespace iRadio
             }
 
             Console.WriteLine("iRadio Telnet.xml:");
+            Console.SetOut(stdOut); // stop re-direct
+            // use Console cursor control from now on 
+            Console.Clear();
+            Console.CursorTop = 0;
+            Console.CursorLeft = 0;
+            Console.WriteLine("NOXON iRadio");
+
             StreamReader TelnetFile = new StreamReader("Telnet.xml");
             IEnumerable<XElement> iRadioData =
                 from el in StreamiRadioDoc(TelnetFile)
                 select el;
-            Parse(iRadioData);
+            Parse(iRadioData, writer, stdOut);
 
-            // Console.ReadLine();
+            writer.Close();
+            ostrm.Close();
             Environment.Exit(1);
 
 
@@ -58,16 +87,22 @@ namespace iRadio
             IEnumerable<XElement> iRadioNetData =
                 from el in StreamiRadioNet(netStream)
                 select el;
-            Parse(iRadioNetData);
+            Parse(iRadioNetData, writer, stdOut);
             tcpClient.Close();
             netStream.Close();
         }
 
 
-        private static void Parse(IEnumerable<XElement> iRadioData)
+        private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter writer, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
             {
+                // int timep;  // using LINQ is not really more readable ...
+                // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
+                // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
+
+                Thread.Sleep(100); // 100ms
+
                 switch (el.Name.ToString())
                 {
                     case "update":
@@ -75,14 +110,12 @@ namespace iRadio
                         {
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
                             {
-                                int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
-                                Console.WriteLine("Playing for {0}:{1:00}", s / 60, s % 60);
+                                ShowPlayingTime(el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
-                                Console.WriteLine("Playing track '{0}'", el.Value.Trim('\r', '\n').Trim());
+                                ShowTrack(el);
                             }
-
                         }
                         break;
                     case "view":
@@ -92,24 +125,26 @@ namespace iRadio
                             {
                                 if (e.Name == "text" && e.Attribute("id").Value == "title")
                                 {
-                                    Console.WriteLine("Title '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    ShowTitle(e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "artist")
                                 {
-                                    Console.WriteLine("Artist '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    ShowArtist(e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "album")
                                 {
-                                    Console.WriteLine("Album '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    ShowAlbum(e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "track")
                                 {
-                                    Console.WriteLine("Track '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    // Console.WriteLine("Track '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    ShowTrack(e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
-                                    int s = int.Parse(e.Value.Trim('\r', '\n', ' '));
-                                    Console.WriteLine("Playing @ {0}:{1:00}", s / 60, s % 60);
+                                    // int s = int.Parse(e.Value.Trim('\r', '\n', ' '));
+                                    // Console.WriteLine("Playing @ {0:00}:{1:00}", s / 60, s % 60);
+                                    ShowPlayingTime(e);
                                 }
                             }
                         }
@@ -120,7 +155,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    Console.WriteLine("Status Icon '{0}'", e.Value.Trim('\r', '\n').Trim());
+                                    ShowStatus(e);
                                 }
                             }
 
@@ -129,16 +164,75 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                Console.WriteLine(".");
+                                // Console.WriteLine(".");
+                                ShowStatus(el);
                             }
                         }
                         break;
                     default:
-                        Console.WriteLine("{0}: {1}, {2} = {3}", el.NodeType, el.Name, el.Attribute("id"), el.Value.Trim());
+                        Console.SetOut(writer); // re-direct
+                        Console.WriteLine("{0}", el.ToString());
+                        Console.SetOut(stdOut); // stop re-direct
                         break;
                 }
             }
         }
+
+        private static void ShowAlbum(XElement e)
+        {
+            Console.CursorTop = 1;
+            Console.CursorLeft = 0;
+            Console.WriteLine(new String(' ', 50));
+            Console.CursorTop = 1;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Album '{0}'", e.Value.Trim('\r', '\n').Trim());
+        }
+
+        private static void ShowArtist(XElement e)
+        {
+            Console.CursorTop = 2;
+            Console.CursorLeft = 0;
+            Console.WriteLine(new String(' ', 50));
+            Console.CursorTop = 2;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Artist '{0}'", e.Value.Trim('\r', '\n').Trim());
+        }
+
+        private static void ShowTitle(XElement e)
+        {
+            Console.CursorTop = 3;
+            Console.CursorLeft = 0;
+            Console.WriteLine(new String(' ', 50));
+            Console.CursorTop = 3;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Title '{0}'", e.Value.Trim('\r', '\n').Trim());
+        }
+
+        private static void ShowTrack(XElement el)
+        {
+            Console.CursorTop = 4;
+            Console.CursorLeft = 0;
+            Console.WriteLine(new String(' ', 50));
+            Console.CursorTop = 4;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Playing track '{0}'", el.Value.Trim('\r', '\n').Trim());
+        }
+
+        private static void ShowPlayingTime(XElement el)
+        {
+            Console.CursorTop = 5;
+            Console.CursorLeft = 0;
+            int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
+            Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
+        }
+
+        private static void ShowStatus(XElement e)
+        {
+            Console.CursorTop = 10;
+            Console.CursorLeft = 0;
+            Console.WriteLine("Status Icon '{0}'", e.Value.Trim('\r', '\n').Trim());
+        }
+
 
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
         {
