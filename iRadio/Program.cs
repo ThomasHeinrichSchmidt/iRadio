@@ -12,9 +12,12 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: display source messages if not detected/parsed
+    // ToDo: exception handling 
+    // ToDo: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'
+    // ToDo: write xml.log from port ('Artist' does not change when preset changes)
+    // ToDo: process commands 0 ... 5
 
-
+    // Done: display source messages if not detected/parsed
     // Done: use LINQ for spotting data in XMLs
     // Done: switch on messages while parsing
     // Done: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
@@ -23,6 +26,8 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
+        static bool testmode = true;
+
         static void Main(string[] args)
         {
             FileStream ostrm;  // pepare to re-direct Console.WriteLine
@@ -66,7 +71,7 @@ namespace iRadio
                 select el;
             Parse(iRadioData, writer, stdOut);
 
-            Environment.Exit(1);
+            if (testmode) Environment.Exit(1);
 
 
             Console.WriteLine("iRadio Telnet port 10100:");
@@ -85,11 +90,8 @@ namespace iRadio
             Parse(iRadioNetData, writer, stdOut);
             tcpClient.Close();
             netStream.Close();
-
             writer.Close();
             ostrm.Close();
-            // Environment.Exit(1);
-
         }
 
         private static void ShowHeader()
@@ -116,7 +118,7 @@ namespace iRadio
                 // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
-                Thread.Sleep(50); // 50ms  
+                if (testmode) Thread.Sleep(50); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
 
                 switch (el.Name.ToString())
                 {
@@ -283,8 +285,9 @@ namespace iRadio
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
-            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
-            using (XmlReader reader = XmlReader.Create(netStream, settings))
+            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
+            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            using (XmlReader reader = XmlReader.Create(netStream, settings, context))                                              //                                           ^---
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
