@@ -12,11 +12,11 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: exception handling 
+    // ToDo: exception handling and/or enforce XML reading with wrong char set
     // ToDo: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'
-    // ToDo: write xml.log from port ('Artist' does not change when preset changes)
     // ToDo: process commands 0 ... 5
 
+    // Done: write xml.log from port ('Artist' does not change when preset changes)
     // Done: display source messages if not detected/parsed
     // Done: use LINQ for spotting data in XMLs
     // Done: switch on messages while parsing
@@ -30,22 +30,24 @@ namespace iRadio
 
         static void Main(string[] args)
         {
-            FileStream ostrm;  // pepare to re-direct Console.WriteLine
-            StreamWriter writer;
+            FileStream ostrm1, ostrm2;  // pepare to re-direct Console.WriteLine
+            StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
             try
             {
-                ostrm = new FileStream("./iRadio.txt", FileMode.Create, FileAccess.Write);
-                writer = new StreamWriter(ostrm);
+                ostrm1 = new FileStream("./iRadio-non-parsed-elements.txt", FileMode.Create, FileAccess.Write);
+                nonParsedElementsWriter = new StreamWriter(ostrm1);
+                ostrm2 = new FileStream("./iRadio-logging.txt", FileMode.Create, FileAccess.Write);
+                parsedElementsWriter = new StreamWriter(ostrm2);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Cannot open iRadio.txt for writing");
+                Console.WriteLine("Cannot open iRadio .txt files for writing");
                 Console.WriteLine(e.Message);
                 return;
             }
 
-            Console.SetOut(writer); // re-direct to file 
+            Console.SetOut(nonParsedElementsWriter); // re-direct to file 
             Console.WriteLine("iRadio play data:");
             string markup = @"
                                 <update id=""play"" > <value id =""timep"" min=""0"" max=""65535"" > 1698 </value > </update >  
@@ -69,9 +71,13 @@ namespace iRadio
             IEnumerable<XElement> iRadioData =
                 from el in StreamiRadioDoc(TelnetFile)
                 select el;
-            Parse(iRadioData, writer, stdOut);
+            Parse(iRadioData, null, nonParsedElementsWriter, stdOut);  // don't log parsed elements
 
-            if (testmode) Environment.Exit(1);
+            if (testmode)
+            {
+                CloseStreams(ostrm1, ostrm2, nonParsedElementsWriter, parsedElementsWriter);
+                Environment.Exit(1);
+            }
 
 
             Console.WriteLine("iRadio Telnet port 10100:");
@@ -87,11 +93,11 @@ namespace iRadio
             IEnumerable<XElement> iRadioNetData =
                 from el in StreamiRadioNet(netStream)
                 select el;
-            Parse(iRadioNetData, writer, stdOut);
+            Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
+
             tcpClient.Close();
             netStream.Close();
-            writer.Close();
-            ostrm.Close();
+            CloseStreams(ostrm1, ostrm2, nonParsedElementsWriter, parsedElementsWriter);
         }
 
         private static void ShowHeader()
@@ -110,7 +116,7 @@ namespace iRadio
             Console.ForegroundColor = fg;
         }
 
-        private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter writer, TextWriter stdOut)
+        private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
             {
@@ -119,6 +125,12 @@ namespace iRadio
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
                 if (testmode) Thread.Sleep(50); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
+                if (parsedElementsWriter != null)
+                {
+                    Console.SetOut(parsedElementsWriter); // re-direct
+                    Console.WriteLine("{0}", el.ToString());
+                    Console.SetOut(stdOut); // stop re-direct
+                }
 
                 switch (el.Name.ToString())
                 {
@@ -187,7 +199,7 @@ namespace iRadio
                         }
                         break;
                     default:
-                        Console.SetOut(writer); // re-direct
+                        Console.SetOut(nonParsedElementsWriter); // re-direct
                         Console.WriteLine("{0}", el.ToString());
                         Console.SetOut(stdOut); // stop re-direct
                         break;
@@ -261,6 +273,13 @@ namespace iRadio
             Console.WriteLine(new String(' ', Console.WindowWidth));
         }
 
+        private static void CloseStreams(FileStream ostrm1, FileStream ostrm2, StreamWriter nonParsedElementsWriter, StreamWriter parsedElementsWriter)
+        {
+            parsedElementsWriter.Close();
+            nonParsedElementsWriter.Close();
+            ostrm1.Close();
+            ostrm2.Close();
+        }
 
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
         {
@@ -285,22 +304,37 @@ namespace iRadio
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
-            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
+            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment }; // ,  CheckCharacters = false  };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            using (XmlReader reader = XmlReader.Create(netStream, settings, context))                                              //                                           ^---
+            using (XmlReader reader = XmlReader.Create(netStream, settings))  // , context))                                         //                                           ^---
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
                 {
                     if (reader.NodeType == XmlNodeType.Element)
                     {
-                        XElement el = XElement.ReadFrom(reader) as XElement;
+                        XElement el;
+                        try
+                        {
+                            el = XElement.ReadFrom(reader) as XElement;
+                        }
+                        catch
+                        {
+                            el = new XElement("Dummy");
+                        }
                         if (el != null)
                             yield return el;
                     }
                     else
                     {
-                        reader.Read();
+                        try
+                        {
+                            reader.Read();
+                        }
+                        catch
+                        {
+                            // continue
+                        }
                     }
                 }
             }
