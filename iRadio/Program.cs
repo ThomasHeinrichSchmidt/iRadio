@@ -326,63 +326,36 @@ namespace iRadio
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
-            XmlReaderSettings settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false }; // ,  CheckCharacters = false  };
-            // XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            using (XmlReader reader = XmlReader.Create(netStream, settings))  // , context))                                         //                                           ^---
+            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
+            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            using (XmlReader reader = XmlReader.Create(netStream, settings , context))                                         //                                           ^---
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
                 {
-                    XElement el = new XElement("nil");
                     if (reader.NodeType == XmlNodeType.Element)
                     {
-                        Debug.WriteLine(reader.Name);
-                        if (reader.Name.Equals("update") || reader.Name.Equals("view"))
+                        XElement el;
+                        try
                         {
-                            using (XmlReader subtree = reader.ReadSubtree())
-                            {
-                                // subtree.Read();
-                                subtree.MoveToContent();
-                                try
-                                {
-                                    el = XElement.ReadFrom(subtree) as XElement;
-                                }
-                                catch (XmlException ex)
-                                { // log it at least
-                                    el = null;
-                                }
-                            }
-                            reader.Skip();
-                            if (el != null)
-                                yield return el;
+                            el = XElement.ReadFrom(reader) as XElement;
                         }
-                        else
+                        catch
                         {
-                            try
-                            {
-                                el = XElement.ReadFrom(reader) as XElement;
-                            }
-                            catch (System.Xml.XmlException ex)
-                            {
-                                el = null;
-                            }
-                            if (el != null)
-                                yield return el;
+                            el = new XElement("Dummy");
                         }
+                        if (el != null)
+                            yield return el;
                     }
                     else
                     {
-                        bool success = reader.Read();
-                        if (!success)
+                        try
                         {
-                            // byte[] buffer = new byte[1000];
-                            // int readBytes = 0;
-                            // readBytes = reader.ReadElementContentAsBinHex(buffer, 0, buffer.Length);
-                            // string text = reader.ReadString();
-                            // reader.Skip();
-                            // reader.ReadStartElement();  // exception, cannot handle TEXT node
-                            reader.ReadToFollowing("update");
-                            ReadState r = reader.ReadState;
+                            reader.Read();
+                        }
+                        catch
+                        {
+                            // continue
                         }
                     }
                 }
