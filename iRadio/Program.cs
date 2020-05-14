@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -26,7 +27,7 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
-        static bool testmode = true;
+        static bool testmode = false;
 
         static void Main(string[] args)
         {
@@ -79,8 +80,9 @@ namespace iRadio
                 Environment.Exit(1);
             }
 
+            ShowHeader();
 
-            Console.WriteLine("iRadio Telnet port 10100:");
+            // Console.WriteLine("iRadio Telnet port 10100:");
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
             // Uses a remote endpoint to establish a socket connection.
             TcpClient tcpClient = new TcpClient();
@@ -130,6 +132,7 @@ namespace iRadio
                     Console.SetOut(parsedElementsWriter); // re-direct
                     Console.WriteLine("{0}", el.ToString());
                     Console.SetOut(stdOut); // stop re-direct
+                    parsedElementsWriter.Flush();
                 }
 
                 switch (el.Name.ToString())
@@ -145,6 +148,14 @@ namespace iRadio
                             {
                                 ShowTrack(el);
                             }
+                            else
+                            {
+                                LogElement(nonParsedElementsWriter, stdOut, el);
+                            }
+                        }
+                        else
+                        {
+                            LogElement(nonParsedElementsWriter, stdOut, el);
                         }
                         break;
                     case "view":
@@ -177,7 +188,7 @@ namespace iRadio
                                 }
                             }
                         }
-                        if (el.Attribute("id").Value == "status")
+                        else if (el.Attribute("id").Value == "status")
                         {
                             Console.WriteLine("Status, value = {0}", el.Element("value").Value);
                             foreach (XElement e in el.Elements())
@@ -189,7 +200,7 @@ namespace iRadio
                             }
 
                         }
-                        if (el.Attribute("id").Value == "msg")
+                        else if (el.Attribute("id").Value == "msg")
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
@@ -197,11 +208,13 @@ namespace iRadio
                                 ShowStatus(el);
                             }
                         }
+                        else
+                        {
+                            LogElement(nonParsedElementsWriter, stdOut, el);
+                        }
                         break;
                     default:
-                        Console.SetOut(nonParsedElementsWriter); // re-direct
-                        Console.WriteLine("{0}", el.ToString());
-                        Console.SetOut(stdOut); // stop re-direct
+                        LogElement(nonParsedElementsWriter, stdOut, el);
                         break;
                 }
             }
@@ -273,6 +286,14 @@ namespace iRadio
             Console.WriteLine(new String(' ', Console.WindowWidth));
         }
 
+        private static void LogElement(StreamWriter nonParsedElementsWriter, TextWriter stdOut, XElement el)
+        {
+            Console.SetOut(nonParsedElementsWriter); // re-direct
+            Console.WriteLine("{0}", el.ToString());
+            Console.SetOut(stdOut); // stop re-direct
+            nonParsedElementsWriter.Flush();
+        }
+
         private static void CloseStreams(FileStream ostrm1, FileStream ostrm2, StreamWriter nonParsedElementsWriter, StreamWriter parsedElementsWriter)
         {
             parsedElementsWriter.Close();
@@ -283,13 +304,14 @@ namespace iRadio
 
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
         {
-            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
+            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false };
             using (XmlReader reader = XmlReader.Create(stringReader, settings))
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
                 {
-                    if (reader.NodeType == XmlNodeType.Element) { 
+                    if (reader.NodeType == XmlNodeType.Element)
+                    { 
                         XElement el = XElement.ReadFrom(reader) as XElement;
                         if (el != null)
                             yield return el;
@@ -304,36 +326,63 @@ namespace iRadio
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
-            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment }; // ,  CheckCharacters = false  };
-            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            XmlReaderSettings settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false }; // ,  CheckCharacters = false  };
+            // XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
             using (XmlReader reader = XmlReader.Create(netStream, settings))  // , context))                                         //                                           ^---
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
                 {
+                    XElement el = new XElement("nil");
                     if (reader.NodeType == XmlNodeType.Element)
                     {
-                        XElement el;
-                        try
+                        Debug.WriteLine(reader.Name);
+                        if (reader.Name.Equals("update") || reader.Name.Equals("view"))
                         {
-                            el = XElement.ReadFrom(reader) as XElement;
+                            using (XmlReader subtree = reader.ReadSubtree())
+                            {
+                                // subtree.Read();
+                                subtree.MoveToContent();
+                                try
+                                {
+                                    el = XElement.ReadFrom(subtree) as XElement;
+                                }
+                                catch (XmlException ex)
+                                { // log it at least
+                                    el = null;
+                                }
+                            }
+                            reader.Skip();
+                            if (el != null)
+                                yield return el;
                         }
-                        catch
+                        else
                         {
-                            el = new XElement("Dummy");
+                            try
+                            {
+                                el = XElement.ReadFrom(reader) as XElement;
+                            }
+                            catch (System.Xml.XmlException ex)
+                            {
+                                el = null;
+                            }
+                            if (el != null)
+                                yield return el;
                         }
-                        if (el != null)
-                            yield return el;
                     }
                     else
                     {
-                        try
+                        bool success = reader.Read();
+                        if (!success)
                         {
-                            reader.Read();
-                        }
-                        catch
-                        {
-                            // continue
+                            // byte[] buffer = new byte[1000];
+                            // int readBytes = 0;
+                            // readBytes = reader.ReadElementContentAsBinHex(buffer, 0, buffer.Length);
+                            // string text = reader.ReadString();
+                            // reader.Skip();
+                            // reader.ReadStartElement();  // exception, cannot handle TEXT node
+                            reader.ReadToFollowing("update");
+                            ReadState r = reader.ReadState;
                         }
                     }
                 }
