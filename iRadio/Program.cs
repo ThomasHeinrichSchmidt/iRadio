@@ -27,7 +27,7 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
-        static bool testmode = false;
+        static bool testmode = true;
 
         static void Main(string[] args)
         {
@@ -146,7 +146,7 @@ namespace iRadio
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
-                                ShowTrack(el);
+                                ShowLine("Track", 4, el);
                             }
                             else
                             {
@@ -165,20 +165,20 @@ namespace iRadio
                             {
                                 if (e.Name == "text" && e.Attribute("id").Value == "title")
                                 {
-                                    ShowTitle(e);
+                                    ShowLine("Title", 2, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "artist")
                                 {
-                                    ShowArtist(e);
+                                    ShowLine("Artist", 3, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "album")
                                 {
-                                    ShowAlbum(e);
+                                    ShowLine("Album", 1,e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "track")
                                 {
                                     // Console.WriteLine("Track '{0}'", e.Value.Trim('\r', '\n').Trim());
-                                    ShowTrack(e);
+                                    ShowLine("Track", 4, e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
@@ -220,40 +220,23 @@ namespace iRadio
             }
         }
 
-        private static void ShowAlbum(XElement e)
+        private static void ShowLine(string caption, int line, XElement e)
         {
-            int line = 1;
             ClearLine(line);
             Console.CursorTop = line;
             Console.CursorLeft = 0;
-            Console.WriteLine("Album '{0}'", e.Value.Trim('\r', '\n').Trim());
-        }
-
-        private static void ShowTitle(XElement e)
-        {
-            int line = 2;
-            ClearLine(line);
-            Console.CursorTop = line;
-            Console.CursorLeft = 0;
-            Console.WriteLine("Title '{0}'", e.Value.Trim('\r', '\n').Trim());
-        }
-
-        private static void ShowArtist(XElement e)
-        {
-            int line = 3;
-            ClearLine(line);
-            Console.CursorTop = line;
-            Console.CursorLeft = 0;
-            Console.WriteLine("Artist '{0}'", e.Value.Trim('\r', '\n').Trim());
-        }
-
-        private static void ShowTrack(XElement el)
-        {
-            int line = 4;
-            ClearLine(line);
-            Console.CursorTop = line;
-            Console.CursorLeft = 0;
-            Console.WriteLine("Playing track '{0}'", el.Value.Trim('\r', '\n').Trim());
+            string original = e.Value.Trim('\r', '\n').Trim();
+            byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);  
+            string corrected = Encoding.UTF8.GetString(encoded);
+            char badc = '\xfffd';
+            if (corrected.Contains(badc))
+            {
+                Console.WriteLine("{0} '{1}'", caption, original);
+            }
+            else
+            {
+                Console.WriteLine("{0} '{1}'", caption, corrected);
+            }
         }
 
         private static void ShowPlayingTime(XElement el)
@@ -305,7 +288,8 @@ namespace iRadio
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false };
-            using (XmlReader reader = XmlReader.Create(stringReader, settings))
+            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            using (XmlReader reader = XmlReader.Create(stringReader, settings, context))
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
@@ -327,8 +311,8 @@ namespace iRadio
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
-            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-9"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            using (XmlReader reader = XmlReader.Create(netStream, settings , context))                                         //                                           ^---
+            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            using (XmlReader reader = XmlReader.Create(netStream, settings , context))                                             //                                           ^---
             {
                 // reader.MoveToContent();
                 while (!reader.EOF)
