@@ -13,10 +13,10 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: exception handling and/or enforce XML reading with wrong char set
-    // ToDo: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'
-    // ToDo: process commands 0 ... 5
+    // ToDo: process commands 0 ... 5 + more keys on front? (stop, rev, play/stop, fw, < ^ > v 
 
+    // Done: exception handling and/or enforce XML reading with wrong char set - No, reading not UTF-8, but ISO-8859-1
+    // Done: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'), not possible, XML must be well formed always
     // Done: write xml.log from port ('Artist' does not change when preset changes)
     // Done: display source messages if not detected/parsed
     // Done: use LINQ for spotting data in XMLs
@@ -27,7 +27,7 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
-        static bool testmode = true;
+        static bool testmode = false;
 
         static void Main(string[] args)
         {
@@ -120,6 +120,15 @@ namespace iRadio
 
         private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
+            const int lineAlbum = 1;
+            const int lineTitle = 2;
+            const int lineArtist = 3;
+            const int lineTrack = 4;
+            const int lineIcon = 7;
+            const int lineWiFi = 8;
+            const int lineBuffer = 9;
+            const int lineStatus = 10;
+
             foreach (XElement el in iRadioData)
             {
                 // int timep;  // using LINQ is not really more readable ...
@@ -135,6 +144,12 @@ namespace iRadio
                     parsedElementsWriter.Flush();
                 }
 
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo c = Console.ReadKey(true);
+                    c.KeyChar;
+                }
+
                 switch (el.Name.ToString())
                 {
                     case "update":
@@ -144,13 +159,32 @@ namespace iRadio
                             {
                                 ShowPlayingTime(el);
                             }
+                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "buflvl")
+                            {
+                                ShowLine("Buffer[%]", lineBuffer, el);
+                            }
+                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "wilvl")
+                            {
+                                ShowLine("WiFi[%]", lineWiFi, el);
+                            }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
-                                ShowLine("Track", 4, el);
+                                ShowLine("Track", lineTrack, el);
+                            }
+                            else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "artist")
+                            {
+                                ShowLine("Artist", lineArtist, el);
                             }
                             else
                             {
                                 LogElement(nonParsedElementsWriter, stdOut, el);
+                            }
+                        }
+                        else if (el.Attribute("id").Value == "status")
+                        {
+                            if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "play")
+                            {
+                                ShowLine("Icon", lineIcon, el);
                             }
                         }
                         else
@@ -165,25 +199,22 @@ namespace iRadio
                             {
                                 if (e.Name == "text" && e.Attribute("id").Value == "title")
                                 {
-                                    ShowLine("Title", 2, e);
+                                    ShowLine("Title", lineTitle, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "artist")
                                 {
-                                    ShowLine("Artist", 3, e);
+                                    ShowLine("Artist", lineArtist, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "album")
                                 {
-                                    ShowLine("Album", 1,e);
+                                    ShowLine("Album", lineAlbum,e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "track")
                                 {
-                                    // Console.WriteLine("Track '{0}'", e.Value.Trim('\r', '\n').Trim());
-                                    ShowLine("Track", 4, e);
+                                    ShowLine("Track", lineTrack, e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
-                                    // int s = int.Parse(e.Value.Trim('\r', '\n', ' '));
-                                    // Console.WriteLine("Playing @ {0:00}:{1:00}", s / 60, s % 60);
                                     ShowPlayingTime(e);
                                 }
                             }
@@ -204,7 +235,6 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                // Console.WriteLine(".");
                                 ShowStatus(el);
                             }
                         }
