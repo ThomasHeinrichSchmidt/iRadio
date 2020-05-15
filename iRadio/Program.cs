@@ -13,8 +13,11 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: process commands 0 ... 5 + more keys on front? (stop, rev, play/stop, fw, < ^ > v 
 
+    // ToDo: process commands 0 ... 5 + more keys on front? (stop, rev, play/stop, fw, < ^ > v   w a s d 
+    // ToDo: --> 2-iRadio-non-parsed-elements.txt 
+
+    // Done: network stream CanWrite() --> 
     // Done: exception handling and/or enforce XML reading with wrong char set - No, reading not UTF-8, but ISO-8859-1
     // Done: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'), not possible, XML must be well formed always
     // Done: write xml.log from port ('Artist' does not change when preset changes)
@@ -72,7 +75,7 @@ namespace iRadio
             IEnumerable<XElement> iRadioData =
                 from el in StreamiRadioDoc(TelnetFile)
                 select el;
-            Parse(iRadioData, null, nonParsedElementsWriter, stdOut);  // don't log parsed elements
+            Parse(null, iRadioData, null, nonParsedElementsWriter, stdOut);  // don't log parsed elements
 
             if (testmode)
             {
@@ -87,7 +90,17 @@ namespace iRadio
             // Uses a remote endpoint to establish a socket connection.
             TcpClient tcpClient = new TcpClient();
             IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("192.168.178.36"), 10100);
-            tcpClient.Connect(ipEndPoint);
+            while (!tcpClient.Connected)
+            {
+                try
+                {
+                    tcpClient.Connect(ipEndPoint);
+                }
+                catch (SocketException ex)
+                {
+                    Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1})", ex.SocketErrorCode, ex.Message);
+                }
+            }
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
             // Uses the GetStream public method to return the NetworkStream.
             NetworkStream netStream = tcpClient.GetStream();
@@ -95,7 +108,7 @@ namespace iRadio
             IEnumerable<XElement> iRadioNetData =
                 from el in StreamiRadioNet(netStream)
                 select el;
-            Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
+            Parse(netStream, iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
 
             tcpClient.Close();
             netStream.Close();
@@ -118,7 +131,7 @@ namespace iRadio
             Console.ForegroundColor = fg;
         }
 
-        private static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
+        private static void Parse(NetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             const int lineAlbum = 1;
             const int lineTitle = 2;
@@ -147,7 +160,26 @@ namespace iRadio
                 if (Console.KeyAvailable)
                 {
                     ConsoleKeyInfo c = Console.ReadKey(true);
-                    c.KeyChar;
+                    char ch = c.KeyChar;
+                    if (ch == 'q') break;
+                    byte result = 32;  // space
+                    try
+                    {
+                        result = Convert.ToByte(ch);
+                    }
+                    catch (OverflowException)
+                    {
+                        Console.WriteLine("Unable to convert u+{0} to a byte.", Convert.ToInt16(ch).ToString("X4"));
+                    }
+                    byte[] buffer = new byte[2];
+                    buffer[0] = result;
+                    if (netStream != null)
+                    {
+                        if (netStream.CanWrite) {
+                            netStream.Write(buffer, 0, 1);
+                        }
+                        ShowLine("Key=", lineStatus + 1, new XElement("value", ch));
+                    }
                 }
 
                 switch (el.Name.ToString())
@@ -226,7 +258,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    ShowStatus(e);
+                                    ShowStatus(e, lineStatus);
                                 }
                             }
 
@@ -235,7 +267,7 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                ShowStatus(el);
+                                ShowStatus(el, lineStatus);
                             }
                         }
                         else
@@ -278,14 +310,14 @@ namespace iRadio
             Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
-        private static void ShowStatus(XElement e)
+        private static void ShowStatus(XElement e, int line)
         {
-            Console.CursorTop = 10;
+            Console.CursorTop = line;
             Console.CursorLeft = 0;
             Console.WriteLine("Status Icon '{0}'", e.Value.Trim('\r', '\n').Trim());
             if (e.Value.Contains("empty"))
             {
-                for (int i = 1; i < 10; i++)
+                for (int i = 1; i < line; i++)
                 {
                     ClearLine(i);
                 }
