@@ -141,6 +141,7 @@ namespace iRadio
             const int lineWiFi = 8;
             const int lineBuffer = 9;
             const int lineStatus = 10;
+            const int lineWaiting = 101;
 
             foreach (XElement el in iRadioData)
             {
@@ -374,34 +375,45 @@ namespace iRadio
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            using (XmlReader reader = XmlReader.Create(netStream, settings , context))                                             //                                           ^---
+            string[] waiting = new string[] { @"\", "|", "/", "--" };
+            int waited = 0;
+            using (XmlReader reader = XmlReader.Create(netStream, settings, context))                                             //                                           ^---
             {
-                // reader.MoveToContent();
-                while (!reader.EOF)
+                while (true)
                 {
-                    if (reader.NodeType == XmlNodeType.Element)
+                    if (reader.EOF)
                     {
-                        XElement el;
-                        try
-                        {
-                            el = XElement.ReadFrom(reader) as XElement;
-                        }
-                        catch
-                        {
-                            el = new XElement("Dummy");
-                        }
-                        if (el != null)
-                            yield return el;
+                        Thread.Sleep(200);
+                        string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4];
+                        ShowStatus(new XElement("value", waitingForSignal), 11);
                     }
-                    else
+                    // reader.MoveToContent();
+                    while (!reader.EOF)
                     {
-                        try
+                        if (reader.NodeType == XmlNodeType.Element)
                         {
-                            reader.Read();
+                            XElement el;
+                            try
+                            {
+                                el = XElement.ReadFrom(reader) as XElement;
+                            }
+                            catch
+                            {
+                                el = new XElement("Dummy");
+                            }
+                            if (el != null)
+                                yield return el;
                         }
-                        catch
+                        else
                         {
-                            // continue
+                            try
+                            {
+                                reader.Read();
+                            }
+                            catch
+                            {
+                                // continue
+                            }
                         }
                     }
                 }
