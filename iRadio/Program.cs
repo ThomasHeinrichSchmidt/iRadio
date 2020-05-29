@@ -16,6 +16,7 @@ namespace iRadio
 
     // ToDo: process commands 0 ... 5 + more keys on front? (stop, rev, play/stop, fw, < ^ > v   w a s d 
     // ToDo: --> 2-iRadio-non-parsed-elements.txt 
+    // ToDo: search for NOXON (Noxon-iRadio?), not IP
 
     // Done: network stream CanWrite() --> 
     // Done: exception handling and/or enforce XML reading with wrong char set - No, reading not UTF-8, but ISO-8859-1
@@ -85,33 +86,36 @@ namespace iRadio
 
             ShowHeader();
 
-            // Console.WriteLine("iRadio Telnet port 10100:");
-            // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
-            // Uses a remote endpoint to establish a socket connection.
-            TcpClient tcpClient = new TcpClient();
-            IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("192.168.178.36"), 10100);
-            while (!tcpClient.Connected)
+            while (true)
             {
-                try
+                // Console.WriteLine("iRadio Telnet port 10100:");
+                // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
+                // Uses a remote endpoint to establish a socket connection.
+                TcpClient tcpClient = new TcpClient();
+                IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("192.168.178.36"), 10100);
+                while (!tcpClient.Connected)
                 {
-                    tcpClient.Connect(ipEndPoint);
+                    try
+                    {
+                        tcpClient.Connect(ipEndPoint);
+                    }
+                    catch (SocketException ex)
+                    {
+                        Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1})", ex.SocketErrorCode, ex.Message);
+                    }
                 }
-                catch (SocketException ex)
-                {
-                    Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1})", ex.SocketErrorCode, ex.Message);
-                }
+
+                // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
+                // Uses the GetStream public method to return the NetworkStream.
+                NetworkStream netStream = tcpClient.GetStream();
+
+                IEnumerable<XElement> iRadioNetData =
+                    from el in StreamiRadioNet(netStream)
+                    select el;
+                Parse(netStream, iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
+                netStream.Close();
+                tcpClient.Close();
             }
-            // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
-            // Uses the GetStream public method to return the NetworkStream.
-            NetworkStream netStream = tcpClient.GetStream();
-
-            IEnumerable<XElement> iRadioNetData =
-                from el in StreamiRadioNet(netStream)
-                select el;
-            Parse(netStream, iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
-
-            tcpClient.Close();
-            netStream.Close();
             CloseStreams(ostrm1, ostrm2, nonParsedElementsWriter, parsedElementsWriter);
         }
 
@@ -133,15 +137,17 @@ namespace iRadio
 
         private static void Parse(NetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
-            const int lineAlbum = 1;
-            const int lineTitle = 2;
-            const int lineArtist = 3;
+            const int lineTitle = 1;
+            const int lineArtist = 2;
+            const int line0 = 2;
+            const int lineAlbum = 3;
             const int lineTrack = 4;
+            const int linePlayingTime = 5;
             const int lineIcon = 7;
             const int lineWiFi = 8;
             const int lineBuffer = 9;
             const int lineStatus = 10;
-            const int lineWaiting = 101;
+            const int lineWaiting = 11;
 
             foreach (XElement el in iRadioData)
             {
@@ -190,7 +196,7 @@ namespace iRadio
                         {
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
                             {
-                                ShowPlayingTime(el);
+                                ShowPlayingTime(el, linePlayingTime);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "buflvl")
                             {
@@ -207,6 +213,10 @@ namespace iRadio
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "artist")
                             {
                                 ShowLine("Artist", lineArtist, el);
+                            }
+                            else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "album")
+                            {
+                                ShowLine("Album", lineAlbum, el);
                             }
                             else
                             {
@@ -276,6 +286,8 @@ namespace iRadio
                             LogElement(nonParsedElementsWriter, stdOut, el);
                         }
                         break;
+                    case "CloseStream":
+                        return;
                     default:
                         LogElement(nonParsedElementsWriter, stdOut, el);
                         break;
@@ -302,16 +314,15 @@ namespace iRadio
             }
         }
 
-        private static void ShowPlayingTime(XElement el)
+        private static void ShowPlayingTime(XElement el, int line)
         {
-            int line = 5;
             Console.CursorTop = line;
             Console.CursorLeft = 0;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
             Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
-        private static void ShowStatus(XElement e, int line)
+        private static void ShowStatus(XElement e, int line, int line0)
         {
             Console.CursorTop = line;
             Console.CursorLeft = 0;
@@ -322,6 +333,18 @@ namespace iRadio
                 {
                     ClearLine(i);
                 }
+            }
+            // loop <text id="line0"> ...  <text id="line3">
+            if (e.Element("text") != null && e.Element("text").Attribute("id").Value == "line0")
+            {
+                for (int i = 1; i < line; i++)
+                {
+                    ClearLine(i);
+                }
+                Console.CursorTop = line0;
+                Console.CursorLeft = 0;
+                Console.WriteLine("{0}", e.Element("text").Attribute("id").Value("line0").Value.Trim('\r', '\n').Trim());
+
             }
         }
 
@@ -375,7 +398,7 @@ namespace iRadio
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            string[] waiting = new string[] { @"\", "|", "/", "--" };
+            string[] waiting = new string[] { @" \ ", " | ", " / ", " - "};
             int waited = 0;
             using (XmlReader reader = XmlReader.Create(netStream, settings, context))                                             //                                           ^---
             {
@@ -383,9 +406,14 @@ namespace iRadio
                 {
                     if (reader.EOF)
                     {
-                        Thread.Sleep(200);
-                        string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4];
+                        Thread.Sleep(200);  // need to re-open netstream, but how?
+                        string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4] + "                "; // + "connected=" + netStream.Socket.connected;
                         ShowStatus(new XElement("value", waitingForSignal), 11);
+                        if (waited > 5 * 1000 / 200)  // 60s
+                        {
+                            XElement el = new XElement("CloseStream");
+                            yield return el;
+                        }
                     }
                     // reader.MoveToContent();
                     while (!reader.EOF)
@@ -395,7 +423,7 @@ namespace iRadio
                             XElement el;
                             try
                             {
-                                el = XElement.ReadFrom(reader) as XElement;
+                                el = XElement.ReadFrom(reader) as XElement;  // can loop forever, if iRadio = "Nicht verfügbar"
                             }
                             catch
                             {
