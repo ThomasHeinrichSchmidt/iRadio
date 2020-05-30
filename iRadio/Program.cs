@@ -31,11 +31,11 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
-        static bool testmode = false;
+        static bool testmode = true;
 
         public const int lineTitle = 1;
         public const int lineArtist = 2;
-        public const int line0 = 2;
+        public const int line0      = 2;
         public const int lineAlbum = 3;
         public const int lineTrack = 4;
         public const int linePlayingTime = 5;
@@ -156,7 +156,7 @@ namespace iRadio
                 // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
-                if (testmode) Thread.Sleep(50); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
+                if (testmode) Thread.Sleep(1000); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
                 if (parsedElementsWriter != null)
                 {
                     Console.SetOut(parsedElementsWriter); // re-direct
@@ -231,6 +231,10 @@ namespace iRadio
                                 ShowLine("Icon", lineIcon, el);
                             }
                         }
+                        else if (el.Attribute("id").Value == "browse")
+                        {
+                            ShowBrowse(el, line0);
+                        }
                         else
                         {
                             LogElement(nonParsedElementsWriter, stdOut, el);
@@ -282,6 +286,13 @@ namespace iRadio
                                 ShowMsg(el, lineStatus, line0);
                             }
                         }
+                        else if (el.Attribute("id").Value == "browse")
+                        {
+                            if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
+                            {
+                                ShowBrowse(el, line0);
+                            }
+                        }
                         else
                         {
                             LogElement(nonParsedElementsWriter, stdOut, el);
@@ -320,6 +331,7 @@ namespace iRadio
             Console.CursorTop = line;
             Console.CursorLeft = 0;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
+            ClearLine(line);
             Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
@@ -346,18 +358,42 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = 0;
+                    ClearLine(line0 + i);
                     if (elem.Value == "") ClearLine(line0 + i);
                     else Console.WriteLine(elem.Value);
                 }
             }
         }
 
+        private static void ShowBrowse(XElement e, int line0)
+        {
+            XElement elem;   // loop <text id="line0"> ...  <text id="line3">
+            if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
+            {
+                ShowLine("Title", lineTitle, elem);
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
+                {
+                    Console.CursorTop = line0 + i;
+                    Console.CursorLeft = 0;
+                    ClearLine(line0 + i);
+                    if (elem.Value == "") ClearLine(line0 + i);
+                    else Console.WriteLine(elem.Value);
+                }
+            }
+        }
 
         private static void ClearLine(int line)
         {
+            int top = Console.CursorTop;
             Console.CursorTop = line;
             Console.CursorLeft = 0;
             Console.WriteLine(new String(' ', Console.WindowWidth));
+            Console.CursorTop = top;
+            Console.CursorLeft = 0;
         }
 
         private static void LogElement(StreamWriter nonParsedElementsWriter, TextWriter stdOut, XElement el)
