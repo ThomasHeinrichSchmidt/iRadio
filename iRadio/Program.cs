@@ -8,16 +8,19 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace iRadio
 {
 
-    // ToDo: process commands 0 ... 5 + more keys on front? (stop, rev, play/stop, fw, < ^ > v   w a s d 
-    // ToDo: --> 2-iRadio-non-parsed-elements.txt 
-    // ToDo: search for NOXON (Noxon-iRadio?), not IP
+    // ToDo: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp
+    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
+    //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
+    // Done: 2-iRadio-non-parsed-elements.txt 
     // Done: network stream CanWrite() --> 
     // Done: exception handling and/or enforce XML reading with wrong char set - No, reading not UTF-8, but ISO-8859-1
     // Done: do not use "ISO-8859-9" encoding, ignore or replace character instead (record testing data using Telnet.ps1 on 'WDR 3'), not possible, XML must be well formed always
@@ -31,7 +34,7 @@ namespace iRadio
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     class Program
     {
-        static bool testmode = true;
+        static bool testmode = false;
 
         public const int lineTitle = 1;
         public const int lineArtist = 2;
@@ -39,11 +42,14 @@ namespace iRadio
         public const int lineAlbum = 3;
         public const int lineTrack = 4;
         public const int linePlayingTime = 5;
+        public const int lineSeparator = 6;
         public const int lineIcon = 7;
         public const int lineWiFi = 8;
         public const int lineBuffer = 9;
         public const int lineStatus = 10;
         public const int lineWaiting = 11;
+
+        public static char keypressed = ' ';
 
 
         static void Main(string[] args)
@@ -51,6 +57,11 @@ namespace iRadio
             FileStream ostrm1, ostrm2;  // pepare to re-direct Console.WriteLine
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
+
+            System.Timers.Timer timer = new System.Timers.Timer(1000);  // reset key display after a second
+            timer.Elapsed += ResetShowKeyPressed;
+            timer.Start();
+
             try
             {
                 ostrm1 = new FileStream("./iRadio-non-parsed-elements.txt", FileMode.Create, FileAccess.Write);
@@ -132,7 +143,13 @@ namespace iRadio
             CloseStreams(ostrm1, ostrm2, nonParsedElementsWriter, parsedElementsWriter);
         }
 
-        private static void ShowHeader()
+        private static void ResetShowKeyPressed(object sender, ElapsedEventArgs e)
+        {
+            // reset key display 
+            if (keypressed != ' ' ) ShowLine("Key=", lineStatus + 1, new XElement("value", "  "));
+        }
+
+    private static void ShowHeader()
         {
             Console.Clear();
             Console.Title = "NOXON iRadio";
@@ -186,7 +203,8 @@ namespace iRadio
                         if (netStream.CanWrite) {
                             netStream.Write(buffer, 0, 1);
                         }
-                        ShowLine("Key=", lineStatus + 1, new XElement("value", ch));
+                        keypressed = ch;
+                        ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed));
                     }
                 }
 
@@ -269,7 +287,7 @@ namespace iRadio
                         }
                         else if (el.Attribute("id").Value == "status")
                         {
-                            Console.WriteLine("Status, value = {0}", el.Element("value").Value);
+                            // Console.WriteLine("Status, value = {0}", el.Element("value").Value);
                             foreach (XElement e in el.Elements())
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
@@ -324,6 +342,9 @@ namespace iRadio
             {
                 Console.WriteLine("{0} '{1}'", caption, corrected);
             }
+            Console.CursorTop = lineSeparator;
+            Console.CursorLeft = 0;
+            Console.WriteLine("{0}", new String('-', Console.WindowWidth));
         }
 
         private static void ShowPlayingTime(XElement el, int line)
@@ -332,7 +353,7 @@ namespace iRadio
             Console.CursorLeft = 0;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
             ClearLine(line);
-            Console.WriteLine("Playing for {0:00}:{1:00}", s / 60, s % 60);
+            Console.WriteLine("                     Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
         private static void ShowStatus(XElement e, int line, int line0)
@@ -358,7 +379,6 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = 0;
-                    ClearLine(line0 + i);
                     if (elem.Value == "") ClearLine(line0 + i);
                     else Console.WriteLine(elem.Value);
                 }
@@ -379,7 +399,6 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = 0;
-                    ClearLine(line0 + i);
                     if (elem.Value == "") ClearLine(line0 + i);
                     else Console.WriteLine(elem.Value);
                 }
@@ -464,7 +483,7 @@ namespace iRadio
                             XElement el;
                             try
                             {
-                                el = XElement.ReadFrom(reader) as XElement;  // can loop forever, if iRadio = "Nicht verfügbar"
+                                el = XElement.ReadFrom(reader) as XElement;  // ToDo: can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
                             }
                             catch
                             {
