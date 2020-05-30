@@ -33,6 +33,19 @@ namespace iRadio
     {
         static bool testmode = false;
 
+        public const int lineTitle = 1;
+        public const int lineArtist = 2;
+        public const int line0 = 2;
+        public const int lineAlbum = 3;
+        public const int lineTrack = 4;
+        public const int linePlayingTime = 5;
+        public const int lineIcon = 7;
+        public const int lineWiFi = 8;
+        public const int lineBuffer = 9;
+        public const int lineStatus = 10;
+        public const int lineWaiting = 11;
+
+
         static void Main(string[] args)
         {
             FileStream ostrm1, ostrm2;  // pepare to re-direct Console.WriteLine
@@ -137,18 +150,6 @@ namespace iRadio
 
         private static void Parse(NetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
-            const int lineTitle = 1;
-            const int lineArtist = 2;
-            const int line0 = 2;
-            const int lineAlbum = 3;
-            const int lineTrack = 4;
-            const int linePlayingTime = 5;
-            const int lineIcon = 7;
-            const int lineWiFi = 8;
-            const int lineBuffer = 9;
-            const int lineStatus = 10;
-            const int lineWaiting = 11;
-
             foreach (XElement el in iRadioData)
             {
                 // int timep;  // using LINQ is not really more readable ...
@@ -258,7 +259,7 @@ namespace iRadio
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
-                                    ShowPlayingTime(e);
+                                    ShowPlayingTime(e, linePlayingTime);
                                 }
                             }
                         }
@@ -269,7 +270,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    ShowStatus(e, lineStatus);
+                                    ShowStatus(e, lineStatus, line0);
                                 }
                             }
 
@@ -278,7 +279,7 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                ShowStatus(el, lineStatus);
+                                ShowMsg(el, lineStatus, line0);
                             }
                         }
                         else
@@ -334,19 +335,23 @@ namespace iRadio
                     ClearLine(i);
                 }
             }
-            // loop <text id="line0"> ...  <text id="line3">
-            if (e.Element("text") != null && e.Element("text").Attribute("id").Value == "line0")
-            {
-                for (int i = 1; i < line; i++)
-                {
-                    ClearLine(i);
-                }
-                Console.CursorTop = line0;
-                Console.CursorLeft = 0;
-                Console.WriteLine("{0}", e.Element("text").Attribute("id").Value("line0").Value.Trim('\r', '\n').Trim());
+        }
 
+        private static void ShowMsg(XElement e, int line, int line0)
+        {
+            XElement elem;   // loop <text id="line0"> ...  <text id="line3">
+            for (int i = 0; i < 4; i++)
+            {
+                if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
+                {
+                    Console.CursorTop = line0 + i;
+                    Console.CursorLeft = 0;
+                    if (elem.Value == "") ClearLine(line0 + i);
+                    else Console.WriteLine(elem.Value);
+                }
             }
         }
+
 
         private static void ClearLine(int line)
         {
@@ -408,7 +413,7 @@ namespace iRadio
                     {
                         Thread.Sleep(200);  // need to re-open netstream, but how?
                         string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4] + "                "; // + "connected=" + netStream.Socket.connected;
-                        ShowStatus(new XElement("value", waitingForSignal), 11);
+                        ShowStatus(new XElement("value", waitingForSignal), lineWaiting, line0);
                         if (waited > 5 * 1000 / 200)  // 60s
                         {
                             XElement el = new XElement("CloseStream");
