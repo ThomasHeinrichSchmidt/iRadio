@@ -51,6 +51,47 @@ namespace iRadio
 
         public static char keypressed = ' ';
 
+        struct NoxonCommand
+        {
+            public int Key;
+            public string Desc;
+            public NoxonCommand (int key, string desc)
+            {
+                Key = key;
+                Desc = desc;
+            }
+        }
+
+        Dictionary<char, NoxonCommand> NoxonCommands = new Dictionary<char, NoxonCommand>()
+        {
+            { 'L', new NoxonCommand(0x25, "KEY_LEFT") },
+            { 'U', new NoxonCommand(0x26, "KEY_UP") },
+            { 'R', new NoxonCommand(0x27, "KEY_RIGHT") },
+            { 'D', new NoxonCommand(0x28, "KEY_DOWN") },
+            { 'F', new NoxonCommand(0xAB, "KEY_FAVORITES") },
+            { 'H', new NoxonCommand(0xAC, "KEY_HOME") },
+            { '-', new NoxonCommand(0xAE, "KEY_VOL_DOWN") },
+            { '+', new NoxonCommand(0xAF, "KEY_VOL_UP") },
+            { '>', new NoxonCommand(0xB0, "KEY_NEXT") },
+            { '<', new NoxonCommand(0xB1, "KEY_PREVIOUS") },
+            { 'S', new NoxonCommand(0xB2, "KEY_STOP") },
+            { 'P', new NoxonCommand(0xB3, "KEY_PLAY") },
+            { 'I', new NoxonCommand(0xBA, "KEY_INFO") },
+            { 'R', new NoxonCommand(0xC0, "KEY_REPEAT") },
+            { '*', new NoxonCommand(0xDB, "KEY_SETTINGS") },
+            { 'X', new NoxonCommand(0xDC, "KEY_SHUFFLE") },
+            { '0', new NoxonCommand(0x30, "KEY_0") },
+            { '1', new NoxonCommand(0x31, "KEY_1") },
+            { '2', new NoxonCommand(0x32, "KEY_2") },
+            { '3', new NoxonCommand(0x33, "KEY_3") },
+            { '4', new NoxonCommand(0x34, "KEY_4") },
+            { '5', new NoxonCommand(0x35, "KEY_5") },
+            { '6', new NoxonCommand(0x36, "KEY_6") },
+            { '7', new NoxonCommand(0x37, "KEY_7") },
+            { '8', new NoxonCommand(0x38, "KEY_8") },
+            { '9', new NoxonCommand(0x39, "KEY_9") }
+        };
+
 
         static void Main(string[] args)
         {
