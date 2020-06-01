@@ -14,12 +14,12 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-
-    // ToDo: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp
+    // ToDo: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate thread (?)
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
+    // Done: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp, see // https://github.com/clementleger/noxonremote
     // Done: 2-iRadio-non-parsed-elements.txt 
     // Done: network stream CanWrite() --> 
     // Done: exception handling and/or enforce XML reading with wrong char set - No, reading not UTF-8, but ISO-8859-1
@@ -50,48 +50,42 @@ namespace iRadio
         public const int lineWaiting = 11;
 
         public static char keypressed = ' ';
+        public static System.Timers.Timer unShowKeyPressedTimer;
 
-        struct NoxonCommand
+        class NoxonCommand
         {
-            public int Key;
-            public string Desc;
-            public NoxonCommand (int key, string desc)
-            {
-                Key = key;
-                Desc = desc;
-            }
+            public int Key { get; set; }
+            public string Desc { get; set; }
         }
-
-        Dictionary<char, NoxonCommand> NoxonCommands = new Dictionary<char, NoxonCommand>()
-        {
-            { 'L', new NoxonCommand(0x25, "KEY_LEFT") },
-            { 'U', new NoxonCommand(0x26, "KEY_UP") },
-            { 'R', new NoxonCommand(0x27, "KEY_RIGHT") },
-            { 'D', new NoxonCommand(0x28, "KEY_DOWN") },
-            { 'F', new NoxonCommand(0xAB, "KEY_FAVORITES") },
-            { 'H', new NoxonCommand(0xAC, "KEY_HOME") },
-            { '-', new NoxonCommand(0xAE, "KEY_VOL_DOWN") },
-            { '+', new NoxonCommand(0xAF, "KEY_VOL_UP") },
-            { '>', new NoxonCommand(0xB0, "KEY_NEXT") },
-            { '<', new NoxonCommand(0xB1, "KEY_PREVIOUS") },
-            { 'S', new NoxonCommand(0xB2, "KEY_STOP") },
-            { 'P', new NoxonCommand(0xB3, "KEY_PLAY") },
-            { 'I', new NoxonCommand(0xBA, "KEY_INFO") },
-            { 'R', new NoxonCommand(0xC0, "KEY_REPEAT") },
-            { '*', new NoxonCommand(0xDB, "KEY_SETTINGS") },
-            { 'X', new NoxonCommand(0xDC, "KEY_SHUFFLE") },
-            { '0', new NoxonCommand(0x30, "KEY_0") },
-            { '1', new NoxonCommand(0x31, "KEY_1") },
-            { '2', new NoxonCommand(0x32, "KEY_2") },
-            { '3', new NoxonCommand(0x33, "KEY_3") },
-            { '4', new NoxonCommand(0x34, "KEY_4") },
-            { '5', new NoxonCommand(0x35, "KEY_5") },
-            { '6', new NoxonCommand(0x36, "KEY_6") },
-            { '7', new NoxonCommand(0x37, "KEY_7") },
-            { '8', new NoxonCommand(0x38, "KEY_8") },
-            { '9', new NoxonCommand(0x39, "KEY_9") }
-        };
-
+        static Dictionary<char, NoxonCommand> NoxonCommands = new Dictionary<char, NoxonCommand>()
+            {
+                { 'L', new NoxonCommand { Key = 0x25, Desc = "KEY_LEFT" } },      // .NET runtime exception on startup if duplicate Dictionary Key value, e.g. 'S'
+                { 'U', new NoxonCommand { Key = 0x26, Desc = "KEY_UP" } },
+                { 'R', new NoxonCommand { Key = 0x27, Desc = "KEY_RIGHT" } },
+                { 'D', new NoxonCommand { Key = 0x28, Desc = "KEY_DOWN" } },
+                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },
+                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },
+                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },
+                { '+', new NoxonCommand { Key = 0xAF, Desc = "KEY_VOL_UP" } },
+                { '>', new NoxonCommand { Key = 0xB0, Desc = "KEY_NEXT" } },
+                { '<', new NoxonCommand { Key = 0xB1, Desc = "KEY_PREVIOUS" } },
+                { 'S', new NoxonCommand { Key = 0xB2, Desc = "KEY_STOP" } },
+                { 'P', new NoxonCommand { Key = 0xB3, Desc = "KEY_PLAY" } },
+                { 'I', new NoxonCommand { Key = 0xBA, Desc = "KEY_INFO" } },
+                { '*', new NoxonCommand { Key = 0xC0, Desc = "KEY_REPEAT" } },
+                { 'M', new NoxonCommand { Key = 0xDB, Desc = "KEY_SETTINGS" } },
+                { 'X', new NoxonCommand { Key = 0xDC, Desc = "KEY_SHUFFLE" } },
+                { '0', new NoxonCommand { Key = 0x30, Desc = "KEY_0" } },
+                { '1', new NoxonCommand { Key = 0x31, Desc = "KEY_1" } },
+                { '2', new NoxonCommand { Key = 0x32, Desc = "KEY_2" } },
+                { '3', new NoxonCommand { Key = 0x33, Desc = "KEY_3" } },
+                { '4', new NoxonCommand { Key = 0x34, Desc = "KEY_4" } },
+                { '5', new NoxonCommand { Key = 0x35, Desc = "KEY_5" } },
+                { '6', new NoxonCommand { Key = 0x36, Desc = "KEY_6" } },
+                { '7', new NoxonCommand { Key = 0x37, Desc = "KEY_7" } },
+                { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
+                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }
+            };
 
         static void Main(string[] args)
         {
@@ -99,9 +93,8 @@ namespace iRadio
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
 
-            System.Timers.Timer timer = new System.Timers.Timer(1000);  // reset key display after a second
-            timer.Elapsed += ResetShowKeyPressed;
-            timer.Start();
+            unShowKeyPressedTimer = new System.Timers.Timer(2000);  // reset key display after a second
+            unShowKeyPressedTimer.Elapsed += ResetShowKeyPressed;
 
             try
             {
@@ -190,7 +183,7 @@ namespace iRadio
             if (keypressed != ' ' ) ShowLine("Key=", lineStatus + 1, new XElement("value", "  "));
         }
 
-    private static void ShowHeader()
+        private static void ShowHeader()
         {
             Console.Clear();
             Console.Title = "NOXON iRadio";
@@ -223,29 +216,23 @@ namespace iRadio
                     parsedElementsWriter.Flush();
                 }
 
-                if (Console.KeyAvailable)
+                if (Console.KeyAvailable)   // only triggers during Parse() but must also trigger during e.g. <view id="browse"> without any new XML input 
                 {
                     ConsoleKeyInfo c = Console.ReadKey(true);
                     char ch = c.KeyChar;
                     if (ch == 'q') break;
-                    byte result = 32;  // space
-                    try
+                    if (NoxonCommands.ContainsKey(ch))
                     {
-                        result = Convert.ToByte(ch);
-                    }
-                    catch (OverflowException)
-                    {
-                        Console.WriteLine("Unable to convert u+{0} to a byte.", Convert.ToInt16(ch).ToString("X4"));
-                    }
-                    byte[] buffer = new byte[2];
-                    buffer[0] = result;
-                    if (netStream != null)
-                    {
-                        if (netStream.CanWrite) {
-                            netStream.Write(buffer, 0, 1);
+                        if (netStream != null)
+                        {
+                            if (netStream.CanWrite)
+                            {
+                                netStream.Write(intToByteArray(NoxonCommands[ch].Key), 0, sizeof(int));
+                            }
+                            keypressed = ch;
+                            ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed + " > " + NoxonCommands[ch].Desc));
+                            unShowKeyPressedTimer.Start();
                         }
-                        keypressed = ch;
-                        ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed));
                     }
                 }
 
@@ -470,6 +457,15 @@ namespace iRadio
             nonParsedElementsWriter.Close();
             ostrm1.Close();
             ostrm2.Close();
+        }
+
+        private static byte[] intToByteArray(int value)
+        {
+            return new byte[] {
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)value};
         }
 
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
