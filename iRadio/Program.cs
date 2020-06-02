@@ -14,11 +14,12 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // ToDo: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate thread (?)
+    // TODO: improve Browse (avoid blank lines), mark currently selected line
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
+    // ToDo: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
     // Done: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp, see // https://github.com/clementleger/noxonremote
     // Done: 2-iRadio-non-parsed-elements.txt 
     // Done: network stream CanWrite() --> 
@@ -51,6 +52,8 @@ namespace iRadio
 
         public static char keypressed = ' ';
         public static System.Timers.Timer unShowKeyPressedTimer;
+        public static System.Timers.Timer keyPressedTimer;
+        public static NetworkStream netStream = null;
 
         class NoxonCommand
         {
@@ -95,6 +98,9 @@ namespace iRadio
 
             unShowKeyPressedTimer = new System.Timers.Timer(2000);  // reset key display after a second
             unShowKeyPressedTimer.Elapsed += ResetShowKeyPressed;
+            keyPressedTimer = new System.Timers.Timer(100);        // loop console for key press
+            keyPressedTimer.Elapsed += ProcessKeyPressed;
+            keyPressedTimer.Start();
 
             try
             {
@@ -165,7 +171,7 @@ namespace iRadio
 
                 // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
                 // Uses the GetStream public method to return the NetworkStream.
-                NetworkStream netStream = tcpClient.GetStream();
+                netStream = tcpClient.GetStream();
 
                 IEnumerable<XElement> iRadioNetData =
                     from el in StreamiRadioNet(netStream)
@@ -182,6 +188,47 @@ namespace iRadio
             // reset key display 
             if (keypressed != ' ' ) ShowLine("Key=", lineStatus + 1, new XElement("value", "  "));
         }
+
+        private static void ProcessKeyPressed(object sender, ElapsedEventArgs e)
+        {
+            if (Console.KeyAvailable)
+            {
+                ConsoleKeyInfo c = Console.ReadKey(true);
+                char ch;
+                switch (c.Key) {
+                    case ConsoleKey.LeftArrow:
+                        ch = 'L';
+                        break;
+                    case ConsoleKey.RightArrow:
+                        ch = 'R';
+                        break;
+                    case ConsoleKey.UpArrow:
+                        ch = 'U';
+                        break;
+                    case ConsoleKey.DownArrow:
+                        ch = 'D';
+                        break;
+                    default:
+                        ch = c.KeyChar;
+                        break;
+                }
+                // if (ch == 'q') break;
+                if (NoxonCommands.ContainsKey(ch))
+                {
+                    if (netStream != null)
+                    {
+                        if (netStream.CanWrite)
+                        {
+                            netStream.Write(intToByteArray(NoxonCommands[ch].Key), 0, sizeof(int));
+                        }
+                        keypressed = ch;
+                        ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed + " > " + NoxonCommands[ch].Desc));
+                        unShowKeyPressedTimer.Start();
+                    }
+                }
+            }
+        }
+
 
         private static void ShowHeader()
         {
@@ -214,26 +261,6 @@ namespace iRadio
                     Console.WriteLine("{0}", el.ToString());
                     Console.SetOut(stdOut); // stop re-direct
                     parsedElementsWriter.Flush();
-                }
-
-                if (Console.KeyAvailable)   // only triggers during Parse() but must also trigger during e.g. <view id="browse"> without any new XML input 
-                {
-                    ConsoleKeyInfo c = Console.ReadKey(true);
-                    char ch = c.KeyChar;
-                    if (ch == 'q') break;
-                    if (NoxonCommands.ContainsKey(ch))
-                    {
-                        if (netStream != null)
-                        {
-                            if (netStream.CanWrite)
-                            {
-                                netStream.Write(intToByteArray(NoxonCommands[ch].Key), 0, sizeof(int));
-                            }
-                            keypressed = ch;
-                            ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed + " > " + NoxonCommands[ch].Desc));
-                            unShowKeyPressedTimer.Start();
-                        }
-                    }
                 }
 
                 switch (el.Name.ToString())
@@ -362,6 +389,14 @@ namespace iRadio
             byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);  
             string corrected = Encoding.UTF8.GetString(encoded);
             char badc = '\xfffd';
+
+            ConsoleColor bg = Console.BackgroundColor;
+            ConsoleColor fg = Console.ForegroundColor;
+            if (caption == "Title")
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Green;
+            }
             if (corrected.Contains(badc))
             {
                 Console.WriteLine("{0} '{1}'", caption, original);
@@ -370,6 +405,9 @@ namespace iRadio
             {
                 Console.WriteLine("{0} '{1}'", caption, corrected);
             }
+            Console.BackgroundColor = bg;
+            Console.ForegroundColor = fg;
+
             Console.CursorTop = lineSeparator;
             Console.CursorLeft = 0;
             Console.WriteLine("{0}", new String('-', Console.WindowWidth));
@@ -427,8 +465,8 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = 0;
-                    if (elem.Value == "") ClearLine(line0 + i);
-                    else Console.WriteLine(elem.Value);
+                    ClearLine(line0 + i);           // if (elem.Value == "")
+                    Console.WriteLine(elem.Value);  // else
                 }
             }
         }
