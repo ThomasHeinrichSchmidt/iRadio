@@ -48,7 +48,8 @@ namespace iRadio
         public const int lineWiFi = 8;
         public const int lineBuffer = 9;
         public const int lineStatus = 10;
-        public const int lineWaiting = 11;
+        public const int lineBusy = 11;
+        public const int lineWaiting = 12;
 
         public static char keypressed = ' ';
         public static System.Timers.Timer unShowKeyPressedTimer;
@@ -266,7 +267,7 @@ namespace iRadio
                 switch (el.Name.ToString())
                 {
                     case "update":
-                        if (el.Attribute("id").Value == "play")
+                        if (el.Attribute("id").Value == "play")   // <update id="play">
                         {
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
                             {
@@ -279,6 +280,11 @@ namespace iRadio
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "wilvl")
                             {
                                 ShowLine("WiFi[%]", lineWiFi, el);
+                            }
+                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "date")   // <value id="date" 
+                            {
+                                int i;
+                                if (int.TryParse(el.Value, out i) && i > 0) ShowLine("Date", lineStatus, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
@@ -297,11 +303,30 @@ namespace iRadio
                                 LogElement(nonParsedElementsWriter, stdOut, el);
                             }
                         }
-                        else if (el.Attribute("id").Value == "status")
+                        else if (el.Attribute("id").Value == "status")  // <update id="status">
                         {
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "play")
                             {
-                                ShowLine("Icon", lineIcon, el);
+                                ShowLine("Icon-Play", lineIcon, el);
+                            }
+                            else if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
+                            {
+                                ShowLine("Icon-Shuffle", lineIcon, el);
+                            }
+                            else if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
+                            {
+                                ShowLine("Icon-Repeat", lineIcon, el);
+                            }
+                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
+                            {
+                                ShowLine("Busy=", lineBusy, el);
+                            }
+                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
+                            {
+                                string min = el.Element("value").Attribute("min").Value;  // <value id="listpos" min="1" max="26">23</value> 
+                                string max = el.Element("value").Attribute("max").Value;
+                                string caption = "From (" + min + ".." + max + ") @ ";
+                                ShowLine(caption, lineStatus, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "browse")
