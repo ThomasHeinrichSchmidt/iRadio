@@ -209,6 +209,18 @@ namespace iRadio
                     case ConsoleKey.DownArrow:
                         ch = 'D';
                         break;
+                    case ConsoleKey.VolumeUp:
+                        ch = '+';
+                        break;
+                    case ConsoleKey.VolumeDown:
+                        ch = '-';
+                        break;
+                    case ConsoleKey.BrowserFavorites:
+                        ch = 'F';
+                        break;
+                    case ConsoleKey.Home:
+                        ch = 'H';
+                        break;
                     default:
                         ch = c.KeyChar;
                         break;
@@ -468,10 +480,28 @@ namespace iRadio
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
-                    Console.CursorTop = line0 + i;
+                    Console.CursorTop = line0 + i;                     
                     Console.CursorLeft = 0;
-                    if (elem.Value == "") ClearLine(line0 + i);
-                    else Console.WriteLine(elem.Value);
+                    ConsoleColor bg = Console.BackgroundColor;
+                    ConsoleColor fg = Console.ForegroundColor;
+                    if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("flag").Value == "ds").FirstOrDefault()) != null)   //  <text id="line0" flag="ds">History</text>
+                    {
+                        Console.BackgroundColor = fg;
+                        Console.ForegroundColor = bg;
+                    }
+                    if (elem.Value == "")
+                    {
+                        Console.BackgroundColor = bg;
+                        Console.ForegroundColor = fg;
+                        ClearLine(line0 + i);
+                    }
+                    else
+                    {
+                        Console.WriteLine(elem.Value);
+                        Console.BackgroundColor = bg;
+                        Console.ForegroundColor = fg;
+                    }
+
                 }
             }
         }
@@ -490,8 +520,23 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = 0;
+                    ConsoleColor bg = Console.BackgroundColor;
+                    ConsoleColor fg = Console.ForegroundColor;
                     ClearLine(line0 + i);           // if (elem.Value == "")
+
+                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ds")   //  <text id="line0" flag="ds">History</text>
+                    {
+                        Console.BackgroundColor = fg;
+                        Console.ForegroundColor = bg;
+                    }
+                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ps")   //    <text id="line0" flag="ps">Radio Efimera</text>
+                    {
+                        Console.BackgroundColor = fg;
+                        Console.ForegroundColor = bg;
+                    }
                     Console.WriteLine(elem.Value);  // else
+                    Console.BackgroundColor = bg;
+                    Console.ForegroundColor = fg;
                 }
             }
         }
