@@ -14,12 +14,15 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: improve Browse (avoid blank lines), mark currently selected line
+    // TODO: improve Browse (avoid blank lines)
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
+    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
+    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.)
 
-    // ToDo: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
+    // DONE: mark currently selected line - separate "windows" for Browse and Play 
+    // DONE: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
     // Done: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp, see // https://github.com/clementleger/noxonremote
     // Done: 2-iRadio-non-parsed-elements.txt 
     // Done: network stream CanWrite() --> 
@@ -50,6 +53,9 @@ namespace iRadio
         public const int lineStatus = 10;
         public const int lineBusy = 11;
         public const int lineWaiting = 12;
+        public static int columnBrowse = 0;
+        public static int columnHeader = 10;
+        public const int columnShow = 0;
 
         public static char keypressed = ' ';
         public static System.Timers.Timer unShowKeyPressedTimer;
@@ -96,6 +102,8 @@ namespace iRadio
             FileStream ostrm1, ostrm2;  // pepare to re-direct Console.WriteLine
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
+            columnBrowse = Console.BufferWidth / 2 + 2;
+            columnHeader = Console.BufferWidth / 2 - 5;
 
             unShowKeyPressedTimer = new System.Timers.Timer(2000);  // reset key display after a second or two
             unShowKeyPressedTimer.Elapsed += ResetShowKeyPressed;
@@ -249,7 +257,7 @@ namespace iRadio
             Console.Title = "NOXON iRadio";
             Console.CursorVisible = false;
             Console.CursorTop = 0;
-            Console.CursorLeft = 10;
+            Console.CursorLeft = columnHeader;
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
             Console.BackgroundColor = ConsoleColor.Blue;
@@ -267,7 +275,7 @@ namespace iRadio
                 // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
-                if (testmode) Thread.Sleep(1000); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
+                if (testmode) Thread.Sleep(200); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
                 if (parsedElementsWriter != null)
                 {
                     Console.SetOut(parsedElementsWriter); // re-direct
@@ -419,10 +427,10 @@ namespace iRadio
 
         private static void ShowLine(string caption, int line, XElement e)
         {
-            ClearLine(line);
             Console.CursorTop = line;
-            Console.CursorLeft = 0;
-            
+            Console.CursorLeft = columnShow;
+            ClearLine(columnShow, line);
+
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
             if (caption == "Title")
@@ -435,8 +443,8 @@ namespace iRadio
             Console.ForegroundColor = fg;
 
             Console.CursorTop = lineSeparator;
-            Console.CursorLeft = 0;
-            Console.WriteLine("{0}", new String('-', Console.WindowWidth));
+            Console.CursorLeft = columnShow;
+            Console.WriteLine("{0}", new String('-', Console.WindowWidth - Console.CursorLeft -1));
         }
 
         private static string Normalize(XElement e)
@@ -461,22 +469,22 @@ namespace iRadio
         private static void ShowPlayingTime(XElement el, int line)
         {
             Console.CursorTop = line;
-            Console.CursorLeft = 0;
+            Console.CursorLeft = columnShow;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
-            ClearLine(line);
+            ClearLine(columnShow, line);
             Console.WriteLine("                     Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
         private static void ShowStatus(XElement e, int line, int line0)
         {
             Console.CursorTop = line;
-            Console.CursorLeft = 0;
+            Console.CursorLeft = columnShow;
             Console.WriteLine("Status Icon '{0}'", Normalize(e));
             if (e.Value.Contains("empty"))
             {
                 for (int i = 1; i < line; i++)
                 {
-                    ClearLine(i);
+                    // ClearLine(columnShow, i);   //   <icon id="play">empty</icon>    < icon id = "shuffle" > empty </ icon >    < icon id = "repeat" > empty </ icon >
                 }
             }
         }
@@ -489,10 +497,10 @@ namespace iRadio
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
                     Console.CursorTop = line0 + i;                     
-                    Console.CursorLeft = 0;
+                    Console.CursorLeft = columnBrowse;
                     if (elem.Value == "")
                     {
-                        ClearLine(line0 + i);
+                        ClearLine(columnBrowse, line0 + i);
                     }
                     else
                     {
@@ -516,10 +524,10 @@ namespace iRadio
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
                     Console.CursorTop = line0 + i;
-                    Console.CursorLeft = 0;
+                    Console.CursorLeft = columnBrowse;
                     ConsoleColor bg = Console.BackgroundColor;
                     ConsoleColor fg = Console.ForegroundColor;
-                    ClearLine(line0 + i);           // if (elem.Value == "")
+                    ClearLine(columnBrowse, line0 + i);           // if (elem.Value == "")
 
                     if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ds")   //  <text id="line0" flag="ds">History</text>
                     {
@@ -538,14 +546,15 @@ namespace iRadio
             }
         }
 
-        private static void ClearLine(int line)
+        private static void ClearLine(int column, int line)
         {
             int top = Console.CursorTop;
+            int left = Console.CursorLeft;
             Console.CursorTop = line;
-            Console.CursorLeft = 0;
-            Console.WriteLine(new String(' ', Console.WindowWidth));
+            Console.CursorLeft = column;
+            Console.WriteLine(new String(' ', Console.WindowWidth - Console.CursorLeft));
             Console.CursorTop = top;
-            Console.CursorLeft = 0;
+            Console.CursorLeft = left;
         }
 
         private static void LogElement(StreamWriter nonParsedElementsWriter, TextWriter stdOut, XElement el)
