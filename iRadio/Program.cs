@@ -96,7 +96,7 @@ namespace iRadio
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
 
-            unShowKeyPressedTimer = new System.Timers.Timer(2000);  // reset key display after a second
+            unShowKeyPressedTimer = new System.Timers.Timer(2000);  // reset key display after a second or two
             unShowKeyPressedTimer.Elapsed += ResetShowKeyPressed;
             keyPressedTimer = new System.Timers.Timer(100);        // loop console for key press
             keyPressedTimer.Elapsed += ProcessKeyPressed;
