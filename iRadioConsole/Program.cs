@@ -88,7 +88,7 @@ namespace iRadio
                 { '6', new NoxonCommand { Key = 0x36, Desc = "KEY_6" } },
                 { '7', new NoxonCommand { Key = 0x37, Desc = "KEY_7" } },
                 { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
-                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }
+                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }           // only 26 commands, remote has 32 
             };
 
         static void Main(string[] args)
@@ -252,8 +252,8 @@ namespace iRadio
             Console.CursorLeft = 10;
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
-            Console.BackgroundColor = ConsoleColor.White;
-            Console.ForegroundColor = ConsoleColor.Black;
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("NOXON iRadio");
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
@@ -321,19 +321,19 @@ namespace iRadio
                             {
                                 ShowLine("Icon-Play", lineIcon, el);
                             }
-                            else if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
+                            if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
                             {
                                 ShowLine("Icon-Shuffle", lineIcon, el);
                             }
-                            else if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
+                            if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
                             {
                                 ShowLine("Icon-Repeat", lineIcon, el);
                             }
-                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
+                            if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
                                 ShowLine("Busy=", lineBusy, el);
                             }
-                            else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
+                            if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
                             {
                                 string min = el.Element("value").Attribute("min").Value;  // <value id="listpos" min="1" max="26">23</value> 
                                 string max = el.Element("value").Attribute("max").Value;
@@ -422,11 +422,7 @@ namespace iRadio
             ClearLine(line);
             Console.CursorTop = line;
             Console.CursorLeft = 0;
-            string original = e.Value.Trim('\r', '\n').Trim();
-            byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);  
-            string corrected = Encoding.UTF8.GetString(encoded);
-            char badc = '\xfffd';
-
+            
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
             if (caption == "Title")
@@ -434,20 +430,32 @@ namespace iRadio
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Green;
             }
-            if (corrected.Contains(badc))
-            {
-                Console.WriteLine("{0} '{1}'", caption, original);
-            }
-            else
-            {
-                Console.WriteLine("{0} '{1}'", caption, corrected);
-            }
+            Console.WriteLine("{0} '{1}'", caption, Normalize(e));
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
 
             Console.CursorTop = lineSeparator;
             Console.CursorLeft = 0;
             Console.WriteLine("{0}", new String('-', Console.WindowWidth));
+        }
+
+        private static string Normalize(XElement e)
+        {
+            // string original = e.Value.Trim('\r', '\n').Trim();
+            string original = e.Value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);
+            string corrected = Encoding.UTF8.GetString(encoded);
+            string normalized;
+            char badc = '\xfffd';
+            if (corrected.Contains(badc))
+            {
+                normalized = original;
+            }
+            else
+            {
+                normalized = corrected;
+            }
+            return normalized;
         }
 
         private static void ShowPlayingTime(XElement el, int line)
@@ -463,7 +471,7 @@ namespace iRadio
         {
             Console.CursorTop = line;
             Console.CursorLeft = 0;
-            Console.WriteLine("Status Icon '{0}'", e.Value.Trim('\r', '\n').Trim());
+            Console.WriteLine("Status Icon '{0}'", Normalize(e));
             if (e.Value.Contains("empty"))
             {
                 for (int i = 1; i < line; i++)
@@ -482,24 +490,13 @@ namespace iRadio
                 {
                     Console.CursorTop = line0 + i;                     
                     Console.CursorLeft = 0;
-                    ConsoleColor bg = Console.BackgroundColor;
-                    ConsoleColor fg = Console.ForegroundColor;
-                    if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("flag").Value == "ds").FirstOrDefault()) != null)   //  <text id="line0" flag="ds">History</text>
-                    {
-                        Console.BackgroundColor = fg;
-                        Console.ForegroundColor = bg;
-                    }
                     if (elem.Value == "")
                     {
-                        Console.BackgroundColor = bg;
-                        Console.ForegroundColor = fg;
                         ClearLine(line0 + i);
                     }
                     else
                     {
-                        Console.WriteLine(elem.Value);
-                        Console.BackgroundColor = bg;
-                        Console.ForegroundColor = fg;
+                        Console.WriteLine(Normalize(elem));
                     }
 
                 }
@@ -534,7 +531,7 @@ namespace iRadio
                         Console.BackgroundColor = fg;
                         Console.ForegroundColor = bg;
                     }
-                    Console.WriteLine(elem.Value);  // else
+                    Console.WriteLine(Normalize(elem));  // else
                     Console.BackgroundColor = bg;
                     Console.ForegroundColor = fg;
                 }
