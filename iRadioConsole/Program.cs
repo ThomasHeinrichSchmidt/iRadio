@@ -14,12 +14,17 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: F1 - F3 Favoriten #1 - #3 
+    // TODO: check 6 missing keys from remote control = ON/OFF, "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2D), "KEY_ADDFAV"(), "KEY_MUTE"(), "KEY_INTERNETRADIO"()
     // TODO: improve Browse (avoid blank lines)
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    // TODO: ConsoleKey.F1: run macro to choose Favourite #1
+    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max
+    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
+    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
+
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
-    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
-    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.)
 
     // DONE: mark currently selected line - separate "windows" for Browse and Play 
     // DONE: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
@@ -73,11 +78,12 @@ namespace iRadio
                 { 'U', new NoxonCommand { Key = 0x26, Desc = "KEY_UP" } },
                 { 'R', new NoxonCommand { Key = 0x27, Desc = "KEY_RIGHT" } },
                 { 'D', new NoxonCommand { Key = 0x28, Desc = "KEY_DOWN" } },
-                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },
-                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },
-                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },
-                { '+', new NoxonCommand { Key = 0xAF, Desc = "KEY_VOL_UP" } },
-                { '>', new NoxonCommand { Key = 0xB0, Desc = "KEY_NEXT" } },
+                { 'C', new NoxonCommand { Key = 0x2B, Desc = "KEY_PRESET" } },     // (C)hannnel, ths      0x2D="KEY_DELFAV"  
+                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },                       //      "KEY_ADDFAV"
+                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },                            //      "KEY_MUTE"
+                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },                        //      "KEY_INTERNETRADIO"
+                { '+', new NoxonCommand { Key = 0xAF, Desc = "KEY_VOL_UP" } },                               
+                { '>', new NoxonCommand { Key = 0xB0, Desc = "KEY_NEXT" } },                                
                 { '<', new NoxonCommand { Key = 0xB1, Desc = "KEY_PREVIOUS" } },
                 { 'S', new NoxonCommand { Key = 0xB2, Desc = "KEY_STOP" } },
                 { 'P', new NoxonCommand { Key = 0xB3, Desc = "KEY_PLAY" } },
@@ -94,7 +100,7 @@ namespace iRadio
                 { '6', new NoxonCommand { Key = 0x36, Desc = "KEY_6" } },
                 { '7', new NoxonCommand { Key = 0x37, Desc = "KEY_7" } },
                 { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
-                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }           // only 26 commands, remote has 32 
+                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }           // only 26 commands, remote has 32 (incl. ON/OFF)
             };
 
         static void Main(string[] args)
@@ -228,6 +234,37 @@ namespace iRadio
                         break;
                     case ConsoleKey.Home:
                         ch = 'H';
+                        break;
+                    case ConsoleKey.F1:
+                        // run macro to choose Favourite #1 - could show list of favorites: "KEY_FAVORITES" with  <value id="listpos" min="1" max="26">1</value> until max
+                        // 
+                        int next = 1100;  // 100 = same key   <-[1000..1050]->   1100 = next letter
+                        int same = 100;
+                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // a
+                        Thread.Sleep(same);
+                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // b
+                        Thread.Sleep(same);
+                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // c
+
+                        Thread.Sleep(next);
+
+                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+                        Thread.Sleep(same);
+                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+                        Thread.Sleep(same);
+                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // y
+                        Thread.Sleep(same);
+
+                        Thread.Sleep(next);
+
+                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+                        Thread.Sleep(same);
+                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+                        Thread.Sleep(same);
+
+                        Thread.Sleep(3000);  // show result
+
+                        ch = 'I';
                         break;
                     default:
                         ch = c.KeyChar;
