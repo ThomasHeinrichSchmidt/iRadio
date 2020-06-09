@@ -15,17 +15,17 @@ using System.Xml.Linq;
 namespace iRadio
 {
     // TODO: F1 - F3 Favoriten #1 - #3 
-    // TODO: check 6 missing keys from remote control = ON/OFF, "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2D), "KEY_ADDFAV"(), "KEY_MUTE"(), "KEY_INTERNETRADIO"()
     // TODO: improve Browse (avoid blank lines)
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
     // TODO: ConsoleKey.F1: run macro to choose Favourite #1
     // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max
     // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
-    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
+    // DONE: check 6 missing keys from remote control = ON/OFF (??), "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2E), "KEY_ADDFAV"(0x2D), "KEY_MUTE"(??), "KEY_INTERNETRADIO"(0xAA)
     // DONE: mark currently selected line - separate "windows" for Browse and Play 
     // DONE: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
     // Done: process commands 0 ... 5 + more keys on front panel of radio? (stop, rev, play/stop, fw, < ^ > v   w a s d   // WRC service @ WaaRemoteCtrl.cpp, see // https://github.com/clementleger/noxonremote
@@ -78,10 +78,13 @@ namespace iRadio
                 { 'U', new NoxonCommand { Key = 0x26, Desc = "KEY_UP" } },
                 { 'R', new NoxonCommand { Key = 0x27, Desc = "KEY_RIGHT" } },
                 { 'D', new NoxonCommand { Key = 0x28, Desc = "KEY_DOWN" } },
-                { 'C', new NoxonCommand { Key = 0x2B, Desc = "KEY_PRESET" } },     // (C)hannnel, ths      0x2D="KEY_DELFAV"  
-                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },                       //      "KEY_ADDFAV"
-                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },                            //      "KEY_MUTE"
-                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },                        //      "KEY_INTERNETRADIO"
+                { 'C', new NoxonCommand { Key = 0x2B, Desc = "KEY_PRESET" } },          // (C)hannnel  + key 0..9 to store new preset       0x2D="KEY_DELFAV"  
+                { 'A', new NoxonCommand { Key = 0x2D, Desc = "KEY_ADDFAV" } },          // (A)dd favourite if channel/station playing 
+                { 'E', new NoxonCommand { Key = 0x2E, Desc = "KEY_DELFAV" } },          // (E)rase favourite if entry in favourites list selected 
+                { 'N', new NoxonCommand { Key = 0xAA, Desc = "KEY_INTERNETRADIO" } },   // I(N)ternetradio
+                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },                       
+                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },                            
+                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },                    
                 { '+', new NoxonCommand { Key = 0xAF, Desc = "KEY_VOL_UP" } },                               
                 { '>', new NoxonCommand { Key = 0xB0, Desc = "KEY_NEXT" } },                                
                 { '<', new NoxonCommand { Key = 0xB1, Desc = "KEY_PREVIOUS" } },
@@ -100,7 +103,7 @@ namespace iRadio
                 { '6', new NoxonCommand { Key = 0x36, Desc = "KEY_6" } },
                 { '7', new NoxonCommand { Key = 0x37, Desc = "KEY_7" } },
                 { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
-                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }           // only 26 commands, remote has 32 (incl. ON/OFF)
+                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }                 // only 30 commands, remote has 32 (incl. On/Off and Mute, missing here)
             };
 
         static void Main(string[] args)
@@ -238,33 +241,110 @@ namespace iRadio
                     case ConsoleKey.F1:
                         // run macro to choose Favourite #1 - could show list of favorites: "KEY_FAVORITES" with  <value id="listpos" min="1" max="26">1</value> until max
                         // 
-                        int next = 1100;  // 100 = same key   <-[1000..1050]->   1100 = next letter
-                        int same = 100;
-                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // a
-                        Thread.Sleep(same);
-                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // b
-                        Thread.Sleep(same);
-                        netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // c
+                        // ProbingSendLetters();
 
-                        Thread.Sleep(next);
+                        Console.WriteLine("F1 was pressed, starting ReadKey() loop");
+                        while (true)
+                        {
+                            int sel = 5;
+                            if (sel == 1)   // 7 Bit ASCII only 
+                            {
+                                Console.WriteLine("enter character using numpad to sent to NOXON (e.g. Alt+123, but only works for chars < 128)");
+                                ConsoleKeyInfo cp = Console.ReadKey(true);    // enter character to sent to NOXON (e.g. Alt+123, but only works for chars < 128)
+                                int i = Encoding.GetEncoding("ISO-8859-1").GetBytes(new char[] { cp.KeyChar })[0];
+                                ch = cp.KeyChar;
+                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0}={1}) --> 0x{2}", i, ch, BitConverter.ToString(intToByteArray(i)));
+                                netStream.Write(intToByteArray(i), 0, sizeof(int));
+                            }
+                            else if (sel == 2)  // two hex digits 
+                            {
+                                Console.WriteLine("enter character using two hex digits (00..FF) to sent to NOXON");
+                                string line = Console.ReadLine();
+                                byte[] bytes = { 0, 0, 0, System.Runtime.Remoting.Metadata.W3cXsd2001.SoapHexBinary.Parse(line).Value[0]};
+                                System.Diagnostics.Debug.WriteLine("Transmit: Hex = {0} --> 0x{1}", line, BitConverter.ToString(bytes));
+                                netStream.Write(bytes, 0, bytes.Length);
+                            }
+                            else if (sel == 3)  // ascii value 0..255 
+                            {
+                                Console.WriteLine("enter character using ascii code 0..255 to sent to NOXON");
+                                string line = Console.ReadLine();
+                                int i = Int32.Parse(line);
+                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", line, BitConverter.ToString(intToByteArray(i)));
+                                netStream.Write(intToByteArray(i), 0, sizeof(int));
+                            }
+                            else if (sel == 4)  // loop all ascii values 
+                            {
+                                Console.WriteLine("probing all characters 0..255 to sent to NOXON");
+                                for (int i = 0; i < 256; i++)
+                                {   /*
+                                    if (37 <= i && i <= 57) continue;
+                                    if (64 <= i && i <= 90) continue;
+                                    if (97 <= i && i <= 122) continue;
+                                    if (171 <= i && i <= 179) continue;
+                                    */
+                                    System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(intToByteArray(i)));
+                                    netStream.Write(intToByteArray(i), 0, sizeof(int));
+                                    // Thread.Sleep(500);
+                                    Console.ReadKey(true);
+                                }
+                            }
+                            else if (sel == 5)  // macro: Internetradio ... hr3 
+                            {
+                                Console.WriteLine("run macro to choose hr3, hold on ...");
+                                int i = 170; // KEY_INTERNETRADIO
+                                Transmit(i);
+                                i = 39; // KEY_RIGHT  --> Alle Sender
+                                Transmit(i);
+                                i = 39; // KEY_RIGHT  --> Senderliste 
+                                Transmit(i);
 
-                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
-                        Thread.Sleep(same);
-                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
-                        Thread.Sleep(same);
-                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // y
-                        Thread.Sleep(same);
+                                int tnext = 1100;
+                                int tsame = 100;
 
-                        Thread.Sleep(next);
+                                Thread.Sleep(tnext);  // wait for list to load 
 
-                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
-                        Thread.Sleep(same);
-                        netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
-                        Thread.Sleep(same);
+                                netStream.Write(intToByteArray(NoxonCommands['4'].Key), 0, sizeof(int));  // g
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['4'].Key), 0, sizeof(int));  // h     h
 
-                        Thread.Sleep(3000);  // show result
+                                Thread.Sleep(tnext);
 
-                        ch = 'I';
+                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // p
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // q
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // r     r
+
+                                Thread.Sleep(tnext);
+
+                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // d
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // e
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // f
+                                Thread.Sleep(tsame);
+                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // 3     3
+
+                                Thread.Sleep(tnext);
+
+                                i = 39; // KEY_RIGHT  --> Search 
+                                Transmit(i);
+
+                                Console.ReadKey();  // wait for find ro complete, 
+                                                    //<update id="browse">
+                                                    //  <text id="line0" flag="ps">hr3</text>
+                                                    //  <text id="line1" flag="d">hr4</text>
+                                                    //  <text id="line2" flag="p">Hrvatski Radio Frankfurt</text>
+                                                    //  <text id="line3" flag="p">Hrw laut.fm</text>
+                                                    //  <icon id="hchyDn">empty</icon>
+                                                    //</update>
+
+                                i = 39; // KEY_RIGHT  --> play 
+                                Transmit(i);
+
+                                Console.ReadKey();
+                            }
+                        }
                         break;
                     default:
                         ch = c.KeyChar;
@@ -287,6 +367,41 @@ namespace iRadio
             }
         }
 
+        private static void Transmit(int i)
+        {
+            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(intToByteArray(i)));
+            netStream.Write(intToByteArray(i), 0, sizeof(int));
+            Thread.Sleep(500);
+        }
+
+        private static void ProbingSendLetters()
+        {
+            int next = 1100;  // 100 = same key   <-[1000..1050]->   1100 = next letter
+            int same = 100;
+            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // a
+            Thread.Sleep(same);
+            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // b
+            Thread.Sleep(same);
+            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // c
+
+            Thread.Sleep(next);
+
+            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+            Thread.Sleep(same);
+            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+            Thread.Sleep(same);
+            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // y
+            Thread.Sleep(same);
+
+            Thread.Sleep(next);
+
+            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+            Thread.Sleep(same);
+            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+            Thread.Sleep(same);
+
+            Thread.Sleep(3000);  // show result
+        }
 
         private static void ShowHeader()
         {
