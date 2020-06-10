@@ -14,17 +14,30 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: F1 - F3 Favoriten #1 - #3 
     // TODO: improve Browse (avoid blank lines)
+    //       correct browse display: media@... / Musik / Ordner (sind nur 2, es wird aber der Rest von vorher angezeigt)
+    //         <update id="browse">
+    //            <text id="line2" flag="ds">Interpreten</text>
+    //            <text id="line3" flag="d">Alben</text>
+    //         </update>
+    //         <update id="browse">
+    //            <text id="line1" flag="ds">Wiedergabelisten</text>
+    //            <text id="line2" flag="d">Interpreten</text>
+    //         </update>
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    //       correct Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
+    // TODO: F1 - F3 Favoriten #1 - #3 
     // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
+    //       (check NOXON feedback and/or busy to keep in sync)
+    //       
     // TODO: ConsoleKey.F1: run macro to choose Favourite #1
-    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max
+    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  -- show in separate list
     // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
-
+    
+    // ========================
     // DONE: check 6 missing keys from remote control = ON/OFF (??), "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2E), "KEY_ADDFAV"(0x2D), "KEY_MUTE"(??), "KEY_INTERNETRADIO"(0xAA)
     // DONE: mark currently selected line - separate "windows" for Browse and Play 
     // DONE: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
@@ -105,6 +118,19 @@ namespace iRadio
                 { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
                 { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }                 // only 30 commands, remote has 32 (incl. On/Off and Mute, missing here)
             };
+
+        class MultiPressCommand
+        {
+            public int Digit { get; set; }
+            public int Times { get; set; }
+        }
+
+        static Dictionary<char, MultiPressCommand> MultiPressCommands = new Dictionary<char, MultiPressCommand>()
+            { 
+                { 'a', new MultiPressCommand { Digit = 2, Times = 1} },
+                { 'b', new MultiPressCommand { Digit = 2, Times = 2} }                 
+            };
+
 
         static void Main(string[] args)
         {
@@ -373,6 +399,49 @@ namespace iRadio
             netStream.Write(intToByteArray(i), 0, sizeof(int));
             Thread.Sleep(500);
         }
+
+        private static MultiPressCommand[] CreateMultiPressCommands(string s)
+        {
+            // 1 - 1.,?!-&@*#_~             max. 10 chars allowed in result
+            // 2 - abcä2 
+            // 3 - def3
+            // 4 - ghi4
+            // 5 - jkl5
+            // 6 - mnoö6 
+            // 7 - pqrs7
+            // 8 - tuvü8 
+            // 9 - wxyz9 
+            // 0 - "0 " (0 space)
+            string[] MultiPressChars = new string[] { "0 ", "1.,?!-&@*#_~", "abcä2", "def3", "ghi4", "jkl5", "mnoö6", "pqrs7", "tuvü8", "wxyz9" };
+            MultiPressCommand[] mpc = new MultiPressCommand[10];
+            int n = 0;
+            // truncate string to max 10 
+            // for each char in string
+            //      find index in MultiPressChars with MultiPressChars[index].Contains(char)
+            //      MultiPressCommand[i].Digit = index
+            //      MultiPressCommand[i++].Times = Position of char in MultiPressChars[index]
+            // return MultiPressCommand[]
+
+            // use result: 
+            // foreach (mpc in MultiPressCommand[]) 
+            //      for (i=0; i<mpc.Times; i++) { 
+            //          netStream.Write(intToByteArray(NoxonCommands[mpc.Digit].Key), 0, sizeof(int)); 
+            //          Thread.Sleep(same); 
+            //      }
+
+            s = s.Substring(0, 10);
+            foreach (char c in s)
+            {
+                int i = Array.FindIndex(MultiPressChars, m => m.Contains(c));
+                mpc[n].Digit = i;
+                mpc[n].Times = MultiPressChars[i].IndexOf(c);
+                n++;
+                if (n >= 10) break;
+            }
+            Array.Resize<MultiPressCommand>(ref mpc, n);
+            return mpc;
+        }
+
 
         private static void ProbingSendLetters()
         {
