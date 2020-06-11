@@ -55,7 +55,7 @@ namespace iRadio
 
 
     // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
-    class Program
+    public class Program
     {
         static bool testmode = false;
 
@@ -120,7 +120,7 @@ namespace iRadio
                 { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }                 // only 30 commands, remote has 32 (incl. On/Off and Mute, missing here)
             };
 
-        class MultiPressCommand
+        public class MultiPressCommand
         {
             public int Digit { get; set; }
             public int Times { get; set; }
@@ -401,7 +401,7 @@ namespace iRadio
             Thread.Sleep(500);
         }
 
-        private static MultiPressCommand[] CreateMultiPressCommands(string s)
+        public static MultiPressCommand[] CreateMultiPressCommands(string s)
         {
             // 1 - 1.,?!-&@*#_~             max. 10 chars allowed in result
             // 2 - abcä2 
@@ -431,13 +431,12 @@ namespace iRadio
             //      }
             // Thread.Sleep(next); 
 
-            s = s.Substring(0, 10);
+            if (s.Length > 0) s = s.Substring(0, Math.Min(s.Length,10));
             foreach (char c in s)
             {
                 int i = Array.FindIndex(MultiPressChars, m => m.Contains(c));
                 if (i < 0) continue;
-                mpc[n].Digit = i;
-                mpc[n].Times = MultiPressChars[i].IndexOf(c);
+                mpc[n] = new MultiPressCommand { Digit = i, Times = MultiPressChars[i].IndexOf(c) + 1 };
                 n++;
                 if (n >= 10) break;
             }
