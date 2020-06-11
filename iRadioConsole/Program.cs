@@ -81,57 +81,6 @@ namespace iRadio
         public static System.Timers.Timer keyPressedTimer;
         public static NetworkStream netStream = null;
 
-        class NoxonCommand
-        {
-            public int Key { get; set; }
-            public string Desc { get; set; }
-        }
-        static Dictionary<char, NoxonCommand> NoxonCommands = new Dictionary<char, NoxonCommand>()
-            {
-                { 'L', new NoxonCommand { Key = 0x25, Desc = "KEY_LEFT" } },      // .NET runtime exception on startup if duplicate Dictionary Key value, e.g. 'S'
-                { 'U', new NoxonCommand { Key = 0x26, Desc = "KEY_UP" } },
-                { 'R', new NoxonCommand { Key = 0x27, Desc = "KEY_RIGHT" } },
-                { 'D', new NoxonCommand { Key = 0x28, Desc = "KEY_DOWN" } },
-                { 'C', new NoxonCommand { Key = 0x2B, Desc = "KEY_PRESET" } },          // (C)hannnel  + key 0..9 to store new preset       0x2D="KEY_DELFAV"  
-                { 'A', new NoxonCommand { Key = 0x2D, Desc = "KEY_ADDFAV" } },          // (A)dd favourite if channel/station playing 
-                { 'E', new NoxonCommand { Key = 0x2E, Desc = "KEY_DELFAV" } },          // (E)rase favourite if entry in favourites list selected 
-                { 'N', new NoxonCommand { Key = 0xAA, Desc = "KEY_INTERNETRADIO" } },   // I(N)ternetradio
-                { 'F', new NoxonCommand { Key = 0xAB, Desc = "KEY_FAVORITES" } },                       
-                { 'H', new NoxonCommand { Key = 0xAC, Desc = "KEY_HOME" } },                            
-                { '-', new NoxonCommand { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },                    
-                { '+', new NoxonCommand { Key = 0xAF, Desc = "KEY_VOL_UP" } },                               
-                { '>', new NoxonCommand { Key = 0xB0, Desc = "KEY_NEXT" } },                                
-                { '<', new NoxonCommand { Key = 0xB1, Desc = "KEY_PREVIOUS" } },
-                { 'S', new NoxonCommand { Key = 0xB2, Desc = "KEY_STOP" } },
-                { 'P', new NoxonCommand { Key = 0xB3, Desc = "KEY_PLAY" } },
-                { 'I', new NoxonCommand { Key = 0xBA, Desc = "KEY_INFO" } },
-                { '*', new NoxonCommand { Key = 0xC0, Desc = "KEY_REPEAT" } },
-                { 'M', new NoxonCommand { Key = 0xDB, Desc = "KEY_SETTINGS" } },
-                { 'X', new NoxonCommand { Key = 0xDC, Desc = "KEY_SHUFFLE" } },
-                { '0', new NoxonCommand { Key = 0x30, Desc = "KEY_0" } },
-                { '1', new NoxonCommand { Key = 0x31, Desc = "KEY_1" } },
-                { '2', new NoxonCommand { Key = 0x32, Desc = "KEY_2" } },
-                { '3', new NoxonCommand { Key = 0x33, Desc = "KEY_3" } },
-                { '4', new NoxonCommand { Key = 0x34, Desc = "KEY_4" } },
-                { '5', new NoxonCommand { Key = 0x35, Desc = "KEY_5" } },
-                { '6', new NoxonCommand { Key = 0x36, Desc = "KEY_6" } },
-                { '7', new NoxonCommand { Key = 0x37, Desc = "KEY_7" } },
-                { '8', new NoxonCommand { Key = 0x38, Desc = "KEY_8" } },
-                { '9', new NoxonCommand { Key = 0x39, Desc = "KEY_9" } }                 // only 30 commands, remote has 32 (incl. On/Off and Mute, missing here)
-            };
-
-        public class MultiPressCommand
-        {
-            public int Digit { get; set; }
-            public int Times { get; set; }
-        }
-
-        static Dictionary<char, MultiPressCommand> MultiPressCommands = new Dictionary<char, MultiPressCommand>()
-            { 
-                { 'a', new MultiPressCommand { Digit = 2, Times = 1} },
-                { 'b', new MultiPressCommand { Digit = 2, Times = 2} }                 
-            };
-
 
         static void Main(string[] args)
         {
@@ -280,8 +229,8 @@ namespace iRadio
                                 ConsoleKeyInfo cp = Console.ReadKey(true);    // enter character to sent to NOXON (e.g. Alt+123, but only works for chars < 128)
                                 int i = Encoding.GetEncoding("ISO-8859-1").GetBytes(new char[] { cp.KeyChar })[0];
                                 ch = cp.KeyChar;
-                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0}={1}) --> 0x{2}", i, ch, BitConverter.ToString(intToByteArray(i)));
-                                netStream.Write(intToByteArray(i), 0, sizeof(int));
+                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0}={1}) --> 0x{2}", i, ch, BitConverter.ToString(Noxon.intToByteArray(i)));
+                                netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
                             }
                             else if (sel == 2)  // two hex digits 
                             {
@@ -296,8 +245,8 @@ namespace iRadio
                                 Console.WriteLine("enter character using ascii code 0..255 to sent to NOXON");
                                 string line = Console.ReadLine();
                                 int i = Int32.Parse(line);
-                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", line, BitConverter.ToString(intToByteArray(i)));
-                                netStream.Write(intToByteArray(i), 0, sizeof(int));
+                                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", line, BitConverter.ToString(Noxon.intToByteArray(i)));
+                                netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
                             }
                             else if (sel == 4)  // loop all ascii values 
                             {
@@ -309,8 +258,8 @@ namespace iRadio
                                     if (97 <= i && i <= 122) continue;
                                     if (171 <= i && i <= 179) continue;
                                     */
-                                    System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(intToByteArray(i)));
-                                    netStream.Write(intToByteArray(i), 0, sizeof(int));
+                                    System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(Noxon.intToByteArray(i)));
+                                    netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
                                     // Thread.Sleep(500);
                                     Console.ReadKey(true);
                                 }
@@ -330,27 +279,27 @@ namespace iRadio
 
                                 Thread.Sleep(tnext);  // wait for list to load 
 
-                                netStream.Write(intToByteArray(NoxonCommands['4'].Key), 0, sizeof(int));  // g
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['4'].Key), 0, sizeof(int));  // g
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['4'].Key), 0, sizeof(int));  // h     h
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['4'].Key), 0, sizeof(int));  // h     h
 
                                 Thread.Sleep(tnext);
 
-                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // p
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // p
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // q
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // q
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['7'].Key), 0, sizeof(int));  // r     r
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // r     r
 
                                 Thread.Sleep(tnext);
 
-                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // d
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // d
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // e
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // e
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // f
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // f
                                 Thread.Sleep(tsame);
-                                netStream.Write(intToByteArray(NoxonCommands['3'].Key), 0, sizeof(int));  // 3     3
+                                netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // 3     3
 
                                 Thread.Sleep(tnext);
 
@@ -378,16 +327,16 @@ namespace iRadio
                         break;
                 }
                 // if (ch == 'q') break;
-                if (NoxonCommands.ContainsKey(ch))
+                if (Noxon.Commands.ContainsKey(ch))
                 {
                     if (netStream != null)
                     {
                         if (netStream.CanWrite)
                         {
-                            netStream.Write(intToByteArray(NoxonCommands[ch].Key), 0, sizeof(int));
+                            netStream.Write(Noxon.intToByteArray(Noxon.Commands[ch].Key), 0, sizeof(int));
                         }
                         keypressed = ch;
-                        ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed + " > " + NoxonCommands[ch].Desc));
+                        ShowLine("Key=", lineStatus + 1, new XElement("value", keypressed + " > " + Noxon.Commands[ch].Desc));
                         unShowKeyPressedTimer.Start();
                     }
                 }
@@ -396,79 +345,35 @@ namespace iRadio
 
         private static void Transmit(int i)
         {
-            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(intToByteArray(i)));
-            netStream.Write(intToByteArray(i), 0, sizeof(int));
+            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(Noxon.intToByteArray(i)));
+            netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
             Thread.Sleep(500);
         }
-
-        public static MultiPressCommand[] CreateMultiPressCommands(string s)
-        {
-            // 1 - 1.,?!-&@*#_~             max. 10 chars allowed in result
-            // 2 - abcä2 
-            // 3 - def3
-            // 4 - ghi4
-            // 5 - jkl5
-            // 6 - mnoö6 
-            // 7 - pqrs7
-            // 8 - tuvü8 
-            // 9 - wxyz9 
-            // 0 - "0 " (0 space)
-            string[] MultiPressChars = new string[] { "0 ", "1.,?!-&@*#_~", "abcä2", "def3", "ghi4", "jkl5", "mnoö6", "pqrs7", "tuvü8", "wxyz9" };
-            MultiPressCommand[] mpc = new MultiPressCommand[10];
-            int n = 0;
-            // truncate string to max 10 
-            // for each char in string
-            //      find index in MultiPressChars with MultiPressChars[index].Contains(char)
-            //      MultiPressCommand[i].Digit = index
-            //      MultiPressCommand[i++].Times = Position of char in MultiPressChars[index]
-            // return MultiPressCommand[]
-
-            // use result: 
-            // foreach (mpc in MultiPressCommand[]) 
-            //      for (i=0; i<mpc.Times; i++) { 
-            //          netStream.Write(intToByteArray(NoxonCommands[mpc.Digit].Key), 0, sizeof(int)); 
-            //          Thread.Sleep(same); 
-            //      }
-            // Thread.Sleep(next); 
-
-            if (s.Length > 0) s = s.Substring(0, Math.Min(s.Length,10));
-            foreach (char c in s)
-            {
-                int i = Array.FindIndex(MultiPressChars, m => m.Contains(c));
-                if (i < 0) continue;
-                mpc[n] = new MultiPressCommand { Digit = i, Times = MultiPressChars[i].IndexOf(c) + 1 };
-                n++;
-                if (n >= 10) break;
-            }
-            Array.Resize<MultiPressCommand>(ref mpc, n);
-            return mpc;
-        }
-
 
         private static void ProbingSendLetters()
         {
             int next = 1100;  // 100 = same key   <-[1000..1050]->   1100 = next letter
             int same = 100;
-            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // a
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // a
             Thread.Sleep(same);
-            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // b
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // b
             Thread.Sleep(same);
-            netStream.Write(intToByteArray(NoxonCommands['2'].Key), 0, sizeof(int));  // c
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // c
 
             Thread.Sleep(next);
 
-            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // w
             Thread.Sleep(same);
-            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // x
             Thread.Sleep(same);
-            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // y
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // y
             Thread.Sleep(same);
 
             Thread.Sleep(next);
 
-            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // w
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // w
             Thread.Sleep(same);
-            netStream.Write(intToByteArray(NoxonCommands['9'].Key), 0, sizeof(int));  // x
+            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // x
             Thread.Sleep(same);
 
             Thread.Sleep(3000);  // show result
@@ -794,15 +699,6 @@ namespace iRadio
             nonParsedElementsWriter.Close();
             ostrm1.Close();
             ostrm2.Close();
-        }
-
-        private static byte[] intToByteArray(int value)
-        {
-            return new byte[] {
-                (byte)(value >> 24),
-                (byte)(value >> 16),
-                (byte)(value >> 8),
-                (byte)value};
         }
 
         static IEnumerable<XElement> StreamiRadioDoc(TextReader stringReader)
