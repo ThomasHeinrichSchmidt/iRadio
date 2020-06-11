@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRadioConsole", "iRadioConsole\iRadioConsole.csproj", "{8B9C226F-09FD-4154-9B2B-5B8E1CB4EE1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTesting", "UnitTesting\UnitTesting.csproj", "{49122327-C15F-4BBB-9D75-FBA723008B17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{8B9C226F-09FD-4154-9B2B-5B8E1CB4EE1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B9C226F-09FD-4154-9B2B-5B8E1CB4EE1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B9C226F-09FD-4154-9B2B-5B8E1CB4EE1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49122327-C15F-4BBB-9D75-FBA723008B17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49122327-C15F-4BBB-9D75-FBA723008B17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49122327-C15F-4BBB-9D75-FBA723008B17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49122327-C15F-4BBB-9D75-FBA723008B17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

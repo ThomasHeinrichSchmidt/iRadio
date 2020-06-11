@@ -14,6 +14,7 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: add unit tests, e.g. CreateMultiPressCommands
     // TODO: improve Browse (avoid blank lines)
     //       correct browse display: media@... / Musik / Ordner (sind nur 2, es wird aber der Rest von vorher angezeigt)
     //         <update id="browse">
@@ -36,7 +37,7 @@ namespace iRadio
 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
-    
+
     // ========================
     // DONE: check 6 missing keys from remote control = ON/OFF (??), "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2E), "KEY_ADDFAV"(0x2D), "KEY_MUTE"(??), "KEY_INTERNETRADIO"(0xAA)
     // DONE: mark currently selected line - separate "windows" for Browse and Play 
@@ -428,11 +429,13 @@ namespace iRadio
             //          netStream.Write(intToByteArray(NoxonCommands[mpc.Digit].Key), 0, sizeof(int)); 
             //          Thread.Sleep(same); 
             //      }
+            // Thread.Sleep(next); 
 
             s = s.Substring(0, 10);
             foreach (char c in s)
             {
                 int i = Array.FindIndex(MultiPressChars, m => m.Contains(c));
+                if (i < 0) continue;
                 mpc[n].Digit = i;
                 mpc[n].Times = MultiPressChars[i].IndexOf(c);
                 n++;
