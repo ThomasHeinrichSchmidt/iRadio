@@ -289,8 +289,8 @@ namespace iRadio
                             try
                             {
                                 timeoutTimer.Start();
-                                
-                                el = XNode.ReadFromAsync(reader, cancellationToken);
+
+                                Task<XNode> t = XNode.ReadFromAsync(reader, cancellationToken);
                                 el = XElement.ReadFrom(reader) as XElement;  // ToDo: can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
                                 timeoutTimer.Stop();
                             }
@@ -321,7 +321,7 @@ namespace iRadio
 
         private static void ProcessKeyParseTimeout(object sender, ElapsedEventArgs e)
         {
-            reader.Close();
+            reader.Close();  // does not make the blocking ReadFrom() call to return
         }
 
 
