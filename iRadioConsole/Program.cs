@@ -38,6 +38,10 @@ namespace iRadio
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
     // ========================
+    // DONE: add iRadio-Welcome.txt 
+    //      <update id = "welcome" >
+    //        < icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
+    //      </update>
     // DONE: handle <Dummy /> - radio started to transmit this starting today 17.6.2020 (hä?) - own mistake, removed.
     // DONE: add unit tests, e.g. CreateMultiPressCommands
     // DONE: check 6 missing keys from remote control = ON/OFF (??), "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2E), "KEY_ADDFAV"(0x2D), "KEY_MUTE"(??), "KEY_INTERNETRADIO"(0xAA)

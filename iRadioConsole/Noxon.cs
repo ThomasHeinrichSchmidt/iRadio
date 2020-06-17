@@ -299,6 +299,14 @@ namespace iRadio
                                 Show.Line(caption, Show.lineStatus, el);
                             }
                         }
+                        else if (el.Attribute("id").Value == "welcome")  // <update id="welcome">
+                        {
+                            //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
+                            if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
+                            {
+                                Show.Line("Welcome", Show.lineIcon, el);
+                            }
+                        }
                         else if (el.Attribute("id").Value == "browse")
                         {
                             Show.Browse(el, Show.line0);
@@ -364,6 +372,14 @@ namespace iRadio
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
                                 Show.Browse(el, Show.line0);
+                            }
+                        }
+                        else if (el.Attribute("id").Value == "welcome")  // <view id="welcome">
+                        {
+                            // <view id="welcome">  < icon id = "welcome" text = "wlan@ths / wlan@t-h-schmidt.de" > welcome </ icon >    </ view >
+                            if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
+                            {
+                                Show.Status(el, Show.lineStatus, Show.line0);
                             }
                         }
                         else
