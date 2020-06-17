@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using System.Text;
 using System.Threading;
 using System.Timers;
@@ -14,8 +12,10 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: handle <Dummy />
-    // TODO: add unit tests, e.g. CreateMultiPressCommands
+    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
+    //       correct: freeze "NOXON"
+    //       corrected: close stream if "Nicht verfÃ¼gbar"
     // TODO: improve Browse (avoid blank lines)
     //       correct browse display: media@... / Musik / Ordner (sind nur 2, es wird aber der Rest von vorher angezeigt)
     //         <update id="browse">
@@ -26,8 +26,6 @@ namespace iRadio
     //            <text id="line1" flag="ds">Wiedergabelisten</text>
     //            <text id="line2" flag="d">Interpreten</text>
     //         </update>
-    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
-    //       correct Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     // TODO: F1 - F3 Favoriten #1 - #3 
     // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
     //       (check NOXON feedback and/or busy to keep in sync)
@@ -40,6 +38,8 @@ namespace iRadio
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
 
     // ========================
+    // DONE: handle <Dummy /> - radio started to transmit this starting today 17.6.2020 (hä?) - own mistake, removed.
+    // DONE: add unit tests, e.g. CreateMultiPressCommands
     // DONE: check 6 missing keys from remote control = ON/OFF (??), "KEY_PRESET"(0x2B), "KEY_DELFAV"(0x2E), "KEY_ADDFAV"(0x2D), "KEY_MUTE"(??), "KEY_INTERNETRADIO"(0xAA)
     // DONE: mark currently selected line - separate "windows" for Browse and Play 
     // DONE: check Console.KeyAvailable continously (without Parse() of incoming XML messages), in separate timer 
@@ -261,9 +261,6 @@ namespace iRadio
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
             string[] waiting = new string[] { @" \ ", " | ", " / ", " - "};
             int waited = 0;
-            System.Timers.Timer timeoutTimer;
-            timeoutTimer = new System.Timers.Timer(100);        // check if ReadFrom(reader) times out
-            timeoutTimer.Elapsed += ProcessKeyParseTimeout;
 
             using (reader = XmlReader.Create(netStream, settings, context))                                             //                                           ^---
             {
@@ -288,11 +285,9 @@ namespace iRadio
                             XElement el;
                             try
                             {
-                                timeoutTimer.Start();
                                 // private static System.Threading.CancellationToken cancellationToken;
                                 // Task<XNode> t = XNode.ReadFromAsync(reader, cancellationToken);  // need to port project to .NET Core, https://docs.microsoft.com/de-de/dotnet/core/porting/
                                 el = XElement.ReadFrom(reader) as XElement;  // ToDo: can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
-                                timeoutTimer.Stop();
                             }
                             catch
                             {
@@ -305,9 +300,7 @@ namespace iRadio
                         {
                             try
                             {
-                                timeoutTimer.Start();
                                 reader.Read();
-                                timeoutTimer.Stop();
                             }
                             catch
                             {
@@ -321,6 +314,14 @@ namespace iRadio
 
         private static void ProcessKeyParseTimeout(object sender, ElapsedEventArgs e)
         {
+            // System.Timers.Timer timeoutTimer;
+            // timeoutTimer = new System.Timers.Timer(100);        // check if ReadFrom(reader) times out
+            // timeoutTimer.Elapsed += ProcessKeyParseTimeout;
+
+            // timeoutTimer.Start();
+            // ...
+            // timeoutTimer.Stop();
+
             reader.Close();  // does not make the blocking ReadFrom() call to return
         }
 
