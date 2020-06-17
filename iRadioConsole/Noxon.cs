@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Channels;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
@@ -351,6 +353,11 @@ namespace iRadio
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
                                 Show.Msg(el, Show.lineStatus, Show.line0);
+                                XElement elem = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg">  < text id = "scrid" > 82 </ text >    < text id = "line0" > Nicht verfÃ¼gbar </ text >
+                                if (elem != null)
+                                {
+                                    if (elem.Value == iRadioConsole.Properties.Resources.NoxonMessageToCloseStream) return;  // close stream if "Nicht verfÃ¼gbar"
+                                }
                             }
                         }
                         else if (el.Attribute("id").Value == "browse")

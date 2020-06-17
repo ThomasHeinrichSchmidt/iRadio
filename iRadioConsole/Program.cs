@@ -14,6 +14,7 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: handle <Dummy />
     // TODO: add unit tests, e.g. CreateMultiPressCommands
     // TODO: improve Browse (avoid blank lines)
     //       correct browse display: media@... / Musik / Ordner (sind nur 2, es wird aber der Rest von vorher angezeigt)
@@ -253,7 +254,6 @@ namespace iRadio
         }
 
         private static XmlReader reader;
-        private static System.Threading.CancellationToken cancellationToken;
 
         static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
         {
@@ -289,8 +289,8 @@ namespace iRadio
                             try
                             {
                                 timeoutTimer.Start();
-
-                                Task<XNode> t = XNode.ReadFromAsync(reader, cancellationToken);
+                                // private static System.Threading.CancellationToken cancellationToken;
+                                // Task<XNode> t = XNode.ReadFromAsync(reader, cancellationToken);  // need to port project to .NET Core, https://docs.microsoft.com/de-de/dotnet/core/porting/
                                 el = XElement.ReadFrom(reader) as XElement;  // ToDo: can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
                                 timeoutTimer.Stop();
                             }
