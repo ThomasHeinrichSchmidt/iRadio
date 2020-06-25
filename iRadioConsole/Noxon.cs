@@ -71,7 +71,7 @@ namespace iRadio
             {
                 if (netStream.CanWrite && Commands.ContainsKey(commandkey))
                 {
-                    System.Diagnostics.Debug.WriteLine("\t\tTransmit Command(): ASC({0} --> 0x{1})", Commands[commandkey].Key, BitConverter.ToString(Noxon.intToByteArray(Commands[commandkey].Key)));
+                    System.Diagnostics.Debug.WriteLine("\t\tTransmit Command('{0}'): ASC({1} --> 0x{2})", commandkey, Commands[commandkey].Key, BitConverter.ToString(Noxon.intToByteArray(Commands[commandkey].Key)));
                     netStream.Write(Noxon.intToByteArray(Commands[commandkey].Key), 0, sizeof(int));
                     return 0;
                 }
@@ -141,9 +141,8 @@ namespace iRadio
             return true;
         }
 
-        private static int macroStep = 0;
-        private static string macro = "";
-        public static string Macro {
+        private static iRadioConsole.Macro macro;
+        public static iRadioConsole.Macro Macro {
             get
             {
                 return macro;
@@ -152,7 +151,6 @@ namespace iRadio
             {
                 if (value != macro)
                 {
-                    macroStep = 0;
                     macro = value;
                 }
             }
@@ -178,62 +176,7 @@ namespace iRadio
                     parsedElementsWriter.Flush();
                 }
 
-                if (Macro == "F1")
-                {
-                    System.Diagnostics.Debug.WriteLine("[{0}] Macro {1} (step {2}), busy = {3})", Show.currentTitle, Macro, macroStep, busy);
-                    switch (macroStep)
-                    {
-                        case 0:
-                            if (!busy) { 
-                                Noxon.netStream.Command('N');  //  I(N)ternetradio
-                                macroStep++;
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: I(N)ternetradio", Macro, macroStep);
-                            }
-                            break;
-                        case 1:
-                            if (!busy)
-                            {
-                                Noxon.netStream.Command('R');   // RIGHT  --> Alle Sender
-                                macroStep++;
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Alle Sender", Macro, macroStep);
-                            }
-                            break;
-                        case 2:
-                            if (!busy)
-                            {
-                                Noxon.netStream.Command('R');   // RIGHT  --> Senderliste 
-                                macroStep++;
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Senderliste", Macro, macroStep);
-                            }
-                            break;
-                        case 3:
-                            if (!busy)
-                            {
-                                Noxon.netStream.String("hr3");
-                                macroStep++;
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: --> 'hr3'", Macro, macroStep);
-                            }
-                            break;
-                        case 4:
-                            if (!busy)
-                            {
-                                Noxon.netStream.Command('R');   // RIGHT  --> Search 
-                                macroStep++;
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Search ", Macro, macroStep);
-                            }
-                            break;
-                        case 5:
-                            if (!busy)
-                            {
-                                Noxon.netStream.Command('R');   // RIGHT  --> play 
-                                Macro = "";
-                                System.Diagnostics.Debug.WriteLine("\tMacro processing '{0}': step {1}: RIGHT  --> play", Macro, macroStep);
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                if (Macro != null) Macro.Step(); // process macro, if any
 
                 switch (el.Name.ToString())
                 {

@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Macro.cs" />
     <Compile Include="MultiPress.cs" />
     <Compile Include="Noxon.cs" />
     <Compile Include="Program.cs" />
