@@ -71,7 +71,7 @@ namespace iRadio
             {
                 if (netStream.CanWrite && Commands.ContainsKey(commandkey))
                 {
-                    System.Diagnostics.Debug.WriteLine("Transmit Command(): ASC({0} --> 0x{1})", Commands[commandkey].Key, BitConverter.ToString(Noxon.intToByteArray(Commands[commandkey].Key)));
+                    System.Diagnostics.Debug.WriteLine("\t\tTransmit Command(): ASC({0} --> 0x{1})", Commands[commandkey].Key, BitConverter.ToString(Noxon.intToByteArray(Commands[commandkey].Key)));
                     netStream.Write(Noxon.intToByteArray(Commands[commandkey].Key), 0, sizeof(int));
                     return 0;
                 }
@@ -82,7 +82,7 @@ namespace iRadio
             }
             catch (System.IO.IOException e)
             {
-                System.Diagnostics.Debug.WriteLine("Transmit Command() failed ({0})", e.Message);
+                System.Diagnostics.Debug.WriteLine("\t\tTransmit Command() failed ({0})", e.Message);
                 Close();
                 Open();
                 if (netStream != null && netStream.CanWrite) netStream.Write(Noxon.intToByteArray(Commands[commandkey].Key), 0, sizeof(int));
@@ -159,6 +159,8 @@ namespace iRadio
         }
 
 
+        private static int listposmin = 0;
+        private static int listposmax = 0;
         public static void Parse(NetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
@@ -171,20 +173,21 @@ namespace iRadio
                 if (parsedElementsWriter != null)
                 {
                     Console.SetOut(parsedElementsWriter); // re-direct
-                    Console.WriteLine("{0}", el.ToString());
+                    Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
                     Console.SetOut(stdOut); // stop re-direct
                     parsedElementsWriter.Flush();
                 }
 
                 if (Macro == "F1")
                 {
+                    System.Diagnostics.Debug.WriteLine("[{0}] Macro {1} (step {2}), busy = {3})", Show.currentTitle, Macro, macroStep, busy);
                     switch (macroStep)
                     {
                         case 0:
                             if (!busy) { 
                                 Noxon.netStream.Command('N');  //  I(N)ternetradio
                                 macroStep++;
-                                System.Diagnostics.Debug.WriteLine("Macro processing {0}: step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: I(N)ternetradio", Macro, macroStep);
                             }
                             break;
                         case 1:
@@ -192,7 +195,7 @@ namespace iRadio
                             {
                                 Noxon.netStream.Command('R');   // RIGHT  --> Alle Sender
                                 macroStep++;
-                                System.Diagnostics.Debug.WriteLine("Macro processing {0}: step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Alle Sender", Macro, macroStep);
                             }
                             break;
                         case 2:
@@ -200,7 +203,7 @@ namespace iRadio
                             {
                                 Noxon.netStream.Command('R');   // RIGHT  --> Senderliste 
                                 macroStep++;
-                                System.Diagnostics.Debug.WriteLine("Macro processing {0}: step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Senderliste", Macro, macroStep);
                             }
                             break;
                         case 3:
@@ -208,7 +211,7 @@ namespace iRadio
                             {
                                 Noxon.netStream.String("hr3");
                                 macroStep++;
-                                System.Diagnostics.Debug.WriteLine("Macro processing {0}: step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: --> 'hr3'", Macro, macroStep);
                             }
                             break;
                         case 4:
@@ -216,7 +219,7 @@ namespace iRadio
                             {
                                 Noxon.netStream.Command('R');   // RIGHT  --> Search 
                                 macroStep++;
-                                System.Diagnostics.Debug.WriteLine("Macro processing {0}: step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing {0}: step {1}: RIGHT  --> Search ", Macro, macroStep);
                             }
                             break;
                         case 5:
@@ -224,7 +227,7 @@ namespace iRadio
                             {
                                 Noxon.netStream.Command('R');   // RIGHT  --> play 
                                 Macro = "";
-                                System.Diagnostics.Debug.WriteLine("Macro processing '{0}': step {1})", Macro, macroStep);
+                                System.Diagnostics.Debug.WriteLine("\tMacro processing '{0}': step {1}: RIGHT  --> play", Macro, macroStep);
                             }
                             break;
                         default:
@@ -287,15 +290,20 @@ namespace iRadio
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
-                                if (el.Value == "1") busy = true;
-                                else busy = false;
+                                busy = false;
+                                if (int.TryParse(el.Value, out int busyval)) busy = busyval == 1 ? true: false;  // el.Value = "\n  1\n"
                                 Show.Line("Busy=", Show.lineBusy, el);
+                                // System.Diagnostics.Debug.WriteLine("Status, busy = {0})", busy);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
                             {
                                 string min = el.Element("value").Attribute("min").Value;  // <value id="listpos" min="1" max="26">23</value> 
                                 string max = el.Element("value").Attribute("max").Value;
                                 string caption = "From (" + min + ".." + max + ") @ ";
+                                int.TryParse(min, out listposmin);  
+                                int.TryParse(max, out listposmax);
+                                // int value = 0;
+                                // if (int.TryParse(el.Value, out value)) el.Value = (value+1).ToString();  // NOXON list index is one too low
                                 Show.Line(caption, Show.lineStatus, el);
                             }
                         }

@@ -12,11 +12,23 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: ConsoleKey.F1: run macro to choose Favourite #1 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
+    //       F1 - F3 Favoriten #1 - #3 
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     //       correct: freeze "NOXON"
     //       corrected: close stream if "Nicht verfÃ¼gbar"
-    // TODO: improve Browse (avoid blank lines)
+    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
+    //       (check NOXON feedback and/or busy to keep in sync)
+    //       
+    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  -- show in separate list
+    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
+
+    // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
+    //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
+
+    // ========================
+    // improve Browse (avoid blank lines)
     //       correct browse display: media@... / Musik / Ordner (sind nur 2, es wird aber der Rest von vorher angezeigt)
     //         <update id="browse">
     //            <text id="line2" flag="ds">Interpreten</text>
@@ -26,18 +38,7 @@ namespace iRadio
     //            <text id="line1" flag="ds">Wiedergabelisten</text>
     //            <text id="line2" flag="d">Interpreten</text>
     //         </update>
-    // TODO: F1 - F3 Favoriten #1 - #3 
-    // TODO: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
-    //       (check NOXON feedback and/or busy to keep in sync)
-    //       
-    // TODO: ConsoleKey.F1: run macro to choose Favourite #1
-    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  -- show in separate list
-    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
-
-    // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
-    //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
-
-    // ========================
+    //       Meine Stationen / Heavy Metal / (3)
     // DONE: add iRadio-Welcome.txt 
     //      <update id = "welcome" >
     //        < icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
@@ -187,13 +188,14 @@ namespace iRadio
                         // ProbingSendLetters();
                         Console.WriteLine("F1 pressed");
                         ch = ' ';
-                        int sel = 5;
+                        int sel = 6;
                         switch (sel) {
                             case 1: Send.Transmit7BitASCIIcharacterEnteredFromNumpad(Noxon.netStream); break;
                             case 2: Send.TransmitCharacterFrom2HexDigits(Noxon.netStream); break;
                             case 3: Send.TransmitCharacterFromASCIIvalue(Noxon.netStream); break;
                             case 4: Send.TransmitAllASCIIvvaluesStepByStep(Noxon.netStream); break;
-                            case 5: Noxon.Macro = "F1";  break;  // macro: Internetradio ... hr3   // Send.TransmitMacroHR3(netStream);
+                            case 5: Send.TransmitMacroHR3(Noxon.netStream); break;
+                            case 6: Noxon.Macro = "F1"; break;  // macro executed in Noxon.Parse(), i.e. Internetradio ... hr3  
                             default: break;
                         }
                         break;
@@ -295,7 +297,7 @@ namespace iRadio
                             }
                             catch
                             {
-                                el = new XElement("Dummy");
+                                el = new XElement("iRadioExceptionXElementAfterReadFromFails");
                             }
                             if (el != null)
                                 yield return el;

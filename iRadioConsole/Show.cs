@@ -27,6 +27,9 @@ namespace iRadio
         public static int columnHeader = 10;
         public const int columnShow = 0;
 
+        public static string currentTitle = "";
+        public static string currentLine0 = "";
+
         public static void Header()
         {
             Console.Clear();
@@ -56,7 +59,10 @@ namespace iRadio
             {
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Green;
+                currentTitle = Normalize(e);
             }
+            if (line == line0) currentLine0 = Normalize(e);
+
             Console.WriteLine("{0} '{1}'", caption, Normalize(e));
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
@@ -138,10 +144,22 @@ namespace iRadio
                 Line("Title", lineTitle, elem);
             }
 
+            bool clearnotusedlines = false;
+            if ((e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "scrid").FirstOrDefault()) != null)
+            {
+                // <view id="browse">
+                //  < view id = "browse" >
+                //  < text id = "scrid" > 102.2 </ text >
+                //  < text id = "cbid" > 3 </ text >
+                // ...
+                clearnotusedlines = true;   // only clear not used lines if this is a complete "screen", not a later "update" to it
+            }
+            bool[] printline = new bool[4];
             for (int i = 0; i < 4; i++)
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
+                    printline[i] = true;
                     Console.CursorTop = line0 + i;
                     Console.CursorLeft = columnBrowse;
                     ConsoleColor bg = Console.BackgroundColor;
@@ -161,6 +179,13 @@ namespace iRadio
                     Console.WriteLine(Normalize(elem));  // else
                     Console.BackgroundColor = bg;
                     Console.ForegroundColor = fg;
+                }
+            }
+            if (clearnotusedlines)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (!printline[i]) ClearLine(columnBrowse, line0 + i);
                 }
             }
         }
