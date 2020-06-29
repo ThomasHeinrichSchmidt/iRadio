@@ -2,6 +2,13 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;
 using iRadio;
+using Moq;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.IO;
+using iRadioConsole;
+using System.Text;
+using System.Security.Permissions;
 
 namespace UnitTesting
 {
@@ -69,7 +76,7 @@ namespace UnitTesting
         }
 
         private MultiPressCommand[] Expected5 = new MultiPressCommand[] {
-            new MultiPressCommand {Digit = 2, Times = 1} ,      
+            new MultiPressCommand {Digit = 2, Times = 1} ,
             new MultiPressCommand {Digit = 2, Times = 2} ,
             new MultiPressCommand {Digit = 2, Times = 3}
         };
@@ -81,6 +88,110 @@ namespace UnitTesting
             Assert.IsTrue(mpc.Length == 3);
             mpc.Should().BeEquivalentTo(Expected5);
             for (int i = 0; i < mpc.Length; i++) TestContext.WriteLine("{0}", mpc[i]);
+        }
+
+
+
+        public class DebugNetworkStream : ITestableNetworkStream
+        {
+            private StringBuilder WriteList = new StringBuilder();
+            private string WriteLine = "";
+            public Stream GetStream()
+            {
+                return new StreamReader("Telnet.xml").BaseStream;
+            }
+            public bool CanWrite
+            {
+                get
+                {
+                    return true;
+                }
+            }
+            public void Write([In, Out] byte[] buffer, int offset, int size)
+            {
+                string bufferstring = BitConverter.ToString(buffer);
+                Debug.WriteLine("DebugNetworkStream.Write: {0}", bufferstring);
+                WriteList.AppendLine(bufferstring);
+                WriteLine = bufferstring;
+            }
+            public string LastWrite
+            {
+                get
+                {
+                    return WriteLine;
+                }
+            }
+            public string AllWrites
+            {
+                get
+                {
+                    return WriteList.ToString();
+                }
+            }
+            public int Read([In, Out] byte[] buffer, int offset, int size)
+            {
+                return 0;
+            }
+            public void Close()
+            {
+                ;
+            }
+        }
+
+        [TestMethod]
+        public void TestMacroStep()    // 
+        {
+            Noxon.netStream = new DebugNetworkStream();
+            string[] m1s = new string[] { "L", "U", "R", "D" };
+            Macro m1 = new iRadioConsole.Macro("Test-m1", m1s);
+            Macro m2 = new iRadioConsole.Macro("Test-m2", new string[] { "N", "R", "R", "@hr3", "U", "D" });
+
+            // run the two macros 'concurrently'
+            bool ok = m1.Step();
+            Assert.IsTrue(ok);
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['L'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m1.Step();
+            Assert.IsTrue(ok);
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsFalse(ok);  // must ignore Step() as macro m1 is still running, LastWrite still 'R', not 'N' (= first command of m2)
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsFalse(ok);  // must ignore Step() for m2
+            int step = 2;
+            do
+            {
+                ok = m1.Step();
+                if (!ok) break;
+                Assert.AreEqual(((DebugNetworkStream)Noxon.netStream).LastWrite, BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands[m1s[step++][0]].Key)));
+            }
+            while (ok);  // macro m1 finished
+
+            ok = m2.Step();
+            Assert.IsTrue(ok);  // must now process Step() for m2
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['N'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsTrue(ok);  
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsTrue(ok);  
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsTrue(ok);  // last key press for hr3 is '3' 
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['3'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ((DebugNetworkStream)Noxon.netStream).AllWrites.Should().EndWithEquivalent("00-00-00-34\r\n00-00-00-34\r\n00-00-00-37\r\n00-00-00-37\r\n00-00-00-37\r\n00-00-00-33\r\n00-00-00-33\r\n00-00-00-33\r\n00-00-00-33\r\n");
+            ok = m2.Step();                                                         //  2x '4' = g(h)i                3x '7' = pq(r)                               4x '3' = def(3)
+            Assert.IsTrue(ok);  
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            ok = m2.Step();
+            Assert.IsTrue(ok);
+            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['D'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+
+            var mock = new Mock<ITestableNetworkStream>();
+            mock.Setup(stream => stream.CanWrite).Returns(true);
+            Noxon.netStream = mock.Object;            // https://github.com/moq/moq4
+            bool write = Noxon.netStream.CanWrite;
+            Assert.IsTrue(write);
         }
     }
 }

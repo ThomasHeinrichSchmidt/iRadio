@@ -266,14 +266,14 @@ namespace iRadio
 
         private static XmlReader reader;
 
-        static IEnumerable<XElement> StreamiRadioNet(NetworkStream netStream)
+        static IEnumerable<XElement> StreamiRadioNet(ITestableNetworkStream netStream)
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false  };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
             string[] waiting = new string[] { @" \ ", " | ", " / ", " - "};
             int waited = 0;
 
-            using (reader = XmlReader.Create(netStream, settings, context))                                             //                                           ^---
+            using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---
             {
                 while (true)
                 {

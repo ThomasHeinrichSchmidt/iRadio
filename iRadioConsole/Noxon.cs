@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
@@ -11,12 +12,52 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    public interface ITestableNetworkStream
+    {
+        Stream GetStream();
+        int Read([In, Out] byte[] buffer, int offset, int size);
+        void Write([In, Out] byte[] buffer, int offset, int size);
+        bool CanWrite { get;  }
+        void Close();
+    }
+    public class TestableNetworkStream : ITestableNetworkStream
+    {
+        private NetworkStream stream;
 
+        public TestableNetworkStream(NetworkStream ns)
+        {
+            this.stream = ns ?? throw new ArgumentNullException("ns");
+        }
+
+        public Stream GetStream()
+        {
+            return stream;
+        }
+        public bool CanWrite
+        {
+            get
+            {
+                return this.stream.CanWrite;
+            }
+        }
+        public int Read([In, Out] byte[] buffer, int offset, int size)
+        {
+            return this.stream.Read(buffer, offset, size);
+        }
+        public void Write([In, Out] byte[] buffer, int offset, int size)
+        {
+            this.stream.Write(buffer, offset, size);
+        }
+        public void Close()
+        {
+            this.stream.Close();
+        }
+    }
     public static class Noxon
     {
         public static bool testmode { get; set; }
         public static bool busy { get; set; }
-        public static NetworkStream netStream = null;
+        public static ITestableNetworkStream netStream = null;
         public static TcpClient tcpClient = null;
 
         public static Dictionary<char, Command> Commands = new Dictionary<char, Command>()
@@ -65,7 +106,7 @@ namespace iRadio
         public static int MultiPressDelayForSameKey = 100;
         public static int MultiPressDelayForNextKey = 1100;
 
-        public static int Command(this NetworkStream netStream, char commandkey)
+        public static int Command(this ITestableNetworkStream netStream, char commandkey)
         {
             try
             {
@@ -94,7 +135,7 @@ namespace iRadio
             }
         }
 
-        public static int String(this NetworkStream netStream, string str)
+        public static int String(this ITestableNetworkStream netStream, string str)
         {
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
             foreach (MultiPressCommand m in mpc)
@@ -128,7 +169,7 @@ namespace iRadio
 
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
             // Uses the GetStream public method to return the NetworkStream.
-            netStream = tcpClient.GetStream();
+            netStream = new TestableNetworkStream(tcpClient.GetStream());
             return true;
         }
 
@@ -159,7 +200,7 @@ namespace iRadio
 
         private static int listposmin = 0;
         private static int listposmax = 0;
-        public static void Parse(NetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
+        public static void Parse(ITestableNetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
             {
@@ -356,7 +397,7 @@ namespace iRadio
 
     public class Send
     {
-        public static void TransmitMacroHR3(NetworkStream netStream)
+        public static void TransmitMacroHR3(ITestableNetworkStream netStream)
         {
             Console.WriteLine("run macro to choose hr3, hold on ...");
             int i = 170; // KEY_INTERNETRADIO
@@ -413,14 +454,14 @@ namespace iRadio
             Console.ReadKey();
         }
 
-        private static void Transmit(int i, NetworkStream netStream)
+        private static void Transmit(int i, ITestableNetworkStream netStream)
         {
             System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(Noxon.intToByteArray(i)));
             netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
             Thread.Sleep(500);
         }
 
-        public static void TransmitAllASCIIvvaluesStepByStep(NetworkStream netStream)
+        public static void TransmitAllASCIIvvaluesStepByStep(ITestableNetworkStream netStream)
         {
             Console.WriteLine("probing all characters 0..255 to sent to NOXON");
             for (int i = 0; i < 256; i++)
@@ -437,7 +478,7 @@ namespace iRadio
             }
         }
 
-        public static void TransmitCharacterFromASCIIvalue(NetworkStream netStream)
+        public static void TransmitCharacterFromASCIIvalue(ITestableNetworkStream netStream)
         {
             Console.WriteLine("enter character using ascii code 0..255 to sent to NOXON");
             string line = Console.ReadLine();
@@ -446,7 +487,7 @@ namespace iRadio
             netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
         }
 
-        public static void TransmitCharacterFrom2HexDigits(NetworkStream netStream)
+        public static void TransmitCharacterFrom2HexDigits(ITestableNetworkStream netStream)
         {
             Console.WriteLine("enter character using two hex digits (00..FF) to sent to NOXON");
             string line = Console.ReadLine();
@@ -455,7 +496,7 @@ namespace iRadio
             netStream.Write(bytes, 0, bytes.Length);
         }
 
-        public static char Transmit7BitASCIIcharacterEnteredFromNumpad(NetworkStream netStream)
+        public static char Transmit7BitASCIIcharacterEnteredFromNumpad(ITestableNetworkStream netStream)
         {
             char ch;
             Console.WriteLine("enter character using numpad to sent to NOXON (e.g. Alt+123, but only works for chars < 128)");

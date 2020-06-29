@@ -17,6 +17,7 @@ namespace iRadioConsole
         private string[] command;
         private int step = 0;
         private int steps = 0;
+        private static Macro runningInstance = null;
 
         public Macro(string name, string[] command)   // command = Noxon.Commands.Key  -OR-  "@input-string"   
         {                                             // e.g. new iRadioConsole.Macro("F1", new string [] { "N", "R", "R", "@hr3", "R", "R"});  
@@ -63,8 +64,9 @@ namespace iRadioConsole
 
         public bool Step() 
         {
-            if (step < steps)
+            if (step < steps && (this == runningInstance || runningInstance == null))
             {
+                runningInstance = this;
                 System.Diagnostics.Debug.WriteLine("[{0}] Processing macro {1}, step {2}, busy = {3})", Show.currentTitle, name, step, Noxon.busy);
                 if (!Noxon.busy)
                 {
@@ -80,6 +82,7 @@ namespace iRadioConsole
                     }
                     Thread.Sleep(1000);  // busy does not work as expected
                     step++;
+                    if (step == steps) runningInstance = null;
                     return true;
                 }
                 return false;
@@ -88,6 +91,14 @@ namespace iRadioConsole
             {
                 return false;
             }
+        }
+        
+        public bool Abort() 
+        {
+            step = 0;
+            steps = 0;
+            if (this == runningInstance) runningInstance = null;
+            return true;
         }
     }
 }
