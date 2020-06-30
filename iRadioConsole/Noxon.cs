@@ -4,11 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
-
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace iRadio
 {
@@ -142,11 +144,100 @@ namespace iRadio
             foreach (MultiPressCommand m in mpc)
                 for (int i = 0; i < m.Times; i++)
                 {
-                    netStream.Command(Convert.ToChar(48 + m.Digit ));
+                    netStream.Command(Convert.ToChar(48 + m.Digit));
                     Thread.Sleep(MultiPressDelayForSameKey);
                 }
             Thread.Sleep(MultiPressDelayForNextKey);
             return 0;
+        }
+
+        private static System.Net.IPAddress GetDefaultGateway()
+        {
+            return NetworkInterface
+                .GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up)
+                .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                .SelectMany(n => n.GetIPProperties()?.GatewayAddresses)
+                .Select(g => g?.Address)
+                .Where(a => a != null)
+                .Where(a => a.AddressFamily == AddressFamily.InterNetwork)
+                // .Where(a => Array.FindIndex(a.GetAddressBytes(), b => b != 0) >= 0)
+                .FirstOrDefault();
+        }
+
+        // https://stackoverflow.com/questions/4042789/how-to-get-ip-of-all-hosts-in-lan
+        static CountdownEvent countdown;
+        static int upCount = 0;
+        static object lockObj = new object();
+        const bool resolveNames = false;
+        private static List<string> IPsFound = new List<string>();
+        static IPAddress IP = null;
+        private static bool PingHosts()
+        {
+            string gateway = GetDefaultGateway().ToString();
+            if (gateway != null) {
+                System.Diagnostics.Debug.WriteLine("DefaultGateway = {0}", gateway);
+                string ipBase = Regex.Replace(gateway, @"\.[0-9]+$", "") + ".";
+                System.Diagnostics.Debug.WriteLine("yields IP base = {0}", gateway);
+
+                countdown = new CountdownEvent(1);
+                Stopwatch sw = new Stopwatch();
+                upCount = 0;
+                sw.Start();
+                for (int i = 1; i < 255; i++)
+                {
+                    string ip = ipBase + i.ToString();
+                    Ping p = new Ping();
+                    p.PingCompleted += new PingCompletedEventHandler(p_PingCompleted);
+                    countdown.AddCount();
+                    p.SendAsync(ip, 100, ip);
+                }
+                countdown.Signal();
+                countdown.Wait();
+                sw.Stop();
+                TimeSpan span = new TimeSpan(sw.ElapsedTicks);
+                System.Diagnostics.Debug.WriteLine("Took {0} milliseconds. {1} hosts active.", sw.ElapsedMilliseconds, upCount);
+                if (IP != null) return true;
+                else return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        static void p_PingCompleted(object sender, PingCompletedEventArgs e)
+        {
+            string ip = (string)e.UserState;
+            if (e.Reply != null && e.Reply.Status == IPStatus.Success)
+            {
+                IPsFound.Add(ip);
+                // IPHostEntry hostEntry = Dns.GetHostEntry(ip);
+                // string name = hostEntry.HostName;
+                // System.Diagnostics.Debug.WriteLine("{0} ({1}) is up: ({2} ms)", ip, name, e.Reply.RoundtripTime);
+                System.Diagnostics.Debug.WriteLine("{0} is up: ({1} ms)", ip, e.Reply.RoundtripTime);
+                using (TcpClient tcpClient = new TcpClient())
+                {
+                    try
+                    {
+                        tcpClient.Connect(ip, 10100);
+                        System.Diagnostics.Debug.WriteLine("Port 10100 on {0} is open", ip);
+                        IP = IPAddress.Parse(ip);
+                    }
+                    catch (Exception)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Port 10100 on {0} is closed", ip);
+                    }
+                }
+                lock (lockObj)
+                {
+                    upCount++;
+                }
+            }
+            else if (e.Reply == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Pinging {0} failed. (Null Reply object?)", ip);
+            }
+            countdown.Signal();
         }
 
         public static bool Open()
@@ -155,7 +246,9 @@ namespace iRadio
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
             // Uses a remote endpoint to establish a socket connection.
             tcpClient = new TcpClient();
-            IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("192.168.178.36"), 10100);
+            IPAddress ip = IPAddress.Parse("192.168.178.1");
+            if (PingHosts()) ip = IP;
+            IPEndPoint ipEndPoint = new IPEndPoint(ip, 10100);
             while (!tcpClient.Connected)
             {
                 try

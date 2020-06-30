@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Timers;
@@ -21,8 +20,17 @@ namespace iRadio
     //       corrected: close stream if "Nicht verfÃ¼gbar"
     // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
-    //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
+    //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100, see Ping.cs 
+    //          >cscs.exe Ping.cs
+    //              192.168.178.1 is up: (0 ms)
+    //              192.168.178.49 is up: (0 ms)
+    //              192.168.178.40 is up: (1 ms)
+    //              192.168.178.36 is up: (51 ms)
+    //              192.168.178.44 is up: (105 ms)
+    //              Took 274 milliseconds. 5 hosts active.
     // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
+    // TODO: README.md: add NoxonRemoteLetters.jpg 
+    //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
 
     // ========================
     // DONE: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  
@@ -61,7 +69,6 @@ namespace iRadio
     // Done: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
 
 
-    // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
     public class Program
     {
 
@@ -137,6 +144,7 @@ namespace iRadio
                 Environment.Exit(1);
             }
 
+            // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
             Show.Header();
             while (true)
             {
