@@ -121,4 +121,8 @@
     <value>Nicht verfÃ¼gbar</value>
     <comment>XElement.ReadFrom(reader) does not return after &lt;view id="msg"&gt;&lt;text id="line0"&gt;Nicht verfÃ¼gbar&lt;/text&gt; </comment>
   </data>
+  <data name="NoxonTitleFavorites" xml:space="preserve">
+    <value>Favoriten</value>
+    <comment>used for Favorites.Get()</comment>
+  </data>
 </root>

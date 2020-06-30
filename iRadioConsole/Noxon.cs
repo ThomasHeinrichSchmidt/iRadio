@@ -59,6 +59,7 @@ namespace iRadio
         public static bool busy { get; set; }
         public static ITestableNetworkStream netStream = null;
         public static TcpClient tcpClient = null;
+        public const int ListLines = 4;
 
         public static Dictionary<char, Command> Commands = new Dictionary<char, Command>()
         {
@@ -182,8 +183,8 @@ namespace iRadio
             return true;
         }
 
-        private static iRadioConsole.Macro macro;
-        public static iRadioConsole.Macro Macro {
+        private static iRadio.Macro macro;
+        public static iRadio.Macro Macro {
             get
             {
                 return macro;
@@ -200,6 +201,20 @@ namespace iRadio
 
         private static int listposmin = 0;
         private static int listposmax = 0;
+
+        public static bool GetListMinMax(out int min, out int max)
+        {
+            min = listposmin;
+            max = listposmax;
+            if (min > 0 && max > 0) return true;
+            return false;
+        }
+        public static void ResetListMinMax()
+        {
+            listposmin = 0;
+            listposmax = 0;
+        }
+
         public static void Parse(ITestableNetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
@@ -393,6 +408,45 @@ namespace iRadio
     {
         public int Key { get; set; }
         public string Desc { get; set; }
+    }
+
+    public static class Favorites
+    {
+        private static List<string> list = new List<string>();
+        public static bool Get()
+        {
+            Noxon.ResetListMinMax();
+            Macro mf = new iRadio.Macro("Favorites.Get.F", new string[] {"F", "F"});  // select (F)avorites, 2 times to update Show.lastBrowsedLines
+            while (mf.Step()) ;
+            if (Noxon.GetListMinMax(out int min, out int max) && Show.lastBrowsedTitle == iRadioConsole.Properties.Resources.NoxonTitleFavorites)
+            {
+                list.Clear();
+                int entries = max - min + 1;
+                for (int i = 0; i < Math.Min(Noxon.ListLines, entries); i++)    // first 4 (or less) 
+                {
+                    if (Show.lastBrowsedLines[i] != "")
+                    {
+                        list.Add(Show.lastBrowsedLines[i]);
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list.Last());
+                    }
+                }
+                if (entries > 4)
+                {
+                    Macro md3 = new iRadio.Macro("Favorites.Get.D", new string[] { "D", "D", "D" }); // scroll 3 entries down to 4th 
+                    while (md3.Step()) ;
+                    for (int i = Noxon.ListLines; i < entries; i++)
+                    {
+                        Macro md = new iRadio.Macro("Favorites.Get.D", new string[] { "D" });
+                        while (md.Step()) ;
+                        list.Add(Show.lastBrowsedLines[3]);
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list.Last());
+                    }
+                }
+                Macro mh = new iRadio.Macro("Favorites.Get.D", new string[] { "H"}); // home again
+                while (mh.Step()) ;
+            }
+            return true;
+        }
     }
 
     public class Send

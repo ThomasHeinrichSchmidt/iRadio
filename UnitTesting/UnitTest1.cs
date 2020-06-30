@@ -1,14 +1,12 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using FluentAssertions;
+﻿using FluentAssertions;
 using iRadio;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.IO;
-using iRadioConsole;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Security.Permissions;
 
 namespace UnitTesting
 {
@@ -143,8 +141,8 @@ namespace UnitTesting
         {
             Noxon.netStream = new DebugNetworkStream();
             string[] m1s = new string[] { "L", "U", "R", "D" };
-            Macro m1 = new iRadioConsole.Macro("Test-m1", m1s);
-            Macro m2 = new iRadioConsole.Macro("Test-m2", new string[] { "N", "R", "R", "@hr3", "U", "D" });
+            Macro m1 = new iRadio.Macro("Test-m1", m1s);
+            Macro m2 = new iRadio.Macro("Test-m2", new string[] { "N", "R", "R", "@hr3", "U", "D" });
 
             // run the two macros 'concurrently'
             bool ok = m1.Step();

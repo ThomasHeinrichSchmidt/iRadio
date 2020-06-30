@@ -68,5 +68,14 @@ namespace iRadioConsole.Properties {
                 return ResourceManager.GetString("NoxonMessageToCloseStream", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Favoriten.
+        /// </summary>
+        internal static string NoxonTitleFavorites {
+            get {
+                return ResourceManager.GetString("NoxonTitleFavorites", resourceCulture);
+            }
+        }
     }
 }

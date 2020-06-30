@@ -30,6 +30,8 @@ namespace iRadio
         public static string currentTitle = "";
         public static string currentLine0 = "";
 
+        public static string lastBrowsedTitle = "";
+        public static string[] lastBrowsedLines = new string[Noxon.ListLines];
         public static void Header()
         {
             Console.Clear();
@@ -117,7 +119,7 @@ namespace iRadio
         public static void Msg(XElement e, int line, int line0)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < Noxon.ListLines; i++)
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
@@ -131,7 +133,6 @@ namespace iRadio
                     {
                         Console.WriteLine(Normalize(elem));
                     }
-
                 }
             }
         }
@@ -142,6 +143,7 @@ namespace iRadio
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
                 Line("Title", lineTitle, elem);
+                lastBrowsedTitle = Normalize(elem);
             }
 
             bool clearnotusedlines = false;
@@ -154,8 +156,8 @@ namespace iRadio
                 // ...
                 clearnotusedlines = true;   // only clear not used lines if this is a complete "screen", not a later "update" to it
             }
-            bool[] printline = new bool[4];
-            for (int i = 0; i < 4; i++)
+            bool[] printline = new bool[Noxon.ListLines];
+            for (int i = 0; i < Noxon.ListLines; i++)
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
@@ -166,6 +168,11 @@ namespace iRadio
                     ConsoleColor fg = Console.ForegroundColor;
                     ClearLine(columnBrowse, line0 + i);           // if (elem.Value == "")
 
+                    // flags:
+                    //  d -  folder 📁
+                    //  ds - folder 📁
+                    //  p -  song   ♪
+                    //  ps - song   ♪ ♪
                     if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ds")   //  <text id="line0" flag="ds">History</text>
                     {
                         Console.BackgroundColor = fg;
@@ -179,13 +186,18 @@ namespace iRadio
                     Console.WriteLine(Normalize(elem));  // else
                     Console.BackgroundColor = bg;
                     Console.ForegroundColor = fg;
+                    lastBrowsedLines[i] = Normalize(elem);
                 }
             }
             if (clearnotusedlines)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < Noxon.ListLines; i++)
                 {
-                    if (!printline[i]) ClearLine(columnBrowse, line0 + i);
+                    if (!printline[i])
+                    {
+                        ClearLine(columnBrowse, line0 + i);
+                        lastBrowsedLines[i] = "";
+                    }
                 }
             }
         }

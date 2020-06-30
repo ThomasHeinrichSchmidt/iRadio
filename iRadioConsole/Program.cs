@@ -12,17 +12,20 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
     // TODO: F1 - F3 Favoriten #1 - #3 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
+    //       how to change sequence of Favoriten? Need to have 1-3 at top of list, otherwise F1-F3 does not really make sense
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     //       correct: freeze "NOXON"
     //       corrected: close stream if "Nicht verfÃ¼gbar"
     // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
-    // TODO: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  -- show in separate list
     // ToDo: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100.
+    // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
 
     // ========================
+    // DONE: retrieve list of favorites: "KEY_FAVORITES" "KEY_DOWN" with  <value id="listpos" min="1" max="26">1</value>    UNTIL  max  
     // DONE: ConsoleKey.F1: run macro to choose Favourite #1 - provide class Macro storing desired commands and execution state, ignore keyboard commands during execution
     // DONE: add searching for keyword by using remote control digits for letters  (1x 2 = a, 2x 2 = b, 3x 2 = c, etc.) - how long to wait for enter next char = 1100ms (same = 100ms)
     //       (check NOXON feedback and/or busy to keep in sync)
@@ -192,15 +195,15 @@ namespace iRadio
                         // ProbingSendLetters();
                         Console.WriteLine("F1 pressed");
                         ch = ' ';
-                        int sel = 6;
+                        int sel = 7;
                         switch (sel) {
                             case 1: Send.Transmit7BitASCIIcharacterEnteredFromNumpad(Noxon.netStream); break;
                             case 2: Send.TransmitCharacterFrom2HexDigits(Noxon.netStream); break;
                             case 3: Send.TransmitCharacterFromASCIIvalue(Noxon.netStream); break;
                             case 4: Send.TransmitAllASCIIvvaluesStepByStep(Noxon.netStream); break;
                             case 5: Send.TransmitMacroHR3(Noxon.netStream); break;
-                            case 6: Noxon.Macro = new iRadioConsole.Macro("F1", new string[] { "N", "R", "R", "@hr3", "R", "R" }); break;
-                                                  // macro executed in Noxon.Parse(), i.e. Internetradio ... hr3  
+                            case 6: Noxon.Macro = new iRadio.Macro("F1", new string[] { "N", "R", "R", "@hr3", "R", "R" }); break;  // macro executed in Noxon.Parse(), i.e. Internetradio ... hr3  
+                            case 7: Favorites.Get(); break;
                             default: break;
                         }
                         break;
