@@ -102,7 +102,7 @@ namespace iRadio
             Console.WriteLine("                     Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
 
-        public static void Status(XElement e, int line, int line0)
+        public static void Status(XElement e, int line)
         {
             Console.CursorTop = line;
             Console.CursorLeft = columnShow;
@@ -116,7 +116,7 @@ namespace iRadio
             }
         }
 
-        public static void Msg(XElement e, int line, int line0)
+        public static void Msg(XElement e, int line0)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             for (int i = 0; i < Noxon.ListLines; i++)

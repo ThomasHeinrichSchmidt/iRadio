@@ -24,7 +24,7 @@ namespace iRadio
     }
     public class TestableNetworkStream : ITestableNetworkStream
     {
-        private NetworkStream stream;
+        private readonly NetworkStream stream;
 
         public TestableNetworkStream(NetworkStream ns)
         {
@@ -57,8 +57,8 @@ namespace iRadio
     }
     public static class Noxon
     {
-        public static bool testmode { get; set; }
-        public static bool busy { get; set; }
+        public static bool Testmode { get; set; }
+        public static bool Busy { get; set; }
         public static ITestableNetworkStream netStream = null;
         public static TcpClient tcpClient = null;
         public const int ListLines = 4;
@@ -97,7 +97,7 @@ namespace iRadio
             { '9', new Command { Key = 0x39, Desc = "KEY_9" } }                 // only 30 commands, remote has 32 (incl. On/Off and Mute, missing here)
         };
 
-        public static byte[] intToByteArray(int value)
+        public static byte[] IntToByteArray(int value)
         {
             return new byte[] {
                 (byte)(value >> 24),
@@ -115,8 +115,8 @@ namespace iRadio
             {
                 if (netStream.CanWrite && Commands.ContainsKey(commandkey))
                 {
-                    System.Diagnostics.Debug.WriteLine("\t\tTransmit Command('{0}'): ASC({1} --> 0x{2})", commandkey, Commands[commandkey].Key, BitConverter.ToString(Noxon.intToByteArray(Commands[commandkey].Key)));
-                    netStream.Write(Noxon.intToByteArray(Commands[commandkey].Key), 0, sizeof(int));
+                    System.Diagnostics.Debug.WriteLine("\t\tTransmit Command('{0}'): ASC({1} --> 0x{2})", commandkey, Commands[commandkey].Key, BitConverter.ToString(Noxon.IntToByteArray(Commands[commandkey].Key)));
+                    netStream.Write(Noxon.IntToByteArray(Commands[commandkey].Key), 0, sizeof(int));
                     return 0;
                 }
                 else
@@ -129,7 +129,7 @@ namespace iRadio
                 System.Diagnostics.Debug.WriteLine("\t\tTransmit Command() failed ({0})", e.Message);
                 Close();
                 Open();
-                if (netStream != null && netStream.CanWrite) netStream.Write(Noxon.intToByteArray(Commands[commandkey].Key), 0, sizeof(int));
+                if (netStream != null && netStream.CanWrite) netStream.Write(Noxon.IntToByteArray(Commands[commandkey].Key), 0, sizeof(int));
                 return 0;
             }
             catch
@@ -168,9 +168,8 @@ namespace iRadio
         // https://stackoverflow.com/questions/4042789/how-to-get-ip-of-all-hosts-in-lan
         static CountdownEvent countdown;
         static int upCount = 0;
-        static object lockObj = new object();
-        const bool resolveNames = false;
-        private static List<string> IPsFound = new List<string>();
+        static readonly object lockObj = new object();
+        private static readonly List<string> IPsFound = new List<string>();
         static IPAddress IP = null;
         private static bool PingHosts()
         {
@@ -188,7 +187,7 @@ namespace iRadio
                 {
                     string ip = ipBase + i.ToString();
                     Ping p = new Ping();
-                    p.PingCompleted += new PingCompletedEventHandler(p_PingCompleted);
+                    p.PingCompleted += new PingCompletedEventHandler(PingCompleted);
                     countdown.AddCount();
                     p.SendAsync(ip, 100, ip);
                 }
@@ -205,7 +204,7 @@ namespace iRadio
                 return false;
             }
         }
-        static void p_PingCompleted(object sender, PingCompletedEventArgs e)
+        static void PingCompleted(object sender, PingCompletedEventArgs e)
         {
             string ip = (string)e.UserState;
             if (e.Reply != null && e.Reply.Status == IPStatus.Success)
@@ -242,13 +241,12 @@ namespace iRadio
 
         public static bool Open()
         {
-            // Console.WriteLine("iRadio Telnet port 10100:");
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
             // Uses a remote endpoint to establish a socket connection.
             tcpClient = new TcpClient();
-            IPAddress ip = IPAddress.Parse("192.168.178.1");
+            IPAddress ip = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
             if (PingHosts()) ip = IP;
-            IPEndPoint ipEndPoint = new IPEndPoint(ip, 10100);
+            IPEndPoint ipEndPoint = new IPEndPoint(ip, 10100);  // using iRadio Telnet port 10100
             while (!tcpClient.Connected)
             {
                 try
@@ -260,7 +258,6 @@ namespace iRadio
                     Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1})", ex.SocketErrorCode, ex.Message);
                 }
             }
-
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
             // Uses the GetStream public method to return the NetworkStream.
             netStream = new TestableNetworkStream(tcpClient.GetStream());
@@ -308,7 +305,7 @@ namespace iRadio
             listposmax = 0;
         }
 
-        public static void Parse(ITestableNetworkStream netStream, IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
+        public static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
         {
             foreach (XElement el in iRadioData)
             {
@@ -316,7 +313,7 @@ namespace iRadio
                 // XElement elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play").FirstOrDefault();  // == null || <update id="play"> < value id = "timep" min = "0" max = "65535" > 1698 </ value >
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
-                if (testmode) Thread.Sleep(200); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
+                if (Testmode) Thread.Sleep(200); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
                 if (parsedElementsWriter != null)
                 {
                     Console.SetOut(parsedElementsWriter); // re-direct
@@ -346,8 +343,7 @@ namespace iRadio
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "date")   // <value id="date" 
                             {
-                                int i;
-                                if (int.TryParse(el.Value, out i) && i > 0) Show.Line("Date", Show.lineStatus, el);
+                                if (int.TryParse(el.Value, out int i) && i > 0) Show.Line("Date", Show.lineStatus, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
@@ -382,8 +378,8 @@ namespace iRadio
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
-                                busy = false;
-                                if (int.TryParse(el.Value, out int busyval)) busy = busyval == 1 ? true: false;  // el.Value = "\n  1\n"
+                                Busy = false;
+                                if (int.TryParse(el.Value, out int busyval)) Busy = busyval == 1;  // el.Value = "\n  1\n"
                                 Show.Line("Busy=", Show.lineBusy, el);
                                 // System.Diagnostics.Debug.WriteLine("Status, busy = {0})", busy);
                             }
@@ -450,7 +446,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    Show.Status(e, Show.lineStatus, Show.line0);
+                                    Show.Status(e, Show.lineStatus);
                                 }
                             }
 
@@ -459,7 +455,7 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                Show.Msg(el, Show.lineStatus, Show.line0);
+                                Show.Msg(el, Show.line0);
                                 XElement elem = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg">  < text id = "scrid" > 82 </ text >    < text id = "line0" > Nicht verfÃ¼gbar </ text >
                                 if (elem != null)
                                 {
@@ -479,7 +475,7 @@ namespace iRadio
                             // <view id="welcome">  < icon id = "welcome" text = "wlan@ths / wlan@t-h-schmidt.de" > welcome </ icon >    </ view >
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Status(el, Show.lineStatus, Show.line0);
+                                Show.Status(el, Show.lineStatus);
                             }
                         }
                         else
@@ -505,7 +501,7 @@ namespace iRadio
 
     public static class Favorites
     {
-        private static List<string> list = new List<string>();
+        private static readonly List<string> list = new List<string>();
         public static bool Get()
         {
             Noxon.ResetListMinMax();
@@ -539,149 +535,6 @@ namespace iRadio
                 while (mh.Step()) ;
             }
             return true;
-        }
-    }
-
-    public class Send
-    {
-        public static void TransmitMacroHR3(ITestableNetworkStream netStream)
-        {
-            Console.WriteLine("run macro to choose hr3, hold on ...");
-            int i = 170; // KEY_INTERNETRADIO
-            Transmit(i, netStream);
-            i = 39; // KEY_RIGHT  --> Alle Sender
-            Transmit(i, netStream);
-            i = 39; // KEY_RIGHT  --> Senderliste 
-            Transmit(i, netStream);
-
-            int tnext = 1100;
-            int tsame = 100;
-
-            Thread.Sleep(tnext);  // wait for list to load 
-
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['4'].Key), 0, sizeof(int));  // g
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['4'].Key), 0, sizeof(int));  // h     h
-
-            Thread.Sleep(tnext);
-
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // p
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // q
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['7'].Key), 0, sizeof(int));  // r     r
-
-            Thread.Sleep(tnext);
-
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // d
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // e
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // f
-            Thread.Sleep(tsame);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['3'].Key), 0, sizeof(int));  // 3     3
-
-            Thread.Sleep(tnext);
-
-            i = 39; // KEY_RIGHT  --> Search 
-            Transmit(i, netStream);
-
-            Console.ReadKey();  // wait for find ro complete, 
-                                //<update id="browse">
-                                //  <text id="line0" flag="ps">hr3</text>
-                                //  <text id="line1" flag="d">hr4</text>
-                                //  <text id="line2" flag="p">Hrvatski Radio Frankfurt</text>
-                                //  <text id="line3" flag="p">Hrw laut.fm</text>
-                                //  <icon id="hchyDn">empty</icon>
-                                //</update>
-
-            i = 39; // KEY_RIGHT  --> play 
-            Transmit(i, netStream);
-
-            Console.ReadKey();
-        }
-
-        private static void Transmit(int i, ITestableNetworkStream netStream)
-        {
-            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(Noxon.intToByteArray(i)));
-            netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
-            Thread.Sleep(500);
-        }
-
-        public static void TransmitAllASCIIvvaluesStepByStep(ITestableNetworkStream netStream)
-        {
-            Console.WriteLine("probing all characters 0..255 to sent to NOXON");
-            for (int i = 0; i < 256; i++)
-            {   /*
-                                    if (37 <= i && i <= 57) continue;
-                                    if (64 <= i && i <= 90) continue;
-                                    if (97 <= i && i <= 122) continue;
-                                    if (171 <= i && i <= 179) continue;
-                                    */
-                System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", i, BitConverter.ToString(Noxon.intToByteArray(i)));
-                netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
-                // Thread.Sleep(500);
-                Console.ReadKey(true);
-            }
-        }
-
-        public static void TransmitCharacterFromASCIIvalue(ITestableNetworkStream netStream)
-        {
-            Console.WriteLine("enter character using ascii code 0..255 to sent to NOXON");
-            string line = Console.ReadLine();
-            int i = Int32.Parse(line);
-            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0} --> 0x{1})", line, BitConverter.ToString(Noxon.intToByteArray(i)));
-            netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
-        }
-
-        public static void TransmitCharacterFrom2HexDigits(ITestableNetworkStream netStream)
-        {
-            Console.WriteLine("enter character using two hex digits (00..FF) to sent to NOXON");
-            string line = Console.ReadLine();
-            byte[] bytes = { 0, 0, 0, System.Runtime.Remoting.Metadata.W3cXsd2001.SoapHexBinary.Parse(line).Value[0] };
-            System.Diagnostics.Debug.WriteLine("Transmit: Hex = {0} --> 0x{1}", line, BitConverter.ToString(bytes));
-            netStream.Write(bytes, 0, bytes.Length);
-        }
-
-        public static char Transmit7BitASCIIcharacterEnteredFromNumpad(ITestableNetworkStream netStream)
-        {
-            char ch;
-            Console.WriteLine("enter character using numpad to sent to NOXON (e.g. Alt+123, but only works for chars < 128)");
-            ConsoleKeyInfo cp = Console.ReadKey(true);    // enter character to sent to NOXON (e.g. Alt+123, but only works for chars < 128)
-            int i = Encoding.GetEncoding("ISO-8859-1").GetBytes(new char[] { cp.KeyChar })[0];
-            ch = cp.KeyChar;
-            System.Diagnostics.Debug.WriteLine("Transmit: ASC({0}={1}) --> 0x{2}", i, ch, BitConverter.ToString(Noxon.intToByteArray(i)));
-            netStream.Write(Noxon.intToByteArray(i), 0, sizeof(int));
-            return ch;
-        }
-
-        public static void ProbingSendLetters(NetworkStream netStream)
-        {
-            int next = 1100;  // 100 = same key   <-[1000..1050]->   1100 = next letter
-            int same = 100;
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // a
-            Thread.Sleep(same);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // b
-            Thread.Sleep(same);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['2'].Key), 0, sizeof(int));  // c
-
-            Thread.Sleep(next);
-
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // w
-            Thread.Sleep(same);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // x
-            Thread.Sleep(same);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // y
-            Thread.Sleep(same);
-
-            Thread.Sleep(next);
-
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // w
-            Thread.Sleep(same);
-            netStream.Write(Noxon.intToByteArray(Noxon.Commands['9'].Key), 0, sizeof(int));  // x
-            Thread.Sleep(same);
-
-            Thread.Sleep(3000);  // show result
         }
     }
 }

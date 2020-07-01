@@ -13,8 +13,8 @@ namespace iRadio
         /// <summary>
         /// (re) play remote control key commands 
         /// </summary>
-        private string name = "";
-        private string[] command;
+        private readonly string name = "";
+        private readonly string[] command;
         private int step = 0;
         private int steps = 0;
         private static Macro runningInstance = null;
@@ -67,8 +67,8 @@ namespace iRadio
             if (step < steps && (this == runningInstance || runningInstance == null))
             {
                 runningInstance = this;
-                System.Diagnostics.Debug.WriteLine("[{0}] Processing macro {1}, step {2}, busy = {3})", Show.currentTitle, name, step, Noxon.busy);
-                if (!Noxon.busy)
+                System.Diagnostics.Debug.WriteLine("[{0}] Processing macro {1}, step {2}, busy = {3})", Show.currentTitle, name, step, Noxon.Busy);
+                if (!Noxon.Busy)
                 {
                     if (command[step].Length == 1)
                     {

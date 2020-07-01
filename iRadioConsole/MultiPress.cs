@@ -51,12 +51,6 @@ namespace iRadio
             Array.Resize<MultiPressCommand>(ref mpc, n);
             return mpc;
         }
-
-        static Dictionary<char, MultiPressCommand> MultiPressCommands = new Dictionary<char, MultiPressCommand>()
-        {
-            { 'a', new MultiPressCommand { Digit = 2, Times = 1} },
-            { 'b', new MultiPressCommand { Digit = 2, Times = 2} }
-        };
     }
 
 

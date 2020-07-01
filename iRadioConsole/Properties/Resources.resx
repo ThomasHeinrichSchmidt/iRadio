@@ -117,6 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="NoxonIP" xml:space="preserve">
+    <value>192.168.2.99</value>
+    <comment>IP used if NOXON was not found on network</comment>
+  </data>
   <data name="NoxonMessageToCloseStream" xml:space="preserve">
     <value>Nicht verfÃ¼gbar</value>
     <comment>XElement.ReadFrom(reader) does not return after &lt;view id="msg"&gt;&lt;text id="line0"&gt;Nicht verfÃ¼gbar&lt;/text&gt; </comment>

@@ -61,6 +61,15 @@ namespace iRadioConsole.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 192.168.2.99.
+        /// </summary>
+        internal static string NoxonIP {
+            get {
+                return ResourceManager.GetString("NoxonIP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nicht verfÃ¼gbar.
         /// </summary>
         internal static string NoxonMessageToCloseStream {

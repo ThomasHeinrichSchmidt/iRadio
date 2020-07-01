@@ -20,11 +20,11 @@ namespace UnitTesting
         {
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands("");
             Assert.IsTrue(mpc.Length == 0);
-            string sIN = TestContext.ResultsDirectory;    // "I:\\Thomas\\Sammlung\\Computer\\Programming\\Visual Studio 2012\\Projects\\iRadio\\TestResults\\Deploy_Thomas H. Schmidt 2020-06-11 18_03_47\\In"
-            string sOUT = TestContext.TestDeploymentDir;  // "I:\\Thomas\\Sammlung\\Computer\\Programming\\Visual Studio 2012\\Projects\\iRadio\\TestResults\\Deploy_Thomas H. Schmidt 2020-06-11 18_03_47\\Out"
+            // string sIN = TestContext.ResultsDirectory;    // "I:\\Thomas\\Sammlung\\Computer\\Programming\\Visual Studio 2012\\Projects\\iRadio\\TestResults\\Deploy_Thomas H. Schmidt 2020-06-11 18_03_47\\In"
+            // string sOUT = TestContext.TestDeploymentDir;  // "I:\\Thomas\\Sammlung\\Computer\\Programming\\Visual Studio 2012\\Projects\\iRadio\\TestResults\\Deploy_Thomas H. Schmidt 2020-06-11 18_03_47\\Out"
         }
 
-        private MultiPressCommand[] Expected2 = new MultiPressCommand[] {
+        private readonly MultiPressCommand[] Expected2 = new MultiPressCommand[] {
             new MultiPressCommand {Digit = 2, Times = 1} ,      // abc = "2" x1, x2, x3
             new MultiPressCommand {Digit = 2, Times = 2} ,
             new MultiPressCommand {Digit = 2, Times = 3}
@@ -39,7 +39,7 @@ namespace UnitTesting
 
         }
 
-        private MultiPressCommand[] Expected3 = new MultiPressCommand[] {
+        private readonly MultiPressCommand[] Expected3 = new MultiPressCommand[] {
             new MultiPressCommand {Digit = 2, Times = 1} ,      // aßc = "2" x1, ??, x3
             new MultiPressCommand {Digit = 2, Times = 3}
         };
@@ -51,7 +51,7 @@ namespace UnitTesting
             mpc.Should().BeEquivalentTo(Expected3);
         }
 
-        private MultiPressCommand[] Expected4 = new MultiPressCommand[] {
+        private readonly MultiPressCommand[] Expected4 = new MultiPressCommand[] {
             new MultiPressCommand {Digit = 2, Times = 1} ,
             new MultiPressCommand {Digit = 2, Times = 2} ,
             new MultiPressCommand {Digit = 2, Times = 3} ,
@@ -73,7 +73,7 @@ namespace UnitTesting
             for (int i = 0; i < mpc.Length; i++) TestContext.WriteLine("{0}", mpc[i]);
         }
 
-        private MultiPressCommand[] Expected5 = new MultiPressCommand[] {
+        private readonly MultiPressCommand[] Expected5 = new MultiPressCommand[] {
             new MultiPressCommand {Digit = 2, Times = 1} ,
             new MultiPressCommand {Digit = 2, Times = 2} ,
             new MultiPressCommand {Digit = 2, Times = 3}
@@ -92,7 +92,7 @@ namespace UnitTesting
 
         public class DebugNetworkStream : ITestableNetworkStream
         {
-            private StringBuilder WriteList = new StringBuilder();
+            private readonly StringBuilder WriteList = new StringBuilder();
             private string WriteLine = "";
             public Stream GetStream()
             {
@@ -147,13 +147,13 @@ namespace UnitTesting
             // run the two macros 'concurrently'
             bool ok = m1.Step();
             Assert.IsTrue(ok);
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['L'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['L'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m1.Step();
             Assert.IsTrue(ok);
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsFalse(ok);  // must ignore Step() as macro m1 is still running, LastWrite still 'R', not 'N' (= first command of m2)
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsFalse(ok);  // must ignore Step() for m2
             int step = 2;
@@ -161,29 +161,29 @@ namespace UnitTesting
             {
                 ok = m1.Step();
                 if (!ok) break;
-                Assert.AreEqual(((DebugNetworkStream)Noxon.netStream).LastWrite, BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands[m1s[step++][0]].Key)));
+                Assert.AreEqual(((DebugNetworkStream)Noxon.netStream).LastWrite, BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands[m1s[step++][0]].Key)));
             }
             while (ok);  // macro m1 finished
 
             ok = m2.Step();
             Assert.IsTrue(ok);  // must now process Step() for m2
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['N'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['N'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsTrue(ok);  
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsTrue(ok);  
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsTrue(ok);  // last key press for hr3 is '3' 
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['3'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['3'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ((DebugNetworkStream)Noxon.netStream).AllWrites.Should().EndWithEquivalent("00-00-00-34\r\n00-00-00-34\r\n00-00-00-37\r\n00-00-00-37\r\n00-00-00-37\r\n00-00-00-33\r\n00-00-00-33\r\n00-00-00-33\r\n00-00-00-33\r\n");
             ok = m2.Step();                                                         //  2x '4' = g(h)i                3x '7' = pq(r)                               4x '3' = def(3)
             Assert.IsTrue(ok);  
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsTrue(ok);
-            Assert.AreEqual(BitConverter.ToString(Noxon.intToByteArray(Noxon.Commands['D'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['D'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
 
             var mock = new Mock<ITestableNetworkStream>();
             mock.Setup(stream => stream.CanWrite).Returns(true);
