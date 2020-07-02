@@ -5,6 +5,7 @@ using Moq;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -97,6 +98,10 @@ namespace UnitTesting
             public Stream GetStream()
             {
                 return new StreamReader("Telnet.xml").BaseStream;
+            }
+            public NetworkStream GetNetworkStream()
+            {
+                return null;
             }
             public bool CanWrite
             {

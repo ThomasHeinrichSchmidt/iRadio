@@ -11,12 +11,14 @@ using System.Threading;
 using System.Xml.Linq;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace iRadio
 {
     public interface ITestableNetworkStream
     {
         Stream GetStream();
+        NetworkStream GetNetworkStream();
         int Read([In, Out] byte[] buffer, int offset, int size);
         void Write([In, Out] byte[] buffer, int offset, int size);
         bool CanWrite { get;  }
@@ -28,10 +30,14 @@ namespace iRadio
 
         public TestableNetworkStream(NetworkStream ns)
         {
-            this.stream = ns ?? throw new ArgumentNullException("ns");
+            this.stream = ns ?? throw new ArgumentNullException("TestableNetworkStream was null");
         }
 
         public Stream GetStream()
+        {
+            return stream;
+        }
+        public NetworkStream GetNetworkStream()
         {
             return stream;
         }
@@ -260,6 +266,16 @@ namespace iRadio
             }
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
             // Uses the GetStream public method to return the NetworkStream.
+            netStream = new TestableNetworkStream(tcpClient.GetStream());
+            return true;
+        }
+
+        public static async Task<bool> OpenAsync()
+        {
+            tcpClient = new TcpClient();
+            IPAddress ip = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
+            if (PingHosts()) ip = IP;
+            await tcpClient.ConnectAsync(ip, 10100); // connect to the server
             netStream = new TestableNetworkStream(tcpClient.GetStream());
             return true;
         }
