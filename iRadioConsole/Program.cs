@@ -11,20 +11,24 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
     // TODO: class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
-    // TODO: F1 - F3 Favoriten #1 - #3 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
-    //       how to change sequence of Favoriten? Need to have 1-3 at top of list, otherwise F1-F3 does not really make sense
+    // TODO: add more tests, using moq
+    // TODO: ProcessKeyPressed(): add more keys, update NoxonRemoteLetters.jpg
+    // TODO: F1 - F10 Favoriten #1 - #10 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
     //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     //       correct: freeze "NOXON"
     //       corrected: close stream if "Nicht verfÃ¼gbar"
-    // TODO: ProcessKeyPressed(): add more keys, update NoxonRemoteLetters.jpg, add to README.md
     // TODO: README.md: add NoxonRemoteLetters.jpg 
     //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
-    // TODO: enable scripting: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
+    // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
     // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
+    // TODO: add settings to app.config
 
     // ========================
+    // DONE: now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
+    //       how to change sequence of Favoriten? NOT POSSIBLE. Need to have 1-3 at top of list, otherwise F1-F3 does not really make sense
     // DONE: search for NOXON (Noxon-iRadio?), not IP // tracert  192.168.178.36  -->  001B9E22FBB7.fritz.box [192.168.178.36]  // MAC Address: 00:1B:9E:22:FB:B7   // Nmap 7.70 scan  Host: 192.168.178.36 (001B9E22FBB7.fritz.box)	Status: Up
     //       would need to scan local (?) IP addresses to find host like MAC address and then probe port 10100, see Ping.cs 
     //          >cscs.exe Ping.cs
