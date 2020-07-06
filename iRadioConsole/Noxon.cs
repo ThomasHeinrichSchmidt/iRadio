@@ -157,6 +157,7 @@ namespace iRadio
             return 0;
         }
 
+        // https://stackoverflow.com/questions/13634868/get-the-default-gateway
         private static System.Net.IPAddress GetDefaultGateway()
         {
             return NetworkInterface
@@ -176,14 +177,15 @@ namespace iRadio
         static int upCount = 0;
         static readonly object lockObj = new object();
         private static readonly List<string> IPsFound = new List<string>();
-        static IPAddress IP = null;
+        static IPAddress IP = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
+
         private static bool PingHosts()
         {
             string gateway = GetDefaultGateway().ToString();
             if (gateway != null) {
-                System.Diagnostics.Debug.WriteLine("DefaultGateway = {0}", gateway);
+                System.Diagnostics.Debug.WriteLine("DefaultGateway = " + gateway);
                 string ipBase = Regex.Replace(gateway, @"\.[0-9]+$", "") + ".";
-                System.Diagnostics.Debug.WriteLine("yields IP base = {0}", gateway);
+                System.Diagnostics.Debug.WriteLine("yields IP base " + gateway);
 
                 countdown = new CountdownEvent(1);
                 Stopwatch sw = new Stopwatch();
@@ -192,10 +194,17 @@ namespace iRadio
                 for (int i = 1; i < 255; i++)
                 {
                     string ip = ipBase + i.ToString();
-                    Ping p = new Ping();
-                    p.PingCompleted += new PingCompletedEventHandler(PingCompleted);
-                    countdown.AddCount();
-                    p.SendAsync(ip, 100, ip);
+                    try
+                    {
+                        Ping p = new Ping();
+                        p.PingCompleted += new PingCompletedEventHandler(PingCompleted);
+                        p.SendAsync(ip, 100, ip);
+                        countdown.AddCount();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Ping.SendAsync  failed on host {0} = {1}", ip, ex.Message);
+                    }
                 }
                 countdown.Signal();
                 countdown.Wait();
@@ -273,9 +282,11 @@ namespace iRadio
         public static async Task<bool> OpenAsync()
         {
             tcpClient = new TcpClient();
-            IPAddress ip = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
-            if (PingHosts()) ip = IP;
-            await tcpClient.ConnectAsync(ip, 10100); // connect to the server
+            // TODO: make PingHosts() not block
+            // IPAddress ip = Noxon.IP;   
+            // if (Noxon.PingHosts()) ip = Noxon.IP;
+            IPAddress ip = IPAddress.Parse("192.168.178.36"); 
+            await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
             netStream = new TestableNetworkStream(tcpClient.GetStream());
             return true;
         }
@@ -321,7 +332,7 @@ namespace iRadio
             listposmax = 0;
         }
 
-        public static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut)
+        public static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut, IShow Show)  // System.Windows.Forms.Form form
         {
             foreach (XElement el in iRadioData)
             {
@@ -330,13 +341,7 @@ namespace iRadio
                 // if ((elem = el.DescendantsAndSelf("update").Where(r => r.Attribute("id").Value == "play" && r.Element("value").Attribute("id").Value == "timep").FirstOrDefault()) != null) timep = int.Parse(elem.Value.Trim('\r', '\n', ' ')); 
 
                 if (Testmode) Thread.Sleep(200); // 50ms  used to delay parsing of Telnet.xml, otherwise it's over very quickly
-                if (parsedElementsWriter != null)
-                {
-                    Console.SetOut(parsedElementsWriter); // re-direct
-                    Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
-                    Console.SetOut(stdOut); // stop re-direct
-                    parsedElementsWriter.Flush();
-                }
+                Show.Log(parsedElementsWriter, stdOut, el);
 
                 if (Macro != null) Macro.Step(); // process macro, if any
 
@@ -347,56 +352,56 @@ namespace iRadio
                         {
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
                             {
-                                Show.PlayingTime(el, Show.linePlayingTime);
+                                Show.PlayingTime(el, Lines.linePlayingTime);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "buflvl")
                             {
-                                Show.Line("Buffer[%]", Show.lineBuffer, el);
+                                Show.Line("Buffer[%]", Lines.lineBuffer, el);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "wilvl")
                             {
-                                Show.Line("WiFi[%]", Show.lineWiFi, el);
+                                Show.Line("WiFi[%]", Lines.lineWiFi, el);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "date")   // <value id="date" 
                             {
-                                if (int.TryParse(el.Value, out int i) && i > 0) Show.Line("Date", Show.lineStatus, el);
+                                if (int.TryParse(el.Value, out int i) && i > 0) Show.Line("Date", Lines.lineStatus, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
-                                Show.Line("Track", Show.lineTrack, el);
+                                Show.Line("Track", Lines.lineTrack, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "artist")
                             {
-                                Show.Line("Artist", Show.lineArtist, el);
+                                Show.Line("Artist", Lines.lineArtist, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "album")
                             {
-                                Show.Line("Album", Show.lineAlbum, el);
+                                Show.Line("Album", Lines.lineAlbum, el);
                             }
                             else
                             {
-                                Program.LogElement(nonParsedElementsWriter, stdOut, el);
+                                ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "status")  // <update id="status">
                         {
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "play")
                             {
-                                Show.Line("Icon-Play", Show.lineIcon, el);
+                                Show.Line("Icon-Play", Lines.lineIcon, el);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
                             {
-                                Show.Line("Icon-Shuffle", Show.lineIcon, el);
+                                Show.Line("Icon-Shuffle", Lines.lineIcon, el);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
                             {
-                                Show.Line("Icon-Repeat", Show.lineIcon, el);
+                                Show.Line("Icon-Repeat", Lines.lineIcon, el);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
                                 Busy = false;
                                 if (int.TryParse(el.Value, out int busyval)) Busy = busyval == 1;  // el.Value = "\n  1\n"
-                                Show.Line("Busy=", Show.lineBusy, el);
+                                Show.Line("Busy=", Lines.lineBusy, el);
                                 // System.Diagnostics.Debug.WriteLine("Status, busy = {0})", busy);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
@@ -404,11 +409,11 @@ namespace iRadio
                                 string min = el.Element("value").Attribute("min").Value;  // <value id="listpos" min="1" max="26">23</value> 
                                 string max = el.Element("value").Attribute("max").Value;
                                 string caption = "From (" + min + ".." + max + ") @ ";
-                                int.TryParse(min, out listposmin);  
+                                int.TryParse(min, out listposmin);
                                 int.TryParse(max, out listposmax);
                                 // int value = 0;
                                 // if (int.TryParse(el.Value, out value)) el.Value = (value+1).ToString();  // NOXON list index is one too low
-                                Show.Line(caption, Show.lineStatus, el);
+                                Show.Line(caption, Lines.lineStatus, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "welcome")  // <update id="welcome">
@@ -416,16 +421,16 @@ namespace iRadio
                             //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Line("Welcome", Show.lineIcon, el);
+                                Show.Line("Welcome", Lines.lineIcon, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "browse")
                         {
-                            Show.Browse(el, Show.line0);
+                            Show.Browse(el, Lines.line0);
                         }
                         else
                         {
-                            Program.LogElement(nonParsedElementsWriter, stdOut, el);
+                            ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                         }
                         break;
                     case "view":
@@ -435,23 +440,23 @@ namespace iRadio
                             {
                                 if (e.Name == "text" && e.Attribute("id").Value == "title")
                                 {
-                                    Show.Line("Title", Show.lineTitle, e);
+                                    Show.Line("Title", Lines.lineTitle, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "artist")
                                 {
-                                    Show.Line("Artist", Show.lineArtist, e);
+                                    Show.Line("Artist", Lines.lineArtist, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "album")
                                 {
-                                    Show.Line("Album", Show.lineAlbum, e);
+                                    Show.Line("Album", Lines.lineAlbum, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "track")
                                 {
-                                    Show.Line("Track", Show.lineTrack, e);
+                                    Show.Line("Track", Lines.lineTrack, e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
-                                    Show.PlayingTime(e, Show.linePlayingTime);
+                                    Show.PlayingTime(e, Lines.linePlayingTime);
                                 }
                             }
                         }
@@ -462,7 +467,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    Show.Status(e, Show.lineStatus);
+                                    Show.Status(e, Lines.lineStatus);
                                 }
                             }
 
@@ -471,7 +476,7 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                Show.Msg(el, Show.line0);
+                                Show.Msg(el, Lines.line0);
                                 XElement elem = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg">  < text id = "scrid" > 82 </ text >    < text id = "line0" > Nicht verfÃ¼gbar </ text >
                                 if (elem != null)
                                 {
@@ -483,7 +488,7 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                Show.Browse(el, Show.line0);
+                                Show.Browse(el, Lines.line0);
                             }
                         }
                         else if (el.Attribute("id").Value == "welcome")  // <view id="welcome">
@@ -491,18 +496,18 @@ namespace iRadio
                             // <view id="welcome">  < icon id = "welcome" text = "wlan@ths / wlan@t-h-schmidt.de" > welcome </ icon >    </ view >
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Status(el, Show.lineStatus);
+                                Show.Status(el, Lines.lineStatus);
                             }
                         }
                         else
                         {
-                            Program.LogElement(nonParsedElementsWriter, stdOut, el);
+                            ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                         }
                         break;
                     case "CloseStream":
                         return;
                     default:
-                        Program.LogElement(nonParsedElementsWriter, stdOut, el);
+                        ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                         break;
                 }
             }

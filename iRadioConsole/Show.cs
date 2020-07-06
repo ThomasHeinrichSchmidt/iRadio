@@ -3,40 +3,26 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-
 namespace iRadio
 {
-    public class Show
+
+    public class Show : IShow
     {
-        public const int lineTitle = 1;
-        public const int lineArtist = 2;
-        public const int line0 = 2;
-        public const int lineAlbum = 3;
-        public const int lineTrack = 4;
-        public const int linePlayingTime = 5;
-        public const int lineSeparator = 6;
-        public const int lineIcon = 7;
-        public const int lineWiFi = 8;
-        public const int lineBuffer = 9;
-        public const int lineStatus = 10;
-        public const int lineBusy = 11;
-        public const int lineWaiting = 12;
-        public static int columnBrowse = 0;
-        public static int columnHeader = 10;
-        public const int columnShow = 0;
 
         public static string currentTitle = "";
         public static string currentLine0 = "";
+        public static int columnBrowse = 0;
+        public static int columnHeader = 10;
 
         public static string lastBrowsedTitle = "";
         public static string[] lastBrowsedLines = new string[Noxon.ListLines];
-        public static void Header()
+        public void Header()
         {
             Console.Clear();
             Console.Title = "NOXON iRadio";
             Console.CursorVisible = false;
             Console.CursorTop = 0;
-            Console.CursorLeft = columnHeader;
+            Console.CursorLeft = Show.columnHeader;
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
             Console.BackgroundColor = ConsoleColor.Blue;
@@ -45,13 +31,11 @@ namespace iRadio
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
         }
-
-
-        public static void Line(string caption, int line, XElement e)
+        public void Line(string caption, Lines line, XElement e)
         {
-            Console.CursorTop = line;
-            Console.CursorLeft = columnShow;
-            ClearLine(columnShow, line);
+            Console.CursorTop = (int)line;
+            Console.CursorLeft = (int)Lines.columnShow;
+            ClearLine((int)Lines.columnShow, (int)line);
 
             ConsoleColor bg = Console.BackgroundColor;
             ConsoleColor fg = Console.ForegroundColor;
@@ -59,89 +43,66 @@ namespace iRadio
             {
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Green;
-                currentTitle = Normalize(e);
+                currentTitle = Tools.Normalize(e);
             }
-            if (line == line0) currentLine0 = Normalize(e);
+            if ((int)line == (int)Lines.line0) currentLine0 = Tools.Normalize(e);
 
-            Console.WriteLine("{0} '{1}'", caption, Normalize(e));
+            Console.WriteLine("{0} '{1}'", caption, Tools.Normalize(e));
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
 
-            Console.CursorTop = lineSeparator;
-            Console.CursorLeft = columnShow;
+            Console.CursorTop = (int)Lines.lineSeparator;
+            Console.CursorLeft = (int)Lines.columnShow;
             Console.WriteLine("{0}", new String('-', Console.WindowWidth - Console.CursorLeft - 1));
         }
-
-        private static string Normalize(XElement e)
+        public void PlayingTime(XElement el, Lines line)
         {
-            // string original = e.Value.Trim('\r', '\n').Trim();
-            string original = e.Value.Replace('\r', ' ').Replace('\n', ' ').Trim();
-            byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);
-            string corrected = Encoding.UTF8.GetString(encoded);
-            string normalized;
-            char badc = '\xfffd';
-            if (corrected.Contains(badc))
-            {
-                normalized = original;
-            }
-            else
-            {
-                normalized = corrected;
-            }
-            return normalized;
-        }
-
-        public static void PlayingTime(XElement el, int line)
-        {
-            Console.CursorTop = line;
-            Console.CursorLeft = columnShow;
+            Console.CursorTop = (int)line;
+            Console.CursorLeft = (int)Lines.columnShow;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
-            ClearLine(columnShow, line);
+            ClearLine((int)Lines.columnShow, (int)line);
             Console.WriteLine("                     Playing for {0:00}:{1:00}", s / 60, s % 60);
         }
-
-        public static void Status(XElement e, int line)
+        public void Status(XElement e, Lines line)
         {
-            Console.CursorTop = line;
-            Console.CursorLeft = columnShow;
-            Console.WriteLine("Status Icon '{0}'", Normalize(e));
+            Console.CursorTop = (int)line;
+            Console.CursorLeft = (int)Lines.columnShow;
+            Console.WriteLine("Status Icon '{0}'", Tools.Normalize(e));
             if (e.Value.Contains("empty"))
             {
-                for (int i = 1; i < line; i++)
+                for (int i = 1; i < (int)line; i++)
                 {
                     // ClearLine(columnShow, i);   //   <icon id="play">empty</icon>    < icon id = "shuffle" > empty </ icon >    < icon id = "repeat" > empty </ icon >
                 }
             }
         }
-
-        public static void Msg(XElement e, int line0)
+        public void Msg(XElement e, Lines line0)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             for (int i = 0; i < Noxon.ListLines; i++)
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
-                    Console.CursorTop = line0 + i;
-                    Console.CursorLeft = columnBrowse;
+                    Console.CursorTop = (int) line0 + i;
+                    Console.CursorLeft = Show.columnBrowse;
                     if (elem.Value == "")
                     {
-                        ClearLine(columnBrowse, line0 + i);
+                        ClearLine(Show.columnBrowse, (int)line0 + i);
                     }
                     else
                     {
-                        Console.WriteLine(Normalize(elem));
+                        Console.WriteLine(Tools.Normalize(elem));
                     }
                 }
             }
         }
-
-        public static void Browse(XElement e, int line0)
+        public void Browse(XElement e, Lines line0)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
-                Line("Title", lineTitle, elem);
-                lastBrowsedTitle = Normalize(elem);
+                Line("Title", Lines.lineTitle, elem);
+                lastBrowsedTitle = Tools.Normalize(elem);
             }
 
             bool clearnotusedlines = false;
@@ -160,11 +121,11 @@ namespace iRadio
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
                     printline[i] = true;
-                    Console.CursorTop = line0 + i;
-                    Console.CursorLeft = columnBrowse;
+                    Console.CursorTop = (int)line0 + i;
+                    Console.CursorLeft = Show.columnBrowse;
                     ConsoleColor bg = Console.BackgroundColor;
                     ConsoleColor fg = Console.ForegroundColor;
-                    ClearLine(columnBrowse, line0 + i);           // if (elem.Value == "")
+                    ClearLine(Show.columnBrowse, (int) line0 + i);           // if (elem.Value == "")
 
                     // flags:
                     //  d -  folder 📁
@@ -181,10 +142,10 @@ namespace iRadio
                         Console.BackgroundColor = fg;
                         Console.ForegroundColor = bg;
                     }
-                    Console.WriteLine(Normalize(elem));  // else
+                    Console.WriteLine(Tools.Normalize(elem));  // else
                     Console.BackgroundColor = bg;
                     Console.ForegroundColor = fg;
-                    lastBrowsedLines[i] = Normalize(elem);
+                    lastBrowsedLines[i] = Tools.Normalize(elem);
                 }
             }
             if (clearnotusedlines)
@@ -193,14 +154,24 @@ namespace iRadio
                 {
                     if (!printline[i])
                     {
-                        ClearLine(columnBrowse, line0 + i);
+                        ClearLine(Show.columnBrowse, (int)line0 + i);
                         lastBrowsedLines[i] = "";
                     }
                 }
             }
         }
+        public void Log(System.IO.StreamWriter parsedElementsWriter, System.IO.TextWriter stdOut, XElement el)
+        {
+            if (parsedElementsWriter != null && stdOut != null && el != null)
+            {
+                Console.SetOut(parsedElementsWriter); // re-direct
+                Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
+                Console.SetOut(stdOut); // stop re-direct
+                parsedElementsWriter.Flush();
+            }
+        }
 
-        private static void ClearLine(int column, int line)
+        private void ClearLine(int column, int line)
         {
             int top = Console.CursorTop;
             int left = Console.CursorLeft;
@@ -210,6 +181,5 @@ namespace iRadio
             Console.CursorTop = top;
             Console.CursorLeft = left;
         }
-
     }
 }

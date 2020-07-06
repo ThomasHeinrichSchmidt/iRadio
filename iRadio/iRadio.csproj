@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\iRadioConsole\iRadioConsole.csproj" />
+    <ProjectReference Include="..\IShow\IShow.csproj" />
   </ItemGroup>
 
 </Project>

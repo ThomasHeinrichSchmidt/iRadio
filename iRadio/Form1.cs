@@ -8,8 +8,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace iRadio
 {
@@ -19,46 +23,6 @@ namespace iRadio
         {
             InitializeComponent();
         }
-        private static async Task<string> SendRequest(string server, int port, string method, string data)
-        {
-            try
-            {
-                // set up IP address of server
-                IPAddress ipAddress = null;
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(server);
-                for (int i = 0; i < ipHostInfo.AddressList.Length; ++i)
-                {
-                    if (ipHostInfo.AddressList[i].AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        ipAddress = ipHostInfo.AddressList[i];
-                        break;
-                    }
-                }
-                if (ipAddress == null)
-                    throw new Exception("Unable to find an IPv4 address for server");
-
-                TcpClient client = new TcpClient();
-                await client.ConnectAsync(ipAddress, port); // connect to the server
-
-                NetworkStream networkStream = client.GetStream();
-                StreamWriter writer = new StreamWriter(networkStream);
-                StreamReader reader = new StreamReader(networkStream);
-
-                writer.AutoFlush = true;
-                string requestData = "method=" + method + "&" + "data=" + data + "&eor"; // 'end-of-requet'
-                await writer.WriteLineAsync(requestData);
-                string response = await reader.ReadLineAsync();
-
-                client.Close();
-
-                return response;
-
-            }
-            catch (Exception ex)
-            {
-                return ex.Message;
-            }
-        } // SendRequest
 
         private async void Button1_Click(object sender, EventArgs e)
         {
@@ -72,8 +36,41 @@ namespace iRadio
         private async void Form1_Load(object sender, EventArgs e)
         {
             Task<bool> isOPen = Noxon.OpenAsync();
-            await isOPen;
-            button1.Enabled = isOPen.Result;
+            try
+            {
+                await isOPen;
+                button1.Enabled = isOPen.Result;
+            }
+            catch (SocketException exs)
+            {
+                MessageBox.Show(exs.Message);
+            }
+
+            StreamWriter nonParsedElementsWriter, parsedElementsWriter;
+            TextWriter stdOut = Console.Out;
+            Console.WriteLine("Console.WriteLine()");
+
+            try
+            {
+                nonParsedElementsWriter = new StreamWriter(new FileStream("./iRadio-non-parsed-elements.txt", FileMode.Create, FileAccess.Write));
+                parsedElementsWriter = new StreamWriter(new FileStream("./iRadio-logging.txt", FileMode.Create, FileAccess.Write));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Cannot open iRadio .txt files for writing");
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            await Task.Run(() =>
+            {
+                IEnumerable<XElement> iRadioNetData =
+                from el in NoxonAsync.StreamiRadioNet(Noxon.netStream)
+                select el;
+
+                Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
+            });
+
         }
     }
     public static class NoxonAsync
@@ -107,5 +104,101 @@ namespace iRadio
                 return -1;
             }
         }
+
+        private static XmlReader reader;
+
+        public static IEnumerable<XElement> StreamiRadioNet(ITestableNetworkStream netStream)
+        {
+            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false, Async = true };
+            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            System.Timers.Timer timeoutTimer = new System.Timers.Timer(10000);        // check if ReadFrom(reader) times out
+            timeoutTimer.Elapsed += (sender, e) => ParseTimeout(sender, e, cancellation);
+
+            using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---
+            {
+                while (true)
+                {
+                    while (!reader.EOF)
+                    {
+                        if (reader.NodeType == XmlNodeType.Element)
+                        {
+                            XElement el;
+                            try
+                            {
+                                timeoutTimer.Start();
+                                //  https://docs.microsoft.com/de-de/dotnet/core/porting/
+                                Task<XNode> t = XNode.ReadFromAsync(reader, cancellation.Token); 
+                                el = t.Result as XElement;  // ToDo: if iRadio = "Nicht verfügbar" or "NOXON" ==> ReadFromAsync() is canceled (OK!) but does not resume normal reading
+                                timeoutTimer.Stop();
+                            }
+                            catch
+                            {
+                                el = new XElement("FormStreamiRadioExceptionXElementAfterReadFromFails");
+                            }
+                            if (el != null)
+                                yield return el;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                reader.Read();
+                            }
+                            catch
+                            {
+                                // continue
+                            }
+                        }
+                    }
+                }
+            }
+            // cancellation.Dispose();
+        }
+        private static void ParseTimeout(object sender, ElapsedEventArgs e, CancellationTokenSource cancellation)
+        {
+            sender.ToString();
+            e.ToString();
+            cancellation.Cancel();
+        }
+    }
+
+    public class FormShow : IShow
+    {
+        public void Browse(XElement e, Lines line0)
+        {
+        }
+        public void Header()
+        {
+        }
+        public void Line(string caption, Lines line, XElement e)
+        {
+            
+        }
+        public void Msg(XElement e, Lines line0)
+        {
+        }
+        public void PlayingTime(XElement el, Lines line)
+        {
+        }
+        public void Status(XElement e, Lines line)
+        {
+        }
+        public void Log(System.IO.StreamWriter parsedElementsWriter, System.IO.TextWriter stdOut, XElement el)
+        {
+            Program.form.listBox1.Invoke((MethodInvoker) delegate {
+                Program.form.listBox1.Items.Add(el.ToString());   // Running on the UI thread
+                Program.form.listBox1.SelectedIndex = Program.form.listBox1.Items.Count - 1;
+            });
+
+            if (parsedElementsWriter != null && stdOut != null && el != null)
+            {
+                Console.SetOut(parsedElementsWriter); // re-direct
+                Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
+                Console.SetOut(stdOut); // stop re-direct
+                parsedElementsWriter.Flush();
+            }
+        }
+
     }
 }

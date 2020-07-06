@@ -74,12 +74,13 @@ namespace iRadio
     // Done: parse Telnet.xml w/o <root>: done, use fragment, XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
 
 
-    public class Program
+    public class ConsoleProgram
     {
 
         public static char keypressed = ' ';
         public static System.Timers.Timer unShowKeyPressedTimer;
         public static System.Timers.Timer keyPressedTimer;
+        public static Show ConsoleShow = new Show();
 
         static void Main(string[] args)
         {
@@ -136,12 +137,12 @@ namespace iRadio
                 Console.WriteLine("iRadio Telnet.xml:");
                 Console.SetOut(stdOut); // stop re-direct
                                         // use Console cursor control from now on 
-                Show.Header();
+                ConsoleShow.Header();
                 StreamReader TelnetFile = new StreamReader("Telnet.xml");
                 IEnumerable<XElement> iRadioData =
                     from el in StreamiRadioDoc(TelnetFile)
                     select el;
-                Noxon.Parse(iRadioData, null, nonParsedElementsWriter, stdOut);  // don't log parsed elements
+                Noxon.Parse(iRadioData, null, nonParsedElementsWriter, stdOut, ConsoleShow);  // don't log parsed elements
             }
 
             if (Noxon.Testmode)
@@ -151,7 +152,7 @@ namespace iRadio
             }
 
             // https://docs.microsoft.com/de-de/dotnet/csharp/programming-guide/concepts/linq/how-to-stream-xml-fragments-from-an-xmlreader
-            Show.Header();
+            ConsoleShow.Header();
             while (true)
             {
                 Noxon.Open();
@@ -159,7 +160,7 @@ namespace iRadio
                     from el in StreamiRadioNet(Noxon.netStream)
                     select el;
 
-                Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut);
+                Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, ConsoleShow);
                 // new Thread(delegate () {Noxon.Parse(Noxon.netStream, iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut); }).Start();
 
                 Noxon.Close();
@@ -170,7 +171,7 @@ namespace iRadio
         private static void ResetShowKeyPressed(object sender, ElapsedEventArgs e)
         {
             // reset key display 
-            if (keypressed != ' ' ) Show.Line("Key=", Show.lineStatus + 1, new XElement("value", "  "));
+            if (keypressed != ' ' ) ConsoleShow.Line("Key=", Lines.lineStatus + 1, new XElement("value", "  "));
         }
 
         private static void ProcessKeyPressed(object sender, ElapsedEventArgs e)
@@ -227,7 +228,7 @@ namespace iRadio
                     {
                         Noxon.netStream.Command(ch);
                         keypressed = ch;
-                        Show.Line("Key=", Show.lineStatus + 1, new XElement("value", keypressed + " > " + Noxon.Commands[ch].Desc));
+                        ConsoleShow.Line("Key=", Lines.lineStatus + 1, new XElement("value", keypressed + " > " + Noxon.Commands[ch].Desc));
                         unShowKeyPressedTimer.Start();
                     }
                 }
@@ -292,7 +293,7 @@ namespace iRadio
                     {
                         Thread.Sleep(200);  // need to re-open netstream, but how?
                         string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4] + "                "; // + "connected=" + netStream.Socket.connected;
-                        Show.Status(new XElement("value", waitingForSignal), Show.lineWaiting);
+                        ConsoleShow.Status(new XElement("value", waitingForSignal), Lines.lineWaiting);
                         if (waited > 5 * 1000 / 200)  // 60s
                         {
                             XElement el = new XElement("CloseStream");
@@ -313,7 +314,7 @@ namespace iRadio
                             }
                             catch
                             {
-                                el = new XElement("iRadioExceptionXElementAfterReadFromFails");
+                                el = new XElement("ConsoleStreamiRadioExceptionXElementAfterReadFromFails");
                             }
                             if (el != null)
                                 yield return el;
