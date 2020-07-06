@@ -458,6 +458,14 @@ namespace iRadio
                                 {
                                     Show.PlayingTime(e, Lines.linePlayingTime);
                                 }
+                                else if (e.Name == "value" && e.Attribute("id").Value == "buflvl")
+                                {
+                                    Show.Line("Buffer[%]", Lines.lineBuffer, e);
+                                }
+                                else if (e.Name == "value" && e.Attribute("id").Value == "wilvl")
+                                {
+                                    Show.Line("WiFi[%]", Lines.lineWiFi, e);
+                                }
                             }
                         }
                         else if (el.Attribute("id").Value == "status")

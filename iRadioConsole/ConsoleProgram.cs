@@ -24,7 +24,8 @@ namespace iRadio
     //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
     // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
     // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
-    // TODO: add settings to app.config
+    // TODO: add settings to app.config (timeout for timeoutTimer)
+    // TODO: ILMerge iRadio.exe
 
     // ========================
     // DONE: now works only if Noxon.Parse() is called, seems not to wait on 'busy' 

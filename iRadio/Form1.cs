@@ -15,6 +15,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 
+
 namespace iRadio
 {
     public partial class Form1 : Form
@@ -43,7 +44,8 @@ namespace iRadio
             }
             catch (SocketException exs)
             {
-                MessageBox.Show(exs.Message);
+                MessageBox.Show(exs.Message, "iRadio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Noxon.netStream = null;
             }
 
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
@@ -62,6 +64,7 @@ namespace iRadio
                 return;
             }
 
+            if (Noxon.netStream == null) return;
             await Task.Run(() =>
             {
                 IEnumerable<XElement> iRadioNetData =
@@ -173,6 +176,16 @@ namespace iRadio
         }
         public void Line(string caption, Lines line, XElement e)
         {
+            switch (line)
+            {
+                case Lines.lineWiFi:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.progressWifi.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
+                    });
+                    break;
+                default:
+                    break;
+            }
             
         }
         public void Msg(XElement e, Lines line0)
