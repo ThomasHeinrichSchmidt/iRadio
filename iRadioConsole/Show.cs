@@ -61,7 +61,10 @@ namespace iRadio
             Console.CursorLeft = (int)Lines.columnShow;
             int s = int.Parse(el.Value.Trim('\r', '\n', ' '));
             ClearLine((int)Lines.columnShow, (int)line);
-            Console.WriteLine("                     Playing for {0:00}:{1:00}", s / 60, s % 60);
+            int h = s / (60 * 60);
+            int m = s / 60 - h * 60;
+            string hms = s < 60 * 60 ? String.Format("{0:00}:{1:00}", s / 60, s % 60) : String.Format("{0:00}:{1:00}:{2:00}", h, m, s % 60);
+            Console.WriteLine("                     Playing for {0}", hms);
         }
         public void Status(XElement e, Lines line)
         {

@@ -38,7 +38,7 @@ public interface IShow
         public static string Normalize(XElement e)
         {
             // string original = e.Value.Trim('\r', '\n').Trim();
-            string original = e.Value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            string original = e.Value.Replace('\r', ' ').Replace('\n', ' ').Trim();  // does only leave values, no xml tags
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             byte[] encoded = Encoding.GetEncoding(1252).GetBytes(original);
             string corrected = Encoding.UTF8.GetString(encoded);

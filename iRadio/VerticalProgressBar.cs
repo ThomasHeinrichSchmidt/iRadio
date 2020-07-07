@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
+using System.Data;
 using System.Text;
 using System.Windows.Forms;
 
@@ -9,8 +11,12 @@ namespace iRadio
     [System.ComponentModel.Description("Vertical Progress Bar")]
     [System.Drawing.ToolboxBitmap(typeof(ProgressBar))]
     [System.ComponentModel.Browsable(true)]
-    public class VerticalProgressBar : ProgressBar
+    public partial class VerticalProgressBar : ProgressBar
     {
+        public VerticalProgressBar()
+        {
+            InitializeComponent();
+        }
         protected override CreateParams CreateParams
         {
             get
@@ -22,7 +28,6 @@ namespace iRadio
                 {
                     cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED 
                 }
-
                 return cp;
             }
         }

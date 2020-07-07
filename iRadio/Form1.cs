@@ -183,6 +183,11 @@ namespace iRadio
                         Program.form.progressWifi.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
+                case Lines.lineBuffer:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.progressBuffer.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
+                    });
+                    break;
                 default:
                     break;
             }
@@ -193,6 +198,16 @@ namespace iRadio
         }
         public void PlayingTime(XElement el, Lines line)
         {
+            if (line == Lines.linePlayingTime)
+            {
+                int s = int.TryParse(Tools.Normalize(el), out int result) ? result : 0;
+                int h = s / (60 * 60);
+                int m = s / 60 - h * 60;
+                string hms = s < 60 * 60 ? String.Format("{0:00}:{1:00}", s / 60, s % 60) : String.Format("{0:00}:{1:00}:{2:00}", h, m, s % 60);
+                Program.form.labelPlaying.Invoke((MethodInvoker)delegate {
+                    Program.form.labelPlaying.Text = hms;
+                });
+            }
         }
         public void Status(XElement e, Lines line)
         {
@@ -202,6 +217,7 @@ namespace iRadio
             Program.form.listBox1.Invoke((MethodInvoker) delegate {
                 Program.form.listBox1.Items.Add(el.ToString());   // Running on the UI thread
                 Program.form.listBox1.SelectedIndex = Program.form.listBox1.Items.Count - 1;
+                Program.form.toolStripStatusLabel1.Text = Tools.Normalize(el);
             });
 
             if (parsedElementsWriter != null && stdOut != null && el != null)
