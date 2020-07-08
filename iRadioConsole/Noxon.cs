@@ -352,31 +352,31 @@ namespace iRadio
                         {
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "timep")
                             {
-                                Show.PlayingTime(el, Lines.linePlayingTime);
+                                Show.PlayingTime(el, Lines.PlayingTime);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "buflvl")
                             {
-                                Show.Line("Buffer[%]", Lines.lineBuffer, el);
+                                Show.Line("Buffer[%]", Lines.Buffer, el);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "wilvl")
                             {
-                                Show.Line("WiFi[%]", Lines.lineWiFi, el);
+                                Show.Line("WiFi[%]", Lines.WiFi, el);
                             }
                             else if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "date")   // <value id="date" 
                             {
-                                if (int.TryParse(el.Value, out int i) && i > 0) Show.Line("Date", Lines.lineStatus, el);
+                                if (int.TryParse(el.Value, out int i) && i > 0) Show.Line("Date", Lines.Status, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "track")
                             {
-                                Show.Line("Track", Lines.lineTrack, el);
+                                Show.Line("Track", Lines.Track, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "artist")
                             {
-                                Show.Line("Artist", Lines.lineArtist, el);
+                                Show.Line("Artist", Lines.Artist, el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "album")
                             {
-                                Show.Line("Album", Lines.lineAlbum, el);
+                                Show.Line("Album", Lines.Album, el);
                             }
                             else
                             {
@@ -387,21 +387,21 @@ namespace iRadio
                         {
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "play")
                             {
-                                Show.Line("Icon-Play", Lines.lineIcon, el);
+                                Show.Line("Icon-Play", Lines.Icon, el);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
                             {
-                                Show.Line("Icon-Shuffle", Lines.lineIcon, el);
+                                Show.Line("Icon-Shuffle", Lines.Icon, el);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
                             {
-                                Show.Line("Icon-Repeat", Lines.lineIcon, el);
+                                Show.Line("Icon-Repeat", Lines.Icon, el);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
                                 Busy = false;
                                 if (int.TryParse(el.Value, out int busyval)) Busy = busyval == 1;  // el.Value = "\n  1\n"
-                                Show.Line("Busy=", Lines.lineBusy, el);
+                                Show.Line("Busy=", Lines.Busy, el);
                                 // System.Diagnostics.Debug.WriteLine("Status, busy = {0})", busy);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
@@ -413,7 +413,7 @@ namespace iRadio
                                 int.TryParse(max, out listposmax);
                                 // int value = 0;
                                 // if (int.TryParse(el.Value, out value)) el.Value = (value+1).ToString();  // NOXON list index is one too low
-                                Show.Line(caption, Lines.lineStatus, el);
+                                Show.Line(caption, Lines.Status, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "welcome")  // <update id="welcome">
@@ -421,7 +421,7 @@ namespace iRadio
                             //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Line("Welcome", Lines.lineIcon, el);
+                                Show.Line("Welcome", Lines.Icon, el);
                             }
                         }
                         else if (el.Attribute("id").Value == "browse")
@@ -440,31 +440,31 @@ namespace iRadio
                             {
                                 if (e.Name == "text" && e.Attribute("id").Value == "title")
                                 {
-                                    Show.Line("Title", Lines.lineTitle, e);
+                                    Show.Line("Title", Lines.Title, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "artist")
                                 {
-                                    Show.Line("Artist", Lines.lineArtist, e);
+                                    Show.Line("Artist", Lines.Artist, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "album")
                                 {
-                                    Show.Line("Album", Lines.lineAlbum, e);
+                                    Show.Line("Album", Lines.Album, e);
                                 }
                                 else if (e.Name == "text" && e.Attribute("id").Value == "track")
                                 {
-                                    Show.Line("Track", Lines.lineTrack, e);
+                                    Show.Line("Track", Lines.Track, e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "timep")
                                 {
-                                    Show.PlayingTime(e, Lines.linePlayingTime);
+                                    Show.PlayingTime(e, Lines.PlayingTime);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "buflvl")
                                 {
-                                    Show.Line("Buffer[%]", Lines.lineBuffer, e);
+                                    Show.Line("Buffer[%]", Lines.Buffer, e);
                                 }
                                 else if (e.Name == "value" && e.Attribute("id").Value == "wilvl")
                                 {
-                                    Show.Line("WiFi[%]", Lines.lineWiFi, e);
+                                    Show.Line("WiFi[%]", Lines.WiFi, e);
                                 }
                             }
                         }
@@ -475,7 +475,7 @@ namespace iRadio
                             {
                                 if (e.Name == "icon" && e.Attribute("id").Value == "play")
                                 {
-                                    Show.Status(e, Lines.lineStatus);
+                                    Show.Status(e, Lines.Status);
                                 }
                             }
 
@@ -504,7 +504,7 @@ namespace iRadio
                             // <view id="welcome">  < icon id = "welcome" text = "wlan@ths / wlan@t-h-schmidt.de" > welcome </ icon >    </ view >
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Status(el, Lines.lineStatus);
+                                Show.Status(el, Lines.Status);
                             }
                         }
                         else

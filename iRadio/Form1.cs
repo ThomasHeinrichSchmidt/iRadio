@@ -127,17 +127,22 @@ namespace iRadio
                         if (reader.NodeType == XmlNodeType.Element)
                         {
                             XElement el;
+                            TaskStatus tstat = TaskStatus.Created;
+                            AggregateException tex = null;
+
                             try
                             {
                                 timeoutTimer.Start();
                                 //  https://docs.microsoft.com/de-de/dotnet/core/porting/
                                 Task<XNode> t = XNode.ReadFromAsync(reader, cancellation.Token); 
                                 el = t.Result as XElement;  // ToDo: if iRadio = "Nicht verfügbar" or "NOXON" ==> ReadFromAsync() is canceled (OK!) but does not resume normal reading
+                                tstat = t.Status;           // also: no more data received if <browse> menu
+                                tex = t.Exception;
                                 timeoutTimer.Stop();
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                el = new XElement("FormStreamiRadioExceptionXElementAfterReadFromFails");
+                                el = new XElement("FormStreamiRadioExceptionXElementAfterReadFromFails", ex.Message + "=" + tex?.Message); 
                             }
                             if (el != null)
                                 yield return el;
@@ -170,6 +175,14 @@ namespace iRadio
     {
         public void Browse(XElement e, Lines line0)
         {
+            XElement elem;   // loop <text id="line0"> ...  <text id="line3">
+            if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
+            {
+                Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form.labelTitle.Text = Tools.Normalize(elem);
+                });
+            }
+
         }
         public void Header()
         {
@@ -178,17 +191,33 @@ namespace iRadio
         {
             switch (line)
             {
-                case Lines.lineWiFi:
+                case Lines.Title:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.labelTitle.Text = Tools.Normalize(e);
+                    });
+                    break;
+                case Lines.WiFi:
                     Program.form.progressWifi.Invoke((MethodInvoker)delegate {
                         Program.form.progressWifi.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
-                case Lines.lineBuffer:
+                case Lines.Buffer:
                     Program.form.progressWifi.Invoke((MethodInvoker)delegate {
                         Program.form.progressBuffer.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
                 default:
+                    //                    Show.Line("Welcome", Lines.Icon, el);   //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
+                    //                    Show.Line("Title", Lines.Title, e);        // 1
+                    //                    Show.Line("Artist", Lines.Artist, el);     // 2 = line0
+                    //                    Show.Line("Album", Lines.Album, el);       // 3
+                    //                    Show.Line("Track", Lines.Track, el);       // 4
+                    //                    Show.Line("Date", Lines.Status, el);
+                    //                    Show.Line(caption, Lines.Status, el);
+                    //                    Show.Line("Icon-Play", Lines.Icon, el);
+                    //                    Show.Line("Icon-Shuffle", Lines.Icon, el);
+                    //                    Show.Line("Icon-Repeat", Lines.Icon, el);
+                    //                    Show.Line("Busy=", Lines.Busy, el);
                     break;
             }
             
@@ -198,7 +227,7 @@ namespace iRadio
         }
         public void PlayingTime(XElement el, Lines line)
         {
-            if (line == Lines.linePlayingTime)
+            if (line == Lines.PlayingTime)
             {
                 int s = int.TryParse(Tools.Normalize(el), out int result) ? result : 0;
                 int h = s / (60 * 60);

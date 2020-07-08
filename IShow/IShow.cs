@@ -7,19 +7,19 @@ namespace iRadio
 {
     public enum Lines
     {
-        lineTitle = 1,
-        lineArtist = 2,
+        Title = 1,
+        Artist = 2,
         line0 = 2,
-        lineAlbum = 3,
-        lineTrack = 4,
-        linePlayingTime = 5,
-        lineSeparator = 6,
-        lineIcon = 7,
-        lineWiFi = 8,
-        lineBuffer = 9,
-        lineStatus = 10,
-        lineBusy = 11,
-        lineWaiting = 12,
+        Album = 3,
+        Track = 4,
+        PlayingTime = 5,
+        Separator = 6,
+        Icon = 7,
+        WiFi = 8,
+        Buffer = 9,
+        Status = 10,
+        Busy = 11,
+        Waiting = 12,
         columnShow = 0
 }
 public interface IShow

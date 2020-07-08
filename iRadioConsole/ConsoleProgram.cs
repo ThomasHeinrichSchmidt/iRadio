@@ -12,6 +12,8 @@ using System.Xml.Linq;
 namespace iRadio
 {
     // TODO: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
+    // TODO: iRadio: correct PingHosts() for Noxon.OpenAsync()
+    // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
     // TODO: class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
     // TODO: add more tests, using moq
     // TODO: ProcessKeyPressed(): add more keys, update NoxonRemoteLetters.jpg
@@ -25,7 +27,7 @@ namespace iRadio
     // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
     // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
     // TODO: add settings to app.config (timeout for timeoutTimer)
-    // TODO: ILMerge iRadio.exe
+    // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
     // DONE: now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
@@ -172,7 +174,7 @@ namespace iRadio
         private static void ResetShowKeyPressed(object sender, ElapsedEventArgs e)
         {
             // reset key display 
-            if (keypressed != ' ' ) ConsoleShow.Line("Key=", Lines.lineStatus + 1, new XElement("value", "  "));
+            if (keypressed != ' ' ) ConsoleShow.Line("Key=", Lines.Status + 1, new XElement("value", "  "));
         }
 
         private static void ProcessKeyPressed(object sender, ElapsedEventArgs e)
@@ -229,7 +231,7 @@ namespace iRadio
                     {
                         Noxon.netStream.Command(ch);
                         keypressed = ch;
-                        ConsoleShow.Line("Key=", Lines.lineStatus + 1, new XElement("value", keypressed + " > " + Noxon.Commands[ch].Desc));
+                        ConsoleShow.Line("Key=", Lines.Status + 1, new XElement("value", keypressed + " > " + Noxon.Commands[ch].Desc));
                         unShowKeyPressedTimer.Start();
                     }
                 }
@@ -294,7 +296,7 @@ namespace iRadio
                     {
                         Thread.Sleep(200);  // need to re-open netstream, but how?
                         string waitingForSignal = "     waiting for signal  " + waiting[waited++ % 4] + "                "; // + "connected=" + netStream.Socket.connected;
-                        ConsoleShow.Status(new XElement("value", waitingForSignal), Lines.lineWaiting);
+                        ConsoleShow.Status(new XElement("value", waitingForSignal), Lines.Waiting);
                         if (waited > 5 * 1000 / 200)  // 60s
                         {
                             XElement el = new XElement("CloseStream");

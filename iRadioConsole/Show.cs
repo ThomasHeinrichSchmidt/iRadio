@@ -51,7 +51,7 @@ namespace iRadio
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
 
-            Console.CursorTop = (int)Lines.lineSeparator;
+            Console.CursorTop = (int)Lines.Separator;
             Console.CursorLeft = (int)Lines.columnShow;
             Console.WriteLine("{0}", new String('-', Console.WindowWidth - Console.CursorLeft - 1));
         }
@@ -104,7 +104,7 @@ namespace iRadio
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
-                Line("Title", Lines.lineTitle, elem);
+                Line("Title", Lines.Title, elem);
                 lastBrowsedTitle = Tools.Normalize(elem);
             }
 
