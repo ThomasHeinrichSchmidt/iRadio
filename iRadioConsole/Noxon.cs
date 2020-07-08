@@ -67,6 +67,7 @@ namespace iRadio
         public static bool Busy { get; set; }
         public static ITestableNetworkStream netStream = null;
         public static TcpClient tcpClient = null;
+        public static bool textEntry = false;    // TODO: if focus on keyboard entry in contrast to local hotkeys 
         public const int ListLines = 4;
 
         public static Dictionary<char, Command> Commands = new Dictionary<char, Command>()

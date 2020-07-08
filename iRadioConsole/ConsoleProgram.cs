@@ -18,7 +18,7 @@ namespace iRadio
     // TODO: add more tests, using moq
     // TODO: ProcessKeyPressed(): add more keys, update NoxonRemoteLetters.jpg
     // TODO: F1 - F10 Favoriten #1 - #10 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
-    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more 
+    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more - timeoutTimer.Start() only if "Nicht verfÃ¼gbar", ... ("browse" OK!)
     //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     //       correct: freeze "NOXON"
     //       corrected: close stream if "Nicht verfÃ¼gbar"

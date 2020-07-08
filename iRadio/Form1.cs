@@ -65,6 +65,9 @@ namespace iRadio
             }
 
             if (Noxon.netStream == null) return;
+            this.KeyPreview = true;
+            this.KeyDown += new KeyEventHandler(Form_KeyDown);
+
             await Task.Run(() =>
             {
                 IEnumerable<XElement> iRadioNetData =
@@ -74,6 +77,32 @@ namespace iRadio
                 Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
             });
 
+        }
+        private async void Form_KeyDown(object sender, KeyEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("KeyDown: {0}", e.KeyCode);
+            if (Noxon.netStream == null || Noxon.textEntry)  
+            {   // if nothing is received or text entry instead of local hotkeys 
+                return;
+            }
+            char command = ' ';
+
+            if (e.Control && e.KeyCode == Keys.S)       // Ctrl-S Save
+            {
+                // Do what you want here
+            }
+            if (e.KeyCode == Keys.D1) command = '1';
+            if (e.KeyCode == Keys.D2) command = '2';
+            if (e.KeyCode == Keys.D3) command = '3';
+            if (e.KeyCode == Keys.D4) command = '4';
+            if (e.KeyCode == Keys.D5) command = '5';  // h --> KeyDown: H  // H -->   KeyDown: ShiftKey, KeyDown: H
+
+            if (command != ' ')
+            {
+                Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
+                await ret;
+                e.SuppressKeyPress = true;  // Stops other controls on the form receiving event.
+            }
         }
     }
     public static class NoxonAsync
