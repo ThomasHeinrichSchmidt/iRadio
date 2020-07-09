@@ -31,12 +31,13 @@ namespace iRadio
             {
                 Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync('1');
                 await ret;
+                toolTip1.Show(Noxon.currentArtist, button1);
             }
         }
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            Task<bool> isOPen = Noxon.OpenAsync();
+            Task<bool> isOPen = Task.Run(() => Noxon.OpenAsync());    // https://stackoverflow.com/questions/14962969/how-can-i-use-async-to-increase-winforms-performance
             try
             {
                 await isOPen;
@@ -96,13 +97,26 @@ namespace iRadio
             if (e.KeyCode == Keys.D3) command = '3';
             if (e.KeyCode == Keys.D4) command = '4';
             if (e.KeyCode == Keys.D5) command = '5';  // h --> KeyDown: H  // H -->   KeyDown: ShiftKey, KeyDown: H
-
+            if (e.KeyCode == Keys.Left) command = 'L';
+            if (e.KeyCode == Keys.Right) command = 'R';
+            if (e.KeyCode == Keys.Up) command = 'U';
+            if (e.KeyCode == Keys.Down) command = 'D';
+            if (e.KeyCode == Keys.VolumeUp) command = '+';
+            if (e.KeyCode == Keys.VolumeDown) command = '-';
+            if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
+            if (e.KeyCode == Keys.Home) command = 'H';
+            if (e.KeyCode == Keys.F1) Favorites.Get(); 
             if (command != ' ')
             {
                 Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
                 await ret;
                 e.SuppressKeyPress = true;  // Stops other controls on the form receiving event.
             }
+        }
+
+        private void StatusStrip1_DoubleClick(object sender, EventArgs e)
+        {
+            MessageBox.Show("Status", "iRadio messages");
         }
     }
     public static class NoxonAsync
@@ -136,6 +150,19 @@ namespace iRadio
                 return -1;
             }
         }
+        public async static Task<int> StringAsync(this NetworkStream netStream, string str)
+        {
+            MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
+            foreach (MultiPressCommand m in mpc)
+                for (int i = 0; i < m.Times; i++)
+                {
+                    await netStream.CommandAsync(Convert.ToChar(48 + m.Digit));
+                    Thread.Sleep(Noxon.MultiPressDelayForSameKey);
+                }
+            Thread.Sleep(Noxon.MultiPressDelayForNextKey);
+            return 0;
+        }
+
 
         private static XmlReader reader;
 
@@ -202,6 +229,7 @@ namespace iRadio
 
     public class FormShow : IShow
     {
+        readonly Queue<string> lastLogMessages = new Queue<string>();
         public void Browse(XElement e, Lines line0)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
@@ -235,6 +263,30 @@ namespace iRadio
                         Program.form.progressBuffer.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
+                case Lines.Icon:
+                    if (caption == "Icon-Play")
+                    {
+                        Program.form.listBox1.Invoke((MethodInvoker)delegate {
+                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
+                        });
+                    }
+                    break;
+                case Lines.Artist:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.listBoxDisplay.Items[0] = Tools.Normalize(e);
+                    });
+                    break;
+                case Lines.Album:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.listBoxDisplay.Items[1] = Tools.Normalize(e);
+                    });
+                    break;
+                case Lines.Track:
+                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                        Program.form.listBoxDisplay.Items[2] = Tools.Normalize(e);
+                    });
+                    break;
+
                 default:
                     //                    Show.Line("Welcome", Lines.Icon, el);   //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
                     //                    Show.Line("Title", Lines.Title, e);        // 1
@@ -243,7 +295,6 @@ namespace iRadio
                     //                    Show.Line("Track", Lines.Track, el);       // 4
                     //                    Show.Line("Date", Lines.Status, el);
                     //                    Show.Line(caption, Lines.Status, el);
-                    //                    Show.Line("Icon-Play", Lines.Icon, el);
                     //                    Show.Line("Icon-Shuffle", Lines.Icon, el);
                     //                    Show.Line("Icon-Repeat", Lines.Icon, el);
                     //                    Show.Line("Busy=", Lines.Busy, el);
@@ -269,13 +320,34 @@ namespace iRadio
         }
         public void Status(XElement e, Lines line)
         {
+            Image statusImage = iRadio.Properties.Resources.hourglass;
+            if (e.Name == "icon" && e.Attribute("id").Value == "play")
+            {
+                if (e.Value == "play") statusImage = iRadio.Properties.Resources.play;
+                if (e.Value == "empty") statusImage = iRadio.Properties.Resources.iRadio;
+            }
+            if ((e.Name == "view" || e.Name == "update") && e.Attribute("id").Value == "welcome")
+            {
+                statusImage = iRadio.Properties.Resources.hand;
+            }
+            Program.form.listBox1.Invoke((MethodInvoker)delegate {
+                Program.form.toolStripStatusLabel1.Text = Tools.Normalize(e);
+                Program.form.toolStripStatusLabel1.Image = statusImage;
+            });
         }
         public void Log(System.IO.StreamWriter parsedElementsWriter, System.IO.TextWriter stdOut, XElement el)
         {
-            Program.form.listBox1.Invoke((MethodInvoker) delegate {
-                Program.form.listBox1.Items.Add(el.ToString());   // Running on the UI thread
+            Program.form.listBox1.Invoke((MethodInvoker)delegate {
+                if (Program.form.listBox1.Items.Count < 10)  // Running on the UI thread
+                {
+                    Program.form.listBox1.Items.Add(el.ToString());
+                }
+                else
+                {
+                    for (int i = 0; i < Program.form.listBox1.Items.Count - 1; i++) Program.form.listBox1.Items[i] = Program.form.listBox1.Items[i + 1];
+                    Program.form.listBox1.Items[^1] = el.ToString();
+                }
                 Program.form.listBox1.SelectedIndex = Program.form.listBox1.Items.Count - 1;
-                Program.form.toolStripStatusLabel1.Text = Tools.Normalize(el);
             });
 
             if (parsedElementsWriter != null && stdOut != null && el != null)

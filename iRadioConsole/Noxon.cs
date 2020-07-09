@@ -69,6 +69,7 @@ namespace iRadio
         public static TcpClient tcpClient = null;
         public static bool textEntry = false;    // TODO: if focus on keyboard entry in contrast to local hotkeys 
         public const int ListLines = 4;
+        public static string currentArtist = "";
 
         public static Dictionary<char, Command> Commands = new Dictionary<char, Command>()
         {
@@ -283,10 +284,8 @@ namespace iRadio
         public static async Task<bool> OpenAsync()
         {
             tcpClient = new TcpClient();
-            // TODO: make PingHosts() not block
-            // IPAddress ip = Noxon.IP;   
-            // if (Noxon.PingHosts()) ip = Noxon.IP;
-            IPAddress ip = IPAddress.Parse("192.168.178.36"); 
+            IPAddress ip = Noxon.IP;   
+            if (Noxon.PingHosts()) ip = Noxon.IP;
             await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
             netStream = new TestableNetworkStream(tcpClient.GetStream());
             return true;
@@ -374,6 +373,7 @@ namespace iRadio
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "artist")
                             {
                                 Show.Line("Artist", Lines.Artist, el);
+                                currentArtist = Tools.Normalize(el);
                             }
                             else if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "album")
                             {
