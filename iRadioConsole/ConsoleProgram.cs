@@ -11,6 +11,7 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: remember last IP
     // TODO: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
     // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)

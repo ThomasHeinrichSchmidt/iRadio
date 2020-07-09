@@ -105,7 +105,13 @@ namespace iRadio
             if (e.KeyCode == Keys.VolumeDown) command = '-';
             if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
             if (e.KeyCode == Keys.Home) command = 'H';
-            if (e.KeyCode == Keys.F1) Favorites.Get(); 
+            if (e.KeyCode == Keys.F1) Favorites.Get();
+            if (command == ' ')
+            {
+                KeysConverter kc = new KeysConverter();
+                char c = kc.ConvertToString(e.KeyCode)[0];  // first char in keyboard string, e.g. (F)avorites, (H)ome, (M)enu, ... 
+                if (Noxon.Commands.ContainsKey(c)) command = c;
+            }
             if (command != ' ')
             {
                 Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
@@ -117,6 +123,16 @@ namespace iRadio
         private void StatusStrip1_DoubleClick(object sender, EventArgs e)
         {
             MessageBox.Show("Status", "iRadio messages");
+        }
+
+        private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)
+            {
+                listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
+                listBoxDisplay.SelectedIndex = FormShow.selectedIndex;
+                listBoxDisplay.SelectedIndexChanged += new EventHandler(ListBoxDisplay_SelectedIndexChanged);
+            }
         }
     }
     public static class NoxonAsync
@@ -188,13 +204,13 @@ namespace iRadio
 
                             try
                             {
-                                timeoutTimer.Start();
+                                if (!FormShow.browsing) timeoutTimer.Start();
                                 //  https://docs.microsoft.com/de-de/dotnet/core/porting/
                                 Task<XNode> t = XNode.ReadFromAsync(reader, cancellation.Token); 
                                 el = t.Result as XElement;  // ToDo: if iRadio = "Nicht verfügbar" or "NOXON" ==> ReadFromAsync() is canceled (OK!) but does not resume normal reading
                                 tstat = t.Status;           // also: no more data received if <browse> menu
                                 tex = t.Exception;
-                                timeoutTimer.Stop();
+                                if (!FormShow.browsing) timeoutTimer.Stop();
                             }
                             catch (Exception ex)
                             {
@@ -229,23 +245,89 @@ namespace iRadio
 
     public class FormShow : IShow
     {
-        readonly Queue<string> lastLogMessages = new Queue<string>();
+        public static bool browsing = false;
+        public static int selectedIndex = -1;
         public void Browse(XElement e, Lines line0)
         {
+            browsing = true;
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
+                Show.lastBrowsedTitle = Tools.Normalize(elem);
                 Program.form.progressWifi.Invoke((MethodInvoker)delegate {
                     Program.form.labelTitle.Text = Tools.Normalize(elem);
                 });
             }
 
+            bool clearnotusedlines = false;
+            if ((e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "scrid").FirstOrDefault()) != null)
+            {
+                // <view id="browse">
+                //  < view id = "browse" >
+                //  < text id = "scrid" > 102.2 </ text >
+                //  < text id = "cbid" > 3 </ text >
+                // ...
+                clearnotusedlines = true;   // only clear not used lines if this is a complete "screen", not a later "update" to it
+            }
+            bool[] printline = new bool[Noxon.ListLines];
+            for (int i = 0; i < Noxon.ListLines; i++)
+            {
+                if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
+                {
+                    printline[i] = true;
+                    // Console.CursorTop = (int)line0 + i;
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                        Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
+                    });
+                    // flags:
+                    //  d -  folder 📁
+                    //  ds - folder 📁
+                    //  p -  song   ♪
+                    //  ps - song   ♪ ♪
+                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ds")   //  <text id="line0" flag="ds">History</text>
+                    {
+                        selectedIndex = i;
+                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                            Program.form.listBoxDisplay.SelectedIndex = i;
+                        });
+                    }
+                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ps")   //    <text id="line0" flag="ps">Radio Efimera</text>
+                    {
+                        selectedIndex = i;
+                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                            Program.form.listBoxDisplay.SelectedIndex = i;
+                        });
+                    }
+                    Show.lastBrowsedLines[i] = Tools.Normalize(elem);
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                        Program.form.listBoxDisplay.Items[i] = Tools.Normalize(elem);
+                    });
+                }
+            }
+            if (clearnotusedlines)
+            {
+                for (int i = 0; i < Noxon.ListLines; i++)
+                {
+                    if (!printline[i])
+                    {
+                        Show.lastBrowsedLines[i] = "";
+                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                            Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
+                        });
+                    }
+                }
+            }
         }
         public void Header()
         {
         }
         public void Line(string caption, Lines line, XElement e)
         {
+            browsing = false;
+            FormShow.selectedIndex = -1;
+            Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                Program.form.listBoxDisplay.SelectedIndex = -1;
+            });
             switch (line)
             {
                 case Lines.Title:
@@ -272,18 +354,21 @@ namespace iRadio
                     }
                     break;
                 case Lines.Artist:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[0] = Tools.Normalize(e);
+                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
                     break;
                 case Lines.Album:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[1] = Tools.Normalize(e);
+                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
                     break;
                 case Lines.Track:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[2] = Tools.Normalize(e);
+                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
                     break;
 
@@ -307,6 +392,7 @@ namespace iRadio
         }
         public void PlayingTime(XElement el, Lines line)
         {
+            browsing = false;
             if (line == Lines.PlayingTime)
             {
                 int s = int.TryParse(Tools.Normalize(el), out int result) ? result : 0;
@@ -358,6 +444,5 @@ namespace iRadio
                 parsedElementsWriter.Flush();
             }
         }
-
     }
 }

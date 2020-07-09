@@ -86,16 +86,16 @@
             // progressWifi
             // 
             this.progressWifi.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.progressWifi.Location = new System.Drawing.Point(630, 148);
+            this.progressWifi.Location = new System.Drawing.Point(630, 145);
             this.progressWifi.Name = "progressWifi";
-            this.progressWifi.Size = new System.Drawing.Size(100, 10);
+            this.progressWifi.Size = new System.Drawing.Size(100, 8);
             this.progressWifi.TabIndex = 4;
             // 
             // pictureBoxAntenna
             // 
             this.pictureBoxAntenna.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxAntenna.Image")));
             this.pictureBoxAntenna.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxAntenna.InitialImage")));
-            this.pictureBoxAntenna.Location = new System.Drawing.Point(736, 138);
+            this.pictureBoxAntenna.Location = new System.Drawing.Point(736, 139);
             this.pictureBoxAntenna.Name = "pictureBoxAntenna";
             this.pictureBoxAntenna.Size = new System.Drawing.Size(30, 20);
             this.pictureBoxAntenna.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -115,16 +115,16 @@
             // progressBuffer
             // 
             this.progressBuffer.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.progressBuffer.Location = new System.Drawing.Point(630, 174);
+            this.progressBuffer.Location = new System.Drawing.Point(630, 172);
             this.progressBuffer.Name = "progressBuffer";
-            this.progressBuffer.Size = new System.Drawing.Size(100, 10);
+            this.progressBuffer.Size = new System.Drawing.Size(100, 8);
             this.progressBuffer.TabIndex = 4;
             // 
             // pictureBoxBuffer
             // 
             this.pictureBoxBuffer.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxBuffer.Image")));
             this.pictureBoxBuffer.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxBuffer.InitialImage")));
-            this.pictureBoxBuffer.Location = new System.Drawing.Point(736, 164);
+            this.pictureBoxBuffer.Location = new System.Drawing.Point(736, 165);
             this.pictureBoxBuffer.Name = "pictureBoxBuffer";
             this.pictureBoxBuffer.Size = new System.Drawing.Size(30, 20);
             this.pictureBoxBuffer.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -175,11 +175,13 @@
             this.listBoxDisplay.Items.AddRange(new object[] {
             "Artist",
             "Album",
-            "Track"});
+            "Track",
+            "00:00"});
             this.listBoxDisplay.Location = new System.Drawing.Point(33, 65);
             this.listBoxDisplay.Name = "listBoxDisplay";
-            this.listBoxDisplay.Size = new System.Drawing.Size(733, 52);
+            this.listBoxDisplay.Size = new System.Drawing.Size(733, 68);
             this.listBoxDisplay.TabIndex = 9;
+            this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
             // 
             // Form1
             // 
