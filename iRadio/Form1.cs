@@ -1,4 +1,5 @@
-﻿using System;
+﻿using iRadio.Properties;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -23,6 +24,12 @@ namespace iRadio
         public Form1()
         {
             InitializeComponent();
+            if (Settings.Default.UpgradeRequired)
+            {
+                Settings.Default.Upgrade();
+                Settings.Default.UpgradeRequired = false;
+                Settings.Default.Save();
+            }
         }
 
         private async void Button1_Click(object sender, EventArgs e)
@@ -37,11 +44,12 @@ namespace iRadio
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            Task<bool> isOPen = Task.Run(() => Noxon.OpenAsync());    // https://stackoverflow.com/questions/14962969/how-can-i-use-async-to-increase-winforms-performance
+            Noxon.IP = IPAddress.Parse(Settings.Default.NoxonIP);  // use previous IP first
+            Task<bool> isOpen = Task.Run(() => Noxon.OpenAsync()); // https://stackoverflow.com/questions/14962969/how-can-i-use-async-to-increase-winforms-performance
             try
             {
-                await isOPen;
-                button1.Enabled = isOPen.Result;
+                await isOpen;
+                button1.Enabled = isOpen.Result;
             }
             catch (SocketException exs)
             {
@@ -105,7 +113,12 @@ namespace iRadio
             if (e.KeyCode == Keys.VolumeDown) command = '-';
             if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
             if (e.KeyCode == Keys.Home) command = 'H';
-            if (e.KeyCode == Keys.F1) Favorites.Get();
+            if (e.KeyCode == Keys.F1) {
+                Task<bool> get = Task.Run(() => Favorites.Get()); 
+                await get;
+                Properties.Settings.Default.FavoritesList = Favorites.List();
+                return;
+            }
             if (command == ' ')
             {
                 KeysConverter kc = new KeysConverter();
@@ -133,6 +146,12 @@ namespace iRadio
                 listBoxDisplay.SelectedIndex = FormShow.selectedIndex;
                 listBoxDisplay.SelectedIndexChanged += new EventHandler(ListBoxDisplay_SelectedIndexChanged);
             }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Properties.Settings.Default.NoxonIP = Noxon.IP.ToString();
+            Properties.Settings.Default.Save();
         }
     }
     public static class NoxonAsync
@@ -439,7 +458,8 @@ namespace iRadio
             if (parsedElementsWriter != null && stdOut != null && el != null)
             {
                 Console.SetOut(parsedElementsWriter); // re-direct
-                Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
+                if (Properties.Settings.Default.LogTimestamps) Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
+                else Console.WriteLine("{0}", el.ToString());
                 Console.SetOut(stdOut); // stop re-direct
                 parsedElementsWriter.Flush();
             }

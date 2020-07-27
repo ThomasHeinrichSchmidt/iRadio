@@ -179,7 +179,7 @@ namespace iRadio
         static int upCount = 0;
         static readonly object lockObj = new object();
         private static readonly List<string> IPsFound = new List<string>();
-        static IPAddress IP = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
+        public static IPAddress IP = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
 
         private static bool PingHosts()
         {
@@ -284,7 +284,17 @@ namespace iRadio
         public static async Task<bool> OpenAsync()
         {
             tcpClient = new TcpClient();
-            IPAddress ip = Noxon.IP;   
+            IPAddress ip = Noxon.IP;
+            try
+            {
+                await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
+                netStream = new TestableNetworkStream(tcpClient.GetStream());
+                return true;
+            }
+            catch (SocketException se)
+            {
+                Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1}), now try all IPs on gateway", se.SocketErrorCode, se.Message);
+            }
             if (Noxon.PingHosts()) ip = Noxon.IP;
             await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
             netStream = new TestableNetworkStream(tcpClient.GetStream());
@@ -324,12 +334,14 @@ namespace iRadio
             min = listposmin;
             max = listposmax;
             if (min > 0 && max > 0) return true;
+            System.Diagnostics.Debug.WriteLine("GetListMinMax({0},{1})", min, max);
             return false;
         }
         public static void ResetListMinMax()
         {
             listposmin = 0;
             listposmax = 0;
+            System.Diagnostics.Debug.WriteLine("ResetListMinMax()");
         }
 
         public static void Parse(IEnumerable<XElement> iRadioData, StreamWriter parsedElementsWriter, StreamWriter nonParsedElementsWriter, TextWriter stdOut, IShow Show)  // System.Windows.Forms.Form form
@@ -412,8 +424,7 @@ namespace iRadio
                                 string caption = "From (" + min + ".." + max + ") @ ";
                                 int.TryParse(min, out listposmin);
                                 int.TryParse(max, out listposmax);
-                                // int value = 0;
-                                // if (int.TryParse(el.Value, out value)) el.Value = (value+1).ToString();  // NOXON list index is one too low
+                                // System.Diagnostics.Debug.WriteLine("<update id='status'>< value id = 'listpos' min = {0} max = {1}>", listposmin, listposmax);
                                 Show.Line(caption, Lines.Status, el);
                             }
                         }
@@ -531,7 +542,7 @@ namespace iRadio
 
     public static class Favorites
     {
-        private static readonly List<string> list = new List<string>();
+        private static readonly System.Collections.Specialized.StringCollection list = new System.Collections.Specialized.StringCollection();
         public static bool Get()
         {
             Noxon.ResetListMinMax();
@@ -546,7 +557,7 @@ namespace iRadio
                     if (Show.lastBrowsedLines[i] != "")
                     {
                         list.Add(Show.lastBrowsedLines[i]);
-                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list.Last());
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list[list.Count-1]);
                     }
                 }
                 if (entries > 4)
@@ -558,13 +569,19 @@ namespace iRadio
                         Macro md = new iRadio.Macro("Favorites.Get.D", new string[] { "D" });
                         while (md.Step()) ;
                         list.Add(Show.lastBrowsedLines[3]);
-                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list.Last());
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list[list.Count - 1]);
                     }
                 }
                 Macro mh = new iRadio.Macro("Favorites.Get.D", new string[] { "H"}); // home again
                 while (mh.Step()) ;
             }
             return true;
+        }
+
+        public static System.Collections.Specialized.StringCollection List()
+        {
+            if (list.Count > 0) return list;
+            else return null;
         }
     }
 }
