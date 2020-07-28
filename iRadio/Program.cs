@@ -14,6 +14,7 @@ namespace iRadio
 
         public static FormShow FormShow = new FormShow();
         public static Form1 form;
+        public static FormLogging formLogging = new FormLogging();
 
         [STAThread]
         static void Main()
@@ -21,6 +22,7 @@ namespace iRadio
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            formLogging.listBox1.Items.Clear(); 
             Application.Run(form = new Form1());
         }
     }

@@ -11,17 +11,18 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing 
+    // TODO: show/enable search text entry if possible with radio 
+    // TODO: Favorites dialog (show, double click to play), class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
+    // TODO: F1 - F10 Favoriten #1 - #10
     // TODO: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
     // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
-    // TODO: class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
     // TODO: add more tests, using moq
-    // TODO: F1 - F10 Favoriten #1 - #10 - now works only if Noxon.Parse() is called, seems not to wait on 'busy' 
     // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more - timeoutTimer.Start() only if "Nicht verfÃ¼gbar", ... ("browse" OK!)
     //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
     //       correct: freeze "NOXON"
     //       corrected: close stream if "Nicht verfÃ¼gbar"
+    // TODO: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing - but what do you want to test then?
     // TODO: README.md: add NoxonRemoteLetters.jpg (updated with current keys)
     //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
     // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
@@ -30,6 +31,7 @@ namespace iRadio
     // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
+    // DONE: double click on status bar opens Telnet message listbox
     // DONE: Settings: remember last IP, toggle timestamps in .logs, 
     // DONE: ProcessKeyPressed(): add more keys, update NoxonRemoteLetters.jpg
     // DONE: iRadio: correct PingHosts() for Noxon.OpenAsync()

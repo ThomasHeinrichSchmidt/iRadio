@@ -24,9 +24,9 @@ namespace iRadio
 }
 public interface IShow
     {
-        void Browse(XElement e, Lines line0);
+        void Browse(XElement e, Lines line0, bool searchingPossible);
         void Header();
-        void Line(string caption, Lines line, XElement e);
+        void Line(string caption, Lines line, XElement e, bool continueBrowsing = false);
         void Msg(XElement e, Lines line0);
         void PlayingTime(XElement el, Lines line);
         void Status(XElement e, Lines line);

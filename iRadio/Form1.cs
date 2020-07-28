@@ -50,6 +50,7 @@ namespace iRadio
             {
                 await isOpen;
                 button1.Enabled = isOpen.Result;
+                Program.formLogging.Text = "NOXON iRadio - " + Noxon.IP.ToString() + ":10100";
             }
             catch (SocketException exs)
             {
@@ -135,11 +136,13 @@ namespace iRadio
 
         private void StatusStrip1_DoubleClick(object sender, EventArgs e)
         {
-            MessageBox.Show("Status", "iRadio messages");
+            if (Program.formLogging == null) Program.formLogging = new FormLogging();
+            Program.formLogging.Show();
         }
 
         private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("ListBoxDisplay_SelectedIndexChanged(), Browsing = {0}, listBoxDisplay.SelectedIndex = {1}, FormShow.selectedIndex = {2}", FormShow.Browsing, listBoxDisplay.SelectedIndex, FormShow.selectedIndex);
             if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)
             {
                 listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
@@ -223,13 +226,13 @@ namespace iRadio
 
                             try
                             {
-                                if (!FormShow.browsing) timeoutTimer.Start();
+                                if (!FormShow.Browsing) timeoutTimer.Start();
                                 //  https://docs.microsoft.com/de-de/dotnet/core/porting/
                                 Task<XNode> t = XNode.ReadFromAsync(reader, cancellation.Token); 
                                 el = t.Result as XElement;  // ToDo: if iRadio = "Nicht verfügbar" or "NOXON" ==> ReadFromAsync() is canceled (OK!) but does not resume normal reading
                                 tstat = t.Status;           // also: no more data received if <browse> menu
                                 tex = t.Exception;
-                                if (!FormShow.browsing) timeoutTimer.Stop();
+                                if (!FormShow.Browsing) timeoutTimer.Stop();
                             }
                             catch (Exception ex)
                             {
@@ -264,11 +267,26 @@ namespace iRadio
 
     public class FormShow : IShow
     {
-        public static bool browsing = false;
+        private static bool browsing = false;
+        private static bool searchingPossible = false;
         public static int selectedIndex = -1;
-        public void Browse(XElement e, Lines line0)
+
+        public static bool Browsing { 
+            get => browsing;
+            set
+            {
+                browsing = value;
+                Program.form.Invoke((MethodInvoker)delegate
+                {
+                    Program.form.textBox1.Enabled = browsing && FormShow.searchingPossible;
+                    Program.form.textBox1.Visible = browsing && FormShow.searchingPossible;
+                    Program.form.button1.Enabled = ! (browsing && FormShow.searchingPossible);
+                });
+            }
+        }
+
+    public void Browse(XElement e, Lines line0, bool searchingPossible)
         {
-            browsing = true;
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
@@ -277,6 +295,9 @@ namespace iRadio
                     Program.form.labelTitle.Text = Tools.Normalize(elem);
                 });
             }
+            FormShow.searchingPossible = searchingPossible;
+            if (Program.form.labelTitle.Text == "NOXON") FormShow.searchingPossible = false;
+            Browsing = true;
 
             bool clearnotusedlines = false;
             if ((e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "scrid").FirstOrDefault()) != null)
@@ -340,10 +361,14 @@ namespace iRadio
         public void Header()
         {
         }
-        public void Line(string caption, Lines line, XElement e)
+
+        public void Line(string caption, Lines line, XElement e, bool continueBrowsing = false)
         {
-            browsing = false;
-            FormShow.selectedIndex = -1;
+            if (!continueBrowsing)
+            {
+                Browsing = false;
+                FormShow.selectedIndex = -1;
+            }
             Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
                 Program.form.listBoxDisplay.SelectedIndex = -1;
             });
@@ -367,7 +392,7 @@ namespace iRadio
                 case Lines.Icon:
                     if (caption == "Icon-Play")
                     {
-                        Program.form.listBox1.Invoke((MethodInvoker)delegate {
+                        Program.form.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
                         });
                     }
@@ -411,7 +436,7 @@ namespace iRadio
         }
         public void PlayingTime(XElement el, Lines line)
         {
-            browsing = false;
+            Browsing = false;
             if (line == Lines.PlayingTime)
             {
                 int s = int.TryParse(Tools.Normalize(el), out int result) ? result : 0;
@@ -435,25 +460,35 @@ namespace iRadio
             {
                 statusImage = iRadio.Properties.Resources.hand;
             }
-            Program.form.listBox1.Invoke((MethodInvoker)delegate {
+            Program.form.Invoke((MethodInvoker)delegate {
                 Program.form.toolStripStatusLabel1.Text = Tools.Normalize(e);
                 Program.form.toolStripStatusLabel1.Image = statusImage;
             });
         }
         public void Log(System.IO.StreamWriter parsedElementsWriter, System.IO.TextWriter stdOut, XElement el)
         {
-            Program.form.listBox1.Invoke((MethodInvoker)delegate {
-                if (Program.form.listBox1.Items.Count < 10)  // Running on the UI thread
+            try
+            {
+                if (Program.formLogging != null && !Program.form.Disposing)
                 {
-                    Program.form.listBox1.Items.Add(el.ToString());
+                    Program.form.Invoke((MethodInvoker)delegate
+                    {
+                        if (Program.formLogging.listBox1.Items.Count < 100)  // Running on the UI thread
+                    {
+                            Program.formLogging.listBox1.Items.Add(el.ToString());
+                        }
+                        else
+                        {
+                            for (int i = 0; i < Program.formLogging.listBox1.Items.Count - 1; i++) Program.formLogging.listBox1.Items[i] = Program.formLogging.listBox1.Items[i + 1];
+                            Program.formLogging.listBox1.Items[^1] = el.ToString();
+                        }
+                        Program.formLogging.listBox1.SelectedIndex = Program.formLogging.listBox1.Items.Count - 1;
+                    });
                 }
-                else
-                {
-                    for (int i = 0; i < Program.form.listBox1.Items.Count - 1; i++) Program.form.listBox1.Items[i] = Program.form.listBox1.Items[i + 1];
-                    Program.form.listBox1.Items[^1] = el.ToString();
-                }
-                Program.form.listBox1.SelectedIndex = Program.form.listBox1.Items.Count - 1;
-            });
+            }
+            catch (Exception e) {
+                System.Diagnostics.Debug.WriteLine("Program.form.Invoke failed ({0})", e.Message);
+            }
 
             if (parsedElementsWriter != null && stdOut != null && el != null)
             {

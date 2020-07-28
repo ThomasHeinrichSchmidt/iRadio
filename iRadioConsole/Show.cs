@@ -31,7 +31,7 @@ namespace iRadio
             Console.BackgroundColor = bg;
             Console.ForegroundColor = fg;
         }
-        public void Line(string caption, Lines line, XElement e)
+        public void Line(string caption, Lines line, XElement e, bool continueBrowsing = false)
         {
             Console.CursorTop = (int)line;
             Console.CursorLeft = (int)Lines.columnShow;
@@ -99,7 +99,7 @@ namespace iRadio
                 }
             }
         }
-        public void Browse(XElement e, Lines line0)
+        public void Browse(XElement e, Lines line0, bool searchingPossible)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)

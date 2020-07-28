@@ -5,6 +5,9 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\netcoreapp3.1\resources\List.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="2.0.18" />

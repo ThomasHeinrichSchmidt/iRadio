@@ -31,7 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.button1 = new System.Windows.Forms.Button();
-            this.listBox1 = new System.Windows.Forms.ListBox();
             this.progressWifi = new System.Windows.Forms.ProgressBar();
             this.pictureBoxAntenna = new System.Windows.Forms.PictureBox();
             this.labelPlaying = new System.Windows.Forms.Label();
@@ -42,6 +41,7 @@
             this.labelTitle = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.listBoxDisplay = new System.Windows.Forms.ListBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -61,27 +61,6 @@
             this.button1.Text = "&1";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.Button1_Click);
-            // 
-            // listBox1
-            // 
-            this.listBox1.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 11;
-            this.listBox1.Items.AddRange(new object[] {
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10"});
-            this.listBox1.Location = new System.Drawing.Point(33, 230);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(733, 114);
-            this.listBox1.TabIndex = 1;
             // 
             // progressWifi
             // 
@@ -183,11 +162,23 @@
             this.listBoxDisplay.TabIndex = 9;
             this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
             // 
+            // textBox1
+            // 
+            this.textBox1.Enabled = false;
+            this.textBox1.Location = new System.Drawing.Point(191, 43);
+            this.textBox1.MaxLength = 10;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.PlaceholderText = "Search ...";
+            this.textBox1.Size = new System.Drawing.Size(161, 23);
+            this.textBox1.TabIndex = 10;
+            this.textBox1.Visible = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.listBoxDisplay);
             this.Controls.Add(this.labelTitle);
             this.Controls.Add(this.statusStrip1);
@@ -196,7 +187,6 @@
             this.Controls.Add(this.labelPlaying);
             this.Controls.Add(this.pictureBoxAntenna);
             this.Controls.Add(this.progressWifi);
-            this.Controls.Add(this.listBox1);
             this.Controls.Add(this.button1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
@@ -213,9 +203,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
-        public System.Windows.Forms.ListBox listBox1;
         public System.Windows.Forms.ProgressBar progressWifi;
         private System.Windows.Forms.PictureBox pictureBoxAntenna;
         public System.Windows.Forms.Label labelPlaying;
@@ -226,6 +213,8 @@
         public System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.ToolTip toolTip1;
         public System.Windows.Forms.ListBox listBoxDisplay;
+        public System.Windows.Forms.TextBox textBox1;
+        public System.Windows.Forms.Button button1;
     }
 }
 

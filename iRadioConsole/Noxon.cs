@@ -400,21 +400,21 @@ namespace iRadio
                         {
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "play")
                             {
-                                Show.Line("Icon-Play", Lines.Icon, el);
+                                Show.Line("Icon-Play", Lines.Icon, el, true);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "shuffle")
                             {
-                                Show.Line("Icon-Shuffle", Lines.Icon, el);
+                                Show.Line("Icon-Shuffle", Lines.Icon, el, true);
                             }
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "repeat")
                             {
-                                Show.Line("Icon-Repeat", Lines.Icon, el);
+                                Show.Line("Icon-Repeat", Lines.Icon, el, true);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "busy")    // <value id="busy" 
                             {
                                 Busy = false;
                                 if (int.TryParse(el.Value, out int busyval)) Busy = busyval == 1;  // el.Value = "\n  1\n"
-                                Show.Line("Busy=", Lines.Busy, el);
+                                Show.Line("Busy=", Lines.Busy, el, true);
                                 // System.Diagnostics.Debug.WriteLine("Status, busy = {0})", busy);
                             }
                             if (el.Element("value") != null && el.Element("value").Attribute("id").Value == "listpos")    // <value id="listpos" 
@@ -425,7 +425,7 @@ namespace iRadio
                                 int.TryParse(min, out listposmin);
                                 int.TryParse(max, out listposmax);
                                 // System.Diagnostics.Debug.WriteLine("<update id='status'>< value id = 'listpos' min = {0} max = {1}>", listposmin, listposmax);
-                                Show.Line(caption, Lines.Status, el);
+                                Show.Line(caption, Lines.Status, el, true);
                             }
                         }
                         else if (el.Attribute("id").Value == "welcome")  // <update id="welcome">
@@ -433,12 +433,12 @@ namespace iRadio
                             //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
                             if (el.Element("icon") != null && el.Element("icon").Attribute("id").Value == "welcome")
                             {
-                                Show.Line("Welcome", Lines.Icon, el);
+                                Show.Line("Welcome", Lines.Icon, el, true);
                             }
                         }
                         else if (el.Attribute("id").Value == "browse")
                         {
-                            Show.Browse(el, Lines.line0);
+                            Show.Browse(el, Lines.line0, false);
                         }
                         else
                         {
@@ -508,7 +508,14 @@ namespace iRadio
                         {
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
-                                Show.Browse(el, Lines.line0);
+                                Show.Browse(el, Lines.line0, true);
+                            }
+                        }
+                        else if (el.Attribute("id").Value == "config")
+                        {
+                            if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
+                            {
+                                Show.Browse(el, Lines.line0, false);
                             }
                         }
                         else if (el.Attribute("id").Value == "welcome")  // <view id="welcome">
