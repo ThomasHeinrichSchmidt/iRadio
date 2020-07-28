@@ -502,7 +502,11 @@ namespace iRadio
                                 XElement elem = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg">  < text id = "scrid" > 82 </ text >    < text id = "line0" > Nicht verfÃ¼gbar </ text >
                                 if (elem != null)
                                 {
-                                    if (elem.Value == iRadioConsole.Properties.Resources.NoxonMessageToCloseStream) return;  // close stream if "Nicht verfÃ¼gbar"
+                                    if (elem.Value == iRadioConsole.Properties.Resources.NoxonMessageToCloseStream)
+                                    {
+                                        Show.Line("CloseStream", Lines.Icon, el);  // close stream if "Nicht verfÃ¼gbar"
+                                        return;  
+                                    }
                                 }
                             }
                         }
@@ -534,7 +538,8 @@ namespace iRadio
                         }
                         break;
                     case "CloseStream":
-                        return;
+                        Show.Line("CloseStream", Lines.Icon, el);
+                        break;
                     default:
                         ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                         break;

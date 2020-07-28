@@ -78,14 +78,19 @@ namespace iRadio
             this.KeyPreview = true;
             this.KeyDown += new KeyEventHandler(Form_KeyDown);
 
-            await Task.Run(() =>
+            do
             {
-                IEnumerable<XElement> iRadioNetData =
-                from el in NoxonAsync.StreamiRadioNet(Noxon.netStream)
-                select el;
+                await Task.Run(() =>
+                {
+                    IEnumerable<XElement> iRadioNetData =
+                    from el in NoxonAsync.StreamiRadioNet(Noxon.netStream)
+                    select el;
 
-                Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
-            });
+                    Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
+                });
+                System.Diagnostics.Debug.WriteLine("Parse finished, due to 'Nicht verfÃ¼gbar'");
+                await Task.Run(() => Noxon.OpenAsync()); 
+            } while (true);
 
         }
         private async void Form_KeyDown(object sender, KeyEventArgs e)
@@ -272,7 +277,7 @@ namespace iRadio
                             }
                             catch (Exception ex)
                             {
-                                el = new XElement("FormStreamiRadioExceptionXElementAfterReadFromFails", ex.Message + "=" + tex?.Message); 
+                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + "=" + tex?.Message);
                             }
                             if (el != null)
                                 yield return el;
@@ -407,7 +412,7 @@ namespace iRadio
         {
         }
 
-        public void Line(string caption, Lines line, XElement e, bool continueBrowsing = false)
+        public async void Line(string caption, Lines line, XElement e, bool continueBrowsing = false)
         {
             if (!continueBrowsing)
             {
@@ -440,6 +445,10 @@ namespace iRadio
                         Program.form.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
                         });
+                    }
+                    else if (caption == "CloseStream")
+                    {
+                        await Noxon.netStream.GetNetworkStream().CommandAsync('L');
                     }
                     break;
                 case Lines.Artist:
