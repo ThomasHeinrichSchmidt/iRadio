@@ -150,12 +150,14 @@ namespace iRadio
         {
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
             foreach (MultiPressCommand m in mpc)
+            {
                 for (int i = 0; i < m.Times; i++)
                 {
                     netStream.Command(Convert.ToChar(48 + m.Digit));
                     Thread.Sleep(MultiPressDelayForSameKey);
                 }
-            Thread.Sleep(MultiPressDelayForNextKey);
+                Thread.Sleep(MultiPressDelayForNextKey);
+            }
             return 0;
         }
 
@@ -438,7 +440,7 @@ namespace iRadio
                         }
                         else if (el.Attribute("id").Value == "browse")
                         {
-                            Show.Browse(el, Lines.line0, false);
+                            Show.Browse(el, Lines.line0, true);
                         }
                         else
                         {

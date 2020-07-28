@@ -91,7 +91,9 @@ namespace iRadio
         private async void Form_KeyDown(object sender, KeyEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("KeyDown: {0}", e.KeyCode);
-            if (Noxon.netStream == null || Noxon.textEntry)  
+
+            bool isLetterOrDigit = char.IsLetterOrDigit((char)e.KeyCode);
+            if (Noxon.netStream == null || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter)))  
             {   // if nothing is received or text entry instead of local hotkeys 
                 return;
             }
@@ -108,6 +110,7 @@ namespace iRadio
             if (e.KeyCode == Keys.D5) command = '5';  // h --> KeyDown: H  // H -->   KeyDown: ShiftKey, KeyDown: H
             if (e.KeyCode == Keys.Left) command = 'L';
             if (e.KeyCode == Keys.Right) command = 'R';
+            if (e.KeyCode == Keys.Enter) command = 'R';
             if (e.KeyCode == Keys.Up) command = 'U';
             if (e.KeyCode == Keys.Down) command = 'D';
             if (e.KeyCode == Keys.VolumeUp) command = '+';
@@ -120,7 +123,7 @@ namespace iRadio
                 Properties.Settings.Default.FavoritesList = Favorites.List();
                 return;
             }
-            if (command == ' ')
+            if (command == ' ' && isLetterOrDigit)
             {
                 KeysConverter kc = new KeysConverter();
                 char c = kc.ConvertToString(e.KeyCode)[0];  // first char in keyboard string, e.g. (F)avorites, (H)ome, (M)enu, ... 
@@ -142,7 +145,22 @@ namespace iRadio
 
         private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("ListBoxDisplay_SelectedIndexChanged(), Browsing = {0}, listBoxDisplay.SelectedIndex = {1}, FormShow.selectedIndex = {2}", FormShow.Browsing, listBoxDisplay.SelectedIndex, FormShow.selectedIndex);
+            // System.Diagnostics.Debug.WriteLine("LBDisplay_SelIxChngd(), Browsing = {0}, LBDisplay.SelIx = {1}, FormShow.selIx = {2}, FormShow.srchPossbl = {3}", FormShow.Browsing, listBoxDisplay.SelectedIndex, FormShow.selectedIndex, FormShow.SearchingPossible);
+
+            //Macro m;   // TODO: click on listBoxDisplay updates NOXON using commands UP/DOWN - does not work (so simply)
+            //if (listBoxDisplay.SelectedIndex > FormShow.selectedIndex)
+            //{
+            //    m = new iRadio.Macro("Favorites.Get.D", new string[] { "D" }); // scroll down 
+            //}
+            //else
+            //{
+            //    m = new iRadio.Macro("Favorites.Get.D", new string[] { "U" }); // scroll up
+
+            //}
+            //Task<bool> xcq = Task.Run(() => m.Execute()); 
+            //await xcq;
+            //return;
+
             if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)
             {
                 listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
@@ -155,6 +173,22 @@ namespace iRadio
         {
             Properties.Settings.Default.NoxonIP = Noxon.IP.ToString();
             Properties.Settings.Default.Save();
+        }
+
+        private async void TextBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // await Task.Run(() => Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text));
+                await Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text);
+                await Noxon.netStream.GetNetworkStream().CommandAsync('R');
+                while (Noxon.Busy) Thread.Sleep(100);
+                await Noxon.netStream.GetNetworkStream().CommandAsync('D');  // refresh display
+                await Noxon.netStream.GetNetworkStream().CommandAsync('U');
+                textBox1.Text = null;
+                listBoxDisplay.Focus();
+                Noxon.textEntry = false;
+            }
         }
     }
     public static class NoxonAsync
@@ -192,12 +226,14 @@ namespace iRadio
         {
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
             foreach (MultiPressCommand m in mpc)
+            {
                 for (int i = 0; i < m.Times; i++)
                 {
                     await netStream.CommandAsync(Convert.ToChar(48 + m.Digit));
                     Thread.Sleep(Noxon.MultiPressDelayForSameKey);
                 }
-            Thread.Sleep(Noxon.MultiPressDelayForNextKey);
+                Thread.Sleep(Noxon.MultiPressDelayForNextKey);
+            }
             return 0;
         }
 
@@ -278,14 +314,24 @@ namespace iRadio
                 browsing = value;
                 Program.form.Invoke((MethodInvoker)delegate
                 {
-                    Program.form.textBox1.Enabled = browsing && FormShow.searchingPossible;
-                    Program.form.textBox1.Visible = browsing && FormShow.searchingPossible;
-                    Program.form.button1.Enabled = ! (browsing && FormShow.searchingPossible);
+                    Program.form.textBox1.Enabled = browsing && FormShow.SearchingPossible;
+                    Program.form.textBox1.Visible = browsing && FormShow.SearchingPossible;
+                    Noxon.textEntry = browsing && FormShow.SearchingPossible;
+                    Program.form.button1.Enabled = ! (browsing && FormShow.SearchingPossible);
                 });
             }
         }
 
-    public void Browse(XElement e, Lines line0, bool searchingPossible)
+        public static bool SearchingPossible { 
+            get => searchingPossible; 
+            set
+            { 
+                searchingPossible = value;
+                if (Program.form.labelTitle.Text == "NOXON") searchingPossible = false;
+            }
+        }
+
+        public void Browse(XElement e, Lines line0, bool searchingPossible)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
@@ -295,8 +341,7 @@ namespace iRadio
                     Program.form.labelTitle.Text = Tools.Normalize(elem);
                 });
             }
-            FormShow.searchingPossible = searchingPossible;
-            if (Program.form.labelTitle.Text == "NOXON") FormShow.searchingPossible = false;
+            FormShow.SearchingPossible = searchingPossible;
             Browsing = true;
 
             bool clearnotusedlines = false;

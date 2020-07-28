@@ -86,8 +86,14 @@ namespace iRadio
                 return false;
             }
         }
-        
-        public bool Abort() 
+
+        public bool Execute()
+        {
+            while (this.Step()) ;
+            return true;
+        }
+
+            public bool Abort() 
         {
             step = 0;
             steps = 0;

@@ -172,6 +172,8 @@
             this.textBox1.Size = new System.Drawing.Size(161, 23);
             this.textBox1.TabIndex = 10;
             this.textBox1.Visible = false;
+            this.textBox1.WordWrap = false;
+            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBox1_KeyDown);
             // 
             // Form1
             // 
