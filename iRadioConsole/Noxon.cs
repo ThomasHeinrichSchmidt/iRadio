@@ -538,8 +538,8 @@ namespace iRadio
                         }
                         break;
                     case "CloseStream":
-                        Show.Line("CloseStream", Lines.Icon, el);
-                        break;
+                        Show.Line("CloseStreamAndReturn", Lines.Icon, el);
+                        return;
                     default:
                         ConsoleProgram.LogElement(nonParsedElementsWriter, stdOut, el);
                         break;

@@ -88,7 +88,7 @@ namespace iRadio
 
                     Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
                 });
-                System.Diagnostics.Debug.WriteLine("Parse finished, due to 'Nicht verfÃ¼gbar'");
+                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restart Parse() now");
                 await Task.Run(() => Noxon.OpenAsync()); 
             } while (true);
 
@@ -98,8 +98,14 @@ namespace iRadio
             System.Diagnostics.Debug.WriteLine("KeyDown: {0}", e.KeyCode);
 
             bool isLetterOrDigit = char.IsLetterOrDigit((char)e.KeyCode);
+            if (Noxon.netStream != null && isLetterOrDigit && Noxon.textEntry && textBox1.Visible)
+            {
+                KeysConverter kc = new KeysConverter();
+                textBox1.Text += kc.ConvertToString(e.KeyCode)[0];
+                return;
+            }
             if (Noxon.netStream == null || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter)))  
-            {   // if nothing is received or text entry instead of local hotkeys 
+            {   // if nothing is received or text entry instead of local hotkeys
                 return;
             }
             char command = ' ';
@@ -446,9 +452,15 @@ namespace iRadio
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
                         });
                     }
-                    else if (caption == "CloseStream")
+                    else if (caption == "CloseStreamAndReturn")  // stream closed due to "Nicht verfÃ¼gbar"
                     {
                         await Noxon.netStream.GetNetworkStream().CommandAsync('L');
+                    }
+                    else if (caption == "CloseStream")  
+                    {
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
+                        });
                     }
                     break;
                 case Lines.Artist:
