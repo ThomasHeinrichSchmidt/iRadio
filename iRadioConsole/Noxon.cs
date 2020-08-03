@@ -517,6 +517,13 @@ namespace iRadio
                                     }
                                 }
                             }
+                            foreach (XElement e in el.Elements())
+                            {
+                                if (e.Name == "value" && e.Attribute("id").Value == "volume")
+                                {
+                                    Show.Line("Volume", Lines.Status, e, true);
+                                }
+                            }
                         }
                         else if (el.Attribute("id").Value == "browse")
                         {

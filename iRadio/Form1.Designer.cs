@@ -44,11 +44,23 @@
             this.pictureBoxRepeat = new System.Windows.Forms.PictureBox();
             this.listBoxDisplay = new System.Windows.Forms.ListBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.pictureBoxStop = new System.Windows.Forms.PictureBox();
+            this.pictureBoxPrevious = new System.Windows.Forms.PictureBox();
+            this.pictureBoxPlayPause = new System.Windows.Forms.PictureBox();
+            this.pictureBoxNext = new System.Windows.Forms.PictureBox();
+            this.pictureBoxAllDirections = new System.Windows.Forms.PictureBox();
+            this.trackBarVolume = new System.Windows.Forms.TrackBar();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShuffle)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRepeat)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStop)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxPrevious)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxPlayPause)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNext)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
@@ -207,11 +219,87 @@
             this.textBox1.WordWrap = false;
             this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBox1_KeyDown);
             // 
+            // pictureBoxStop
+            // 
+            this.pictureBoxStop.ErrorImage = null;
+            this.pictureBoxStop.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxStop.Image")));
+            this.pictureBoxStop.InitialImage = null;
+            this.pictureBoxStop.Location = new System.Drawing.Point(191, 154);
+            this.pictureBoxStop.Name = "pictureBoxStop";
+            this.pictureBoxStop.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxStop.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxStop.TabIndex = 5;
+            this.pictureBoxStop.TabStop = false;
+            // 
+            // pictureBoxPrevious
+            // 
+            this.pictureBoxPrevious.ErrorImage = null;
+            this.pictureBoxPrevious.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxPrevious.Image")));
+            this.pictureBoxPrevious.InitialImage = null;
+            this.pictureBoxPrevious.Location = new System.Drawing.Point(251, 154);
+            this.pictureBoxPrevious.Name = "pictureBoxPrevious";
+            this.pictureBoxPrevious.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxPrevious.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxPrevious.TabIndex = 5;
+            this.pictureBoxPrevious.TabStop = false;
+            // 
+            // pictureBoxPlayPause
+            // 
+            this.pictureBoxPlayPause.ErrorImage = null;
+            this.pictureBoxPlayPause.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxPlayPause.Image")));
+            this.pictureBoxPlayPause.InitialImage = null;
+            this.pictureBoxPlayPause.Location = new System.Drawing.Point(311, 154);
+            this.pictureBoxPlayPause.Name = "pictureBoxPlayPause";
+            this.pictureBoxPlayPause.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxPlayPause.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxPlayPause.TabIndex = 5;
+            this.pictureBoxPlayPause.TabStop = false;
+            // 
+            // pictureBoxNext
+            // 
+            this.pictureBoxNext.ErrorImage = null;
+            this.pictureBoxNext.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxNext.Image")));
+            this.pictureBoxNext.InitialImage = null;
+            this.pictureBoxNext.Location = new System.Drawing.Point(371, 154);
+            this.pictureBoxNext.Name = "pictureBoxNext";
+            this.pictureBoxNext.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxNext.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxNext.TabIndex = 5;
+            this.pictureBoxNext.TabStop = false;
+            // 
+            // pictureBoxAllDirections
+            // 
+            this.pictureBoxAllDirections.ErrorImage = null;
+            this.pictureBoxAllDirections.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxAllDirections.Image")));
+            this.pictureBoxAllDirections.InitialImage = null;
+            this.pictureBoxAllDirections.Location = new System.Drawing.Point(557, 139);
+            this.pictureBoxAllDirections.Name = "pictureBoxAllDirections";
+            this.pictureBoxAllDirections.Size = new System.Drawing.Size(50, 50);
+            this.pictureBoxAllDirections.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxAllDirections.TabIndex = 5;
+            this.pictureBoxAllDirections.TabStop = false;
+            // 
+            // trackBarVolume
+            // 
+            this.trackBarVolume.Enabled = false;
+            this.trackBarVolume.Location = new System.Drawing.Point(431, 154);
+            this.trackBarVolume.Maximum = 100;
+            this.trackBarVolume.Name = "trackBarVolume";
+            this.trackBarVolume.Size = new System.Drawing.Size(117, 45);
+            this.trackBarVolume.TabIndex = 11;
+            this.trackBarVolume.TickFrequency = 10;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.trackBarVolume);
+            this.Controls.Add(this.pictureBoxAllDirections);
+            this.Controls.Add(this.pictureBoxNext);
+            this.Controls.Add(this.pictureBoxPlayPause);
+            this.Controls.Add(this.pictureBoxPrevious);
+            this.Controls.Add(this.pictureBoxStop);
             this.Controls.Add(this.pictureBoxRepeat);
             this.Controls.Add(this.pictureBoxShuffle);
             this.Controls.Add(this.textBox1);
@@ -235,6 +323,12 @@
             this.statusStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShuffle)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRepeat)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStop)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxPrevious)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxPlayPause)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNext)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -255,6 +349,12 @@
         public System.Windows.Forms.Button button1;
         public System.Windows.Forms.PictureBox pictureBoxShuffle;
         public System.Windows.Forms.PictureBox pictureBoxRepeat;
+        public System.Windows.Forms.PictureBox pictureBoxStop;
+        public System.Windows.Forms.PictureBox pictureBoxPrevious;
+        public System.Windows.Forms.PictureBox pictureBoxPlayPause;
+        public System.Windows.Forms.PictureBox pictureBoxNext;
+        public System.Windows.Forms.PictureBox pictureBoxAllDirections;
+        public System.Windows.Forms.TrackBar trackBarVolume;
     }
 }
 

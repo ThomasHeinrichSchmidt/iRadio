@@ -58,6 +58,7 @@ namespace iRadio
                 Noxon.netStream = null;
             }
 
+            Program.form.trackBarVolume.Value = Settings.Default.Volume;
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
             Console.WriteLine("Console.WriteLine()");
@@ -183,6 +184,7 @@ namespace iRadio
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             Properties.Settings.Default.NoxonIP = Noxon.IP.ToString();
+            Properties.Settings.Default.Volume = Program.form.trackBarVolume.Value;
             Properties.Settings.Default.Save();
         }
 
@@ -513,6 +515,15 @@ namespace iRadio
                     if (caption == "Date")
                     {
                         // date is always 0
+                    }
+                    else if (caption == "Volume")
+                    {
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            Settings.Default.Volume = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
+                            Program.form.trackBarVolume.Enabled = true;
+                            Program.form.trackBarVolume.Value = Settings.Default.Volume;
+                        });
+
                     }
                     else
                     {

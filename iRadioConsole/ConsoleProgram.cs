@@ -11,14 +11,10 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: nothing transmitted any more after  <text id="line0">Nicht verfÃ¼gbar</text>
-    // TODO: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
-    // ToDo: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more - timeoutTimer.Start() only if "Nicht verfÃ¼gbar", ... ("browse" OK!)
-    //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
-    //       correct: freeze "NOXON"
-    //       corrected: close stream if "Nicht verfÃ¼gbar"
+    // TODO: add radio hardware keys (stop, play, ...)
     // TODO: Favorites dialog (show, double click to play), class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
     // TODO: F1 - F10 Favoriten #1 - #10
+    // TODO: show seperate window with remote control and clickable keys
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
     // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
     // TODO: add more tests, using moq
@@ -32,6 +28,12 @@ namespace iRadio
     // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
+    // DONE: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more - timeoutTimer.Start() only if "Nicht verfÃ¼gbar", ... ("browse" OK!)
+    //       correct: Turn on NOXON (cold boot), "5" (Preset 5), (L)eft ==> Crash, iRadioConsole freezes: does not longer detect KEYs and netstream, must close/re-open socket.
+    //       correct: freeze "NOXON"
+    //       corrected: close stream if "Nicht verfÃ¼gbar"
+    // DONE: handle "Connect to NOXON iRadio failed (TimedOut, Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat 192.168.2.99:10100)
+    // DONE: nothing transmitted any more after  <text id="line0">Nicht verfÃ¼gbar</text>
     // DONE: show/enable search text entry if possible with radio 
     // DONE: double click on status bar opens Telnet message listbox
     // DONE: Settings: remember last IP, toggle timestamps in .logs, 
