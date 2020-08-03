@@ -40,11 +40,15 @@
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.labelTitle = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.pictureBoxShuffle = new System.Windows.Forms.PictureBox();
+            this.pictureBoxRepeat = new System.Windows.Forms.PictureBox();
             this.listBoxDisplay = new System.Windows.Forms.ListBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShuffle)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRepeat)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
@@ -145,6 +149,34 @@
             // 
             this.toolTip1.ShowAlways = true;
             // 
+            // pictureBoxShuffle
+            // 
+            this.pictureBoxShuffle.ErrorImage = null;
+            this.pictureBoxShuffle.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxShuffle.Image")));
+            this.pictureBoxShuffle.InitialImage = null;
+            this.pictureBoxShuffle.Location = new System.Drawing.Point(87, 139);
+            this.pictureBoxShuffle.Name = "pictureBoxShuffle";
+            this.pictureBoxShuffle.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxShuffle.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxShuffle.TabIndex = 5;
+            this.pictureBoxShuffle.TabStop = false;
+            this.toolTip1.SetToolTip(this.pictureBoxShuffle, "Shuffle");
+            this.pictureBoxShuffle.Visible = false;
+            // 
+            // pictureBoxRepeat
+            // 
+            this.pictureBoxRepeat.ErrorImage = null;
+            this.pictureBoxRepeat.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRepeat.Image")));
+            this.pictureBoxRepeat.InitialImage = null;
+            this.pictureBoxRepeat.Location = new System.Drawing.Point(123, 139);
+            this.pictureBoxRepeat.Name = "pictureBoxRepeat";
+            this.pictureBoxRepeat.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxRepeat.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxRepeat.TabIndex = 5;
+            this.pictureBoxRepeat.TabStop = false;
+            this.toolTip1.SetToolTip(this.pictureBoxRepeat, "Repeat This / Repeat All");
+            this.pictureBoxRepeat.Visible = false;
+            // 
             // listBoxDisplay
             // 
             this.listBoxDisplay.BackColor = System.Drawing.SystemColors.GradientInactiveCaption;
@@ -165,7 +197,7 @@
             // textBox1
             // 
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(191, 43);
+            this.textBox1.Location = new System.Drawing.Point(313, 43);
             this.textBox1.MaxLength = 10;
             this.textBox1.Name = "textBox1";
             this.textBox1.PlaceholderText = "Search ...";
@@ -180,6 +212,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.pictureBoxRepeat);
+            this.Controls.Add(this.pictureBoxShuffle);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.listBoxDisplay);
             this.Controls.Add(this.labelTitle);
@@ -199,6 +233,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShuffle)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRepeat)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -217,6 +253,8 @@
         public System.Windows.Forms.ListBox listBoxDisplay;
         public System.Windows.Forms.TextBox textBox1;
         public System.Windows.Forms.Button button1;
+        public System.Windows.Forms.PictureBox pictureBoxShuffle;
+        public System.Windows.Forms.PictureBox pictureBoxRepeat;
     }
 }
 

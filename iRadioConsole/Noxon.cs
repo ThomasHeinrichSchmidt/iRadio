@@ -491,6 +491,14 @@ namespace iRadio
                                 {
                                     Show.Status(e, Lines.Status);
                                 }
+                                if (e.Name == "icon" && e.Attribute("id").Value == "shuffle")
+                                {
+                                    Show.Line("Icon-Shuffle", Lines.Icon, e, true);
+                                }
+                                if (e.Name == "icon" && e.Attribute("id").Value == "repeat")
+                                {
+                                    Show.Line("Icon-Repeat", Lines.Icon, e, true);
+                                }
                             }
 
                         }

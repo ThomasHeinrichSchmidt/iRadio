@@ -88,7 +88,7 @@ namespace iRadio
 
                     Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
                 });
-                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restart Parse() now");
+                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now");
                 await Task.Run(() => Noxon.OpenAsync()); 
             } while (true);
 
@@ -446,10 +446,38 @@ namespace iRadio
                     });
                     break;
                 case Lines.Icon:
+                    if (caption == "Welcome")
+                    {
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
+                        });
+                    }
                     if (caption == "Icon-Play")
                     {
                         Program.form.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
+                        });
+                    }
+                    if (caption == "Icon-Shuffle")
+                    {
+                        // <update id="status">  < icon id = "shuffle" >  empty  |  shuffle  </ icon >  </ update >
+                        bool shuffle = Tools.Normalize(e) == "shuffle";
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            Program.form.pictureBoxShuffle.Visible = shuffle;
+                        });
+                    }
+                    if (caption == "Icon-Repeat")
+                    {
+                        // <update id="status"> < icon id = "repeat" > empty  |  repeat </ icon >  </ update >
+                        // <update id="status"> < icon id = "repeat" text = "all" > repeat </ icon >  </ update >
+                        bool repeat = Tools.Normalize(e) == "repeat";
+                        bool all = false;                                   
+                        if (e.Element("icon") != null && e.Element("icon").Attribute("text") != null && e.Element("icon").Attribute("text").Value == "all") all = true;
+                        if (e.Attribute("text") != null && e.Attribute("text").Value == "all") all = true;  //   <icon id="repeat" text="all">repeat</icon> 
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            if (all) Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.RepeatAll;
+                            else Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.Repeat;
+                            Program.form.pictureBoxRepeat.Visible = repeat;
                         });
                     }
                     else if (caption == "CloseStreamAndReturn")  // stream closed due to "Nicht verfÃ¼gbar"
@@ -481,18 +509,29 @@ namespace iRadio
                         Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
                     break;
+                case Lines.Status:
+                    if (caption == "Date")
+                    {
+                        // date is always 0
+                    }
+                    else
+                    {
+                        Program.form.Invoke((MethodInvoker)delegate {
+                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.ListImg;
+                            Program.form.toolStripStatusLabel1.Text = caption;
+                        });
+                    }
+                    break;
+                case Lines.Busy:
+                    Cursor c = Cursors.Default;
+                    int busy = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
+                    if (busy == 1) c = Cursors.WaitCursor;
+                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                        Cursor.Current = c;
+                    });
+                    break;
 
                 default:
-                    //                    Show.Line("Welcome", Lines.Icon, el);   //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>
-                    //                    Show.Line("Title", Lines.Title, e);        // 1
-                    //                    Show.Line("Artist", Lines.Artist, el);     // 2 = line0
-                    //                    Show.Line("Album", Lines.Album, el);       // 3
-                    //                    Show.Line("Track", Lines.Track, el);       // 4
-                    //                    Show.Line("Date", Lines.Status, el);
-                    //                    Show.Line(caption, Lines.Status, el);
-                    //                    Show.Line("Icon-Shuffle", Lines.Icon, el);
-                    //                    Show.Line("Icon-Repeat", Lines.Icon, el);
-                    //                    Show.Line("Busy=", Lines.Busy, el);
                     break;
             }
             
@@ -520,14 +559,14 @@ namespace iRadio
             if (e.Name == "icon" && e.Attribute("id").Value == "play")
             {
                 if (e.Value == "play") statusImage = iRadio.Properties.Resources.play;
-                if (e.Value == "empty") statusImage = iRadio.Properties.Resources.iRadio;
+                if (e.Value == "empty") statusImage = iRadio.Properties.Resources.Antenna;
             }
             if ((e.Name == "view" || e.Name == "update") && e.Attribute("id").Value == "welcome")
             {
                 statusImage = iRadio.Properties.Resources.hand;
             }
             Program.form.Invoke((MethodInvoker)delegate {
-                Program.form.toolStripStatusLabel1.Text = Tools.Normalize(e);
+                Program.form.toolStripStatusLabel1.Text = "\t" + Tools.Normalize(e);
                 Program.form.toolStripStatusLabel1.Image = statusImage;
             });
         }
