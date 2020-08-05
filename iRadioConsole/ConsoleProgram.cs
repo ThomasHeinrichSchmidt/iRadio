@@ -320,9 +320,7 @@ namespace iRadio
                             XElement el;
                             try
                             {
-                                // private static System.Threading.CancellationToken cancellationToken;
-                                // Task<XNode> t = XNode.ReadFromAsync(reader, cancellationToken);  // need to port project to .NET Core, https://docs.microsoft.com/de-de/dotnet/core/porting/
-                                el = XElement.ReadFrom(reader) as XElement;  // ToDo: can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
+                                el = XElement.ReadFrom(reader) as XElement;  // can ReadFrom() forever, if iRadio = "Nicht verfügbar" or "NOXON"
                             }
                             catch
                             {

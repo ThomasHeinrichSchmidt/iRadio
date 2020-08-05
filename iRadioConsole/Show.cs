@@ -16,6 +16,8 @@ namespace iRadio
 
         public static string lastBrowsedTitle = "";
         public static string[] lastBrowsedLines = new string[Noxon.ListLines];
+        public static Fav.flag[] lastBrowsedFlags = new Fav.flag[Noxon.ListLines];
+
         public void Header()
         {
             Console.Clear();

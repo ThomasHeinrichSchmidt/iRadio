@@ -507,13 +507,20 @@ namespace iRadio
                             if (el.Element("text") != null && el.Element("text").Attribute("id").Value == "scrid")
                             {
                                 Show.Msg(el, Lines.line0);
-                                XElement elem = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg">  < text id = "scrid" > 82 </ text >    < text id = "line0" > Nicht verfÃ¼gbar </ text >
-                                if (elem != null)
+                                XElement elemline0 = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line0").FirstOrDefault();  // == null || <view id="msg"> <text id = "scrid" > 82 </text>  <text id="line0"> Nicht verfÃ¼gbar  </text >
+                                XElement elemline1 = el.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line1").FirstOrDefault();  // == null || <view id="msg"> <text id = "scrid" >101 </text>  <text id="line0"> Favoriten </text> <text id="line1">---- leer ----</text>
+                                if (elemline0 != null)
                                 {
-                                    if (elem.Value == iRadioConsole.Properties.Resources.NoxonMessageToCloseStream)
+                                    if (elemline0.Value == iRadioConsole.Properties.Resources.NoxonMessageToCloseStream)
                                     {
                                         Show.Line("CloseStream", Lines.Icon, el);  // close stream if "Nicht verfÃ¼gbar"
                                         return;  
+                                    }
+                                    if (elemline0.Value == iRadioConsole.Properties.Resources.NoxonTitleFavorites && elemline1 != null &&
+                                        elemline1.Value == iRadioConsole.Properties.Resources.NoxonFavoritesEmpty)
+                                    {
+                                        Show.Line("CloseStream", Lines.Icon, el);  // close stream if "Favoriten ---- leer ----"
+                                        return;
                                     }
                                 }
                             }
@@ -569,9 +576,28 @@ namespace iRadio
         public string Desc { get; set; }
     }
 
+    public class Fav
+    {
+#pragma warning disable IDE1006 // Naming Styles, allow for similar casing of members
+        public enum flag { Nothing = 0, Folder = 1, Song = 2, Songs = 3 };
+#pragma warning restore IDE1006 // Naming Styles
+        private readonly string[] flaglabel = new string[] { "", "📁", "♪", "♪♪" };   //  d -  folder 📁,  p -  song  ♪
+        public Fav(string title, flag flag = flag.Nothing)
+        {
+            Title = title;
+            Flag = flag;
+        }
+        public string Title { get; set; }
+        public flag Flag { get; set; }
+        public override string ToString()
+        {
+            return String.Format("{0} | {1}", Title, flaglabel[(int)Flag]);
+        }
+    }
+
     public static class Favorites
     {
-        private static readonly System.Collections.Specialized.StringCollection list = new System.Collections.Specialized.StringCollection();
+        private static readonly List<Fav> favlist = new List<Fav>();
         public static bool Get()
         {
             Noxon.ResetListMinMax();
@@ -579,14 +605,14 @@ namespace iRadio
             while (mf.Step()) ;
             if (Noxon.GetListMinMax(out int min, out int max) && Show.lastBrowsedTitle == iRadioConsole.Properties.Resources.NoxonTitleFavorites)
             {
-                list.Clear();
+                favlist.Clear();
                 int entries = max - min + 1;
                 for (int i = 0; i < Math.Min(Noxon.ListLines, entries); i++)    // first 4 (or less) 
                 {
                     if (Show.lastBrowsedLines[i] != "")
                     {
-                        list.Add(Show.lastBrowsedLines[i]);
-                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list[list.Count-1]);
+                        favlist.Add(new Fav(Show.lastBrowsedLines[i], Show.lastBrowsedFlags[i]));
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): fav list[{0}] = {1}", favlist.Count, favlist[favlist.Count-1]);
                     }
                 }
                 if (entries > 4)
@@ -597,8 +623,8 @@ namespace iRadio
                     {
                         Macro md = new iRadio.Macro("Favorites.Get.D", new string[] { "D" });
                         while (md.Step()) ;
-                        list.Add(Show.lastBrowsedLines[3]);
-                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): list[{0}] = {1}", list.Count, list[list.Count - 1]);
+                        favlist.Add(new Fav(Show.lastBrowsedLines[3], Show.lastBrowsedFlags[3]));
+                        System.Diagnostics.Debug.WriteLine("Favorites.Get(): fav list[{0}] = {1}", favlist.Count, favlist[favlist.Count - 1]);
                     }
                 }
                 Macro mh = new iRadio.Macro("Favorites.Get.D", new string[] { "H"}); // home again
@@ -609,6 +635,11 @@ namespace iRadio
 
         public static System.Collections.Specialized.StringCollection List()
         {
+            System.Collections.Specialized.StringCollection list = new System.Collections.Specialized.StringCollection();
+            foreach (Fav f in favlist)
+            {
+                list.Add(f.ToString());
+            }
             if (list.Count > 0) return list;
             else return null;
         }

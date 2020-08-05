@@ -61,6 +61,15 @@ namespace iRadioConsole.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ---- leer ----.
+        /// </summary>
+        internal static string NoxonFavoritesEmpty {
+            get {
+                return ResourceManager.GetString("NoxonFavoritesEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 192.168.2.99.
         /// </summary>
         internal static string NoxonIP {

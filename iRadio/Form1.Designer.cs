@@ -50,6 +50,9 @@
             this.pictureBoxNext = new System.Windows.Forms.PictureBox();
             this.pictureBoxAllDirections = new System.Windows.Forms.PictureBox();
             this.trackBarVolume = new System.Windows.Forms.TrackBar();
+            this.listBoxFavs = new System.Windows.Forms.ListBox();
+            this.labelFavs = new System.Windows.Forms.Label();
+            this.pictureBoxRefresh = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -61,6 +64,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNext)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
@@ -209,7 +213,7 @@
             // textBox1
             // 
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(313, 43);
+            this.textBox1.Location = new System.Drawing.Point(311, 39);
             this.textBox1.MaxLength = 10;
             this.textBox1.Name = "textBox1";
             this.textBox1.PlaceholderText = "Search ...";
@@ -289,11 +293,46 @@
             this.trackBarVolume.TabIndex = 11;
             this.trackBarVolume.TickFrequency = 10;
             // 
+            // listBoxFavs
+            // 
+            this.listBoxFavs.FormattingEnabled = true;
+            this.listBoxFavs.ItemHeight = 15;
+            this.listBoxFavs.Location = new System.Drawing.Point(33, 221);
+            this.listBoxFavs.Name = "listBoxFavs";
+            this.listBoxFavs.Size = new System.Drawing.Size(733, 154);
+            this.listBoxFavs.TabIndex = 12;
+            // 
+            // labelFavs
+            // 
+            this.labelFavs.AutoSize = true;
+            this.labelFavs.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.labelFavs.Location = new System.Drawing.Point(33, 197);
+            this.labelFavs.Name = "labelFavs";
+            this.labelFavs.Size = new System.Drawing.Size(79, 21);
+            this.labelFavs.TabIndex = 8;
+            this.labelFavs.Text = "Favorites";
+            // 
+            // pictureBoxRefresh
+            // 
+            this.pictureBoxRefresh.ErrorImage = null;
+            this.pictureBoxRefresh.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRefresh.Image")));
+            this.pictureBoxRefresh.InitialImage = null;
+            this.pictureBoxRefresh.Location = new System.Drawing.Point(123, 197);
+            this.pictureBoxRefresh.Name = "pictureBoxRefresh";
+            this.pictureBoxRefresh.Size = new System.Drawing.Size(25, 25);
+            this.pictureBoxRefresh.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxRefresh.TabIndex = 5;
+            this.pictureBoxRefresh.TabStop = false;
+            this.pictureBoxRefresh.Click += new System.EventHandler(this.PictureBoxRefresh_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.pictureBoxRefresh);
+            this.Controls.Add(this.labelFavs);
+            this.Controls.Add(this.listBoxFavs);
             this.Controls.Add(this.trackBarVolume);
             this.Controls.Add(this.pictureBoxAllDirections);
             this.Controls.Add(this.pictureBoxNext);
@@ -329,6 +368,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNext)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -355,6 +395,9 @@
         public System.Windows.Forms.PictureBox pictureBoxNext;
         public System.Windows.Forms.PictureBox pictureBoxAllDirections;
         public System.Windows.Forms.TrackBar trackBarVolume;
+        private System.Windows.Forms.Label labelFavs;
+        public System.Windows.Forms.ListBox listBoxFavs;
+        private System.Windows.Forms.PictureBox pictureBoxRefresh;
     }
 }
 

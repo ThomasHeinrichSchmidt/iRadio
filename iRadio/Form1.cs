@@ -3,17 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows.Forms;
-using System.Xml;
 using System.Xml.Linq;
 
 
@@ -59,6 +55,10 @@ namespace iRadio
             }
 
             Program.form.trackBarVolume.Value = Settings.Default.Volume;
+            foreach (string entry in Properties.Settings.Default.FavoritesList)
+            {
+                Program.form.listBoxFavs.Items.Add(entry);
+            }
             StreamWriter nonParsedElementsWriter, parsedElementsWriter;
             TextWriter stdOut = Console.Out;
             Console.WriteLine("Console.WriteLine()");
@@ -130,10 +130,11 @@ namespace iRadio
             if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
             if (e.KeyCode == Keys.Home) command = 'H';
             if (e.KeyCode == Keys.F1) {
-                Task<bool> get = Task.Run(() => Favorites.Get()); 
-                await get;
-                Properties.Settings.Default.FavoritesList = Favorites.List();
-                return;
+                command = ' ';
+                //Task<bool> get = Task.Run(() => Favorites.Get()); 
+                //await get;
+                //Properties.Settings.Default.FavoritesList = Favorites.List();
+                //return;
             }
             if (command == ' ' && isLetterOrDigit)
             {
@@ -203,417 +204,21 @@ namespace iRadio
                 Noxon.textEntry = false;
             }
         }
-    }
-    public static class NoxonAsync
-    {
-        public async static Task<int> CommandAsync(this NetworkStream netStream, char commandkey)
+
+        private async void PictureBoxRefresh_Click(object sender, EventArgs e)
         {
-            try
+            Task<bool> get = Task.Run(() => Favorites.Get());
+            await get;
+            if (Favorites.List() != null)
             {
-                if (netStream.CanWrite && Noxon.Commands.ContainsKey(commandkey))
+                Properties.Settings.Default.FavoritesList = Favorites.List();
+                Program.form.listBoxFavs.Items.Clear();
+                foreach (string entry in Properties.Settings.Default.FavoritesList)
                 {
-                    System.Diagnostics.Debug.WriteLine("\t\tTransmit CommandAsync('{0}'): ASC({1} --> 0x{2})", commandkey, Noxon.Commands[commandkey].Key, BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key)));
-                    await netStream.WriteAsync(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key), 0, sizeof(int));
-                    return 0;
-                }
-                else
-                {
-                    return -1;
+                    Program.form.listBoxFavs.Items.Add(entry);
                 }
             }
-            catch (System.IO.IOException e)
-            {
-                System.Diagnostics.Debug.WriteLine("\t\tTransmit CommandAsync() failed ({0})", e.Message);
-                Noxon.Close();
-                Task<bool> isOPen = Noxon.OpenAsync();
-                await isOPen;
-                if (netStream != null && netStream.CanWrite) await netStream.WriteAsync(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key), 0, sizeof(int));
-                return 0;
-            }
-            catch
-            {
-                return -1;
-            }
-        }
-        public async static Task<int> StringAsync(this NetworkStream netStream, string str)
-        {
-            MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
-            foreach (MultiPressCommand m in mpc)
-            {
-                for (int i = 0; i < m.Times; i++)
-                {
-                    await netStream.CommandAsync(Convert.ToChar(48 + m.Digit));
-                    Thread.Sleep(Noxon.MultiPressDelayForSameKey);
-                }
-                Thread.Sleep(Noxon.MultiPressDelayForNextKey);
-            }
-            return 0;
-        }
-
-
-        private static XmlReader reader;
-
-        public static IEnumerable<XElement> StreamiRadioNet(ITestableNetworkStream netStream)
-        {
-            var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false, Async = true };
-            XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            CancellationTokenSource cancellation = new CancellationTokenSource();
-            System.Timers.Timer timeoutTimer = new System.Timers.Timer(10000);        // check if ReadFrom(reader) times out
-            timeoutTimer.Elapsed += (sender, e) => ParseTimeout(sender, e, cancellation);
-
-            using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---
-            {
-                while (true)
-                {
-                    while (!reader.EOF)
-                    {
-                        if (reader.NodeType == XmlNodeType.Element)
-                        {
-                            XElement el;
-                            TaskStatus tstat = TaskStatus.Created;
-                            AggregateException tex = null;
-
-                            try
-                            {
-                                if (!FormShow.Browsing) timeoutTimer.Start();
-                                //  https://docs.microsoft.com/de-de/dotnet/core/porting/
-                                Task<XNode> t = XNode.ReadFromAsync(reader, cancellation.Token); 
-                                el = t.Result as XElement;  // ToDo: if iRadio = "Nicht verfügbar" or "NOXON" ==> ReadFromAsync() is canceled (OK!) but does not resume normal reading
-                                tstat = t.Status;           // also: no more data received if <browse> menu
-                                tex = t.Exception;
-                                if (!FormShow.Browsing) timeoutTimer.Stop();
-                            }
-                            catch (Exception ex)
-                            {
-                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + "=" + tex?.Message);
-                            }
-                            if (el != null)
-                                yield return el;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                reader.Read();
-                            }
-                            catch
-                            {
-                                // continue
-                            }
-                        }
-                    }
-                }
-            }
-            // cancellation.Dispose();
-        }
-        private static void ParseTimeout(object sender, ElapsedEventArgs e, CancellationTokenSource cancellation)
-        {
-            sender.ToString();
-            e.ToString();
-            cancellation.Cancel();
-        }
-    }
-
-    public class FormShow : IShow
-    {
-        private static bool browsing = false;
-        private static bool searchingPossible = false;
-        public static int selectedIndex = -1;
-
-        public static bool Browsing { 
-            get => browsing;
-            set
-            {
-                browsing = value;
-                Program.form.Invoke((MethodInvoker)delegate
-                {
-                    Program.form.textBox1.Enabled = browsing && FormShow.SearchingPossible;
-                    Program.form.textBox1.Visible = browsing && FormShow.SearchingPossible;
-                    Noxon.textEntry = browsing && FormShow.SearchingPossible;
-                    Program.form.button1.Enabled = ! (browsing && FormShow.SearchingPossible);
-                });
-            }
-        }
-
-        public static bool SearchingPossible { 
-            get => searchingPossible; 
-            set
-            { 
-                searchingPossible = value;
-                if (Program.form.labelTitle.Text == "NOXON") searchingPossible = false;
-            }
-        }
-
-        public void Browse(XElement e, Lines line0, bool searchingPossible)
-        {
-            XElement elem;   // loop <text id="line0"> ...  <text id="line3">
-            if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
-            {
-                Show.lastBrowsedTitle = Tools.Normalize(elem);
-                Program.form.progressWifi.Invoke((MethodInvoker)delegate {
-                    Program.form.labelTitle.Text = Tools.Normalize(elem);
-                });
-            }
-            FormShow.SearchingPossible = searchingPossible;
-            Browsing = true;
-
-            bool clearnotusedlines = false;
-            if ((e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "scrid").FirstOrDefault()) != null)
-            {
-                // <view id="browse">
-                //  < view id = "browse" >
-                //  < text id = "scrid" > 102.2 </ text >
-                //  < text id = "cbid" > 3 </ text >
-                // ...
-                clearnotusedlines = true;   // only clear not used lines if this is a complete "screen", not a later "update" to it
-            }
-            bool[] printline = new bool[Noxon.ListLines];
-            for (int i = 0; i < Noxon.ListLines; i++)
-            {
-                if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
-                {
-                    printline[i] = true;
-                    // Console.CursorTop = (int)line0 + i;
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
-                    });
-                    // flags:
-                    //  d -  folder 📁
-                    //  ds - folder 📁
-                    //  p -  song   ♪
-                    //  ps - song   ♪ ♪
-                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ds")   //  <text id="line0" flag="ds">History</text>
-                    {
-                        selectedIndex = i;
-                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                            Program.form.listBoxDisplay.SelectedIndex = i;
-                        });
-                    }
-                    if (elem.Attribute("flag") != null && elem.Attribute("flag").Value == "ps")   //    <text id="line0" flag="ps">Radio Efimera</text>
-                    {
-                        selectedIndex = i;
-                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                            Program.form.listBoxDisplay.SelectedIndex = i;
-                        });
-                    }
-                    Show.lastBrowsedLines[i] = Tools.Normalize(elem);
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Program.form.listBoxDisplay.Items[i] = Tools.Normalize(elem);
-                    });
-                }
-            }
-            if (clearnotusedlines)
-            {
-                for (int i = 0; i < Noxon.ListLines; i++)
-                {
-                    if (!printline[i])
-                    {
-                        Show.lastBrowsedLines[i] = "";
-                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                            Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
-                        });
-                    }
-                }
-            }
-        }
-        public void Header()
-        {
-        }
-
-        public async void Line(string caption, Lines line, XElement e, bool continueBrowsing = false)
-        {
-            if (!continueBrowsing)
-            {
-                Browsing = false;
-                FormShow.selectedIndex = -1;
-            }
-            Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                Program.form.listBoxDisplay.SelectedIndex = -1;
-            });
-            switch (line)
-            {
-                case Lines.Title:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
-                        Program.form.labelTitle.Text = Tools.Normalize(e);
-                    });
-                    break;
-                case Lines.WiFi:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
-                        Program.form.progressWifi.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
-                    });
-                    break;
-                case Lines.Buffer:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
-                        Program.form.progressBuffer.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
-                    });
-                    break;
-                case Lines.Icon:
-                    if (caption == "Welcome")
-                    {
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
-                        });
-                    }
-                    if (caption == "Icon-Play")
-                    {
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
-                        });
-                    }
-                    if (caption == "Icon-Shuffle")
-                    {
-                        // <update id="status">  < icon id = "shuffle" >  empty  |  shuffle  </ icon >  </ update >
-                        bool shuffle = Tools.Normalize(e) == "shuffle";
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Program.form.pictureBoxShuffle.Visible = shuffle;
-                        });
-                    }
-                    if (caption == "Icon-Repeat")
-                    {
-                        // <update id="status"> < icon id = "repeat" > empty  |  repeat </ icon >  </ update >
-                        // <update id="status"> < icon id = "repeat" text = "all" > repeat </ icon >  </ update >
-                        bool repeat = Tools.Normalize(e) == "repeat";
-                        bool all = false;                                   
-                        if (e.Element("icon") != null && e.Element("icon").Attribute("text") != null && e.Element("icon").Attribute("text").Value == "all") all = true;
-                        if (e.Attribute("text") != null && e.Attribute("text").Value == "all") all = true;  //   <icon id="repeat" text="all">repeat</icon> 
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            if (all) Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.RepeatAll;
-                            else Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.Repeat;
-                            Program.form.pictureBoxRepeat.Visible = repeat;
-                        });
-                    }
-                    else if (caption == "CloseStreamAndReturn")  // stream closed due to "Nicht verfÃ¼gbar"
-                    {
-                        await Noxon.netStream.GetNetworkStream().CommandAsync('L');
-                    }
-                    else if (caption == "CloseStream")  
-                    {
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
-                        });
-                    }
-                    break;
-                case Lines.Artist:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Program.form.listBoxDisplay.Items[0] = Tools.Normalize(e);
-                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
-                    });
-                    break;
-                case Lines.Album:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Program.form.listBoxDisplay.Items[1] = Tools.Normalize(e);
-                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
-                    });
-                    break;
-                case Lines.Track:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Program.form.listBoxDisplay.Items[2] = Tools.Normalize(e);
-                        Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
-                    });
-                    break;
-                case Lines.Status:
-                    if (caption == "Date")
-                    {
-                        // date is always 0
-                    }
-                    else if (caption == "Volume")
-                    {
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Settings.Default.Volume = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
-                            Program.form.trackBarVolume.Enabled = true;
-                            Program.form.trackBarVolume.Value = Settings.Default.Volume;
-                        });
-
-                    }
-                    else
-                    {
-                        Program.form.Invoke((MethodInvoker)delegate {
-                            Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.ListImg;
-                            Program.form.toolStripStatusLabel1.Text = caption;
-                        });
-                    }
-                    break;
-                case Lines.Busy:
-                    Cursor c = Cursors.Default;
-                    int busy = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
-                    if (busy == 1) c = Cursors.WaitCursor;
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                        Cursor.Current = c;
-                    });
-                    break;
-
-                default:
-                    break;
-            }
-            
-        }
-        public void Msg(XElement e, Lines line0)
-        {
-        }
-        public void PlayingTime(XElement el, Lines line)
-        {
-            Browsing = false;
-            if (line == Lines.PlayingTime)
-            {
-                int s = int.TryParse(Tools.Normalize(el), out int result) ? result : 0;
-                int h = s / (60 * 60);
-                int m = s / 60 - h * 60;
-                string hms = s < 60 * 60 ? String.Format("{0:00}:{1:00}", s / 60, s % 60) : String.Format("{0:00}:{1:00}:{2:00}", h, m, s % 60);
-                Program.form.labelPlaying.Invoke((MethodInvoker)delegate {
-                    Program.form.labelPlaying.Text = hms;
-                });
-            }
-        }
-        public void Status(XElement e, Lines line)
-        {
-            Image statusImage = iRadio.Properties.Resources.hourglass;
-            if (e.Name == "icon" && e.Attribute("id").Value == "play")
-            {
-                if (e.Value == "play") statusImage = iRadio.Properties.Resources.play;
-                if (e.Value == "empty") statusImage = iRadio.Properties.Resources.Antenna;
-            }
-            if ((e.Name == "view" || e.Name == "update") && e.Attribute("id").Value == "welcome")
-            {
-                statusImage = iRadio.Properties.Resources.hand;
-            }
-            Program.form.Invoke((MethodInvoker)delegate {
-                Program.form.toolStripStatusLabel1.Text = "\t" + Tools.Normalize(e);
-                Program.form.toolStripStatusLabel1.Image = statusImage;
-            });
-        }
-        public void Log(System.IO.StreamWriter parsedElementsWriter, System.IO.TextWriter stdOut, XElement el)
-        {
-            try
-            {
-                if (Program.formLogging != null && !Program.form.Disposing)
-                {
-                    Program.form.Invoke((MethodInvoker)delegate
-                    {
-                        if (Program.formLogging.listBox1.Items.Count < 100)  // Running on the UI thread
-                    {
-                            Program.formLogging.listBox1.Items.Add(el.ToString());
-                        }
-                        else
-                        {
-                            for (int i = 0; i < Program.formLogging.listBox1.Items.Count - 1; i++) Program.formLogging.listBox1.Items[i] = Program.formLogging.listBox1.Items[i + 1];
-                            Program.formLogging.listBox1.Items[^1] = el.ToString();
-                        }
-                        Program.formLogging.listBox1.SelectedIndex = Program.formLogging.listBox1.Items.Count - 1;
-                    });
-                }
-            }
-            catch (Exception e) {
-                System.Diagnostics.Debug.WriteLine("Program.form.Invoke failed ({0})", e.Message);
-            }
-
-            if (parsedElementsWriter != null && stdOut != null && el != null)
-            {
-                Console.SetOut(parsedElementsWriter); // re-direct
-                if (Properties.Settings.Default.LogTimestamps) Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
-                else Console.WriteLine("{0}", el.ToString());
-                Console.SetOut(stdOut); // stop re-direct
-                parsedElementsWriter.Flush();
-            }
+            return;
         }
     }
 }
