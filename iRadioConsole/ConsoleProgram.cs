@@ -11,7 +11,6 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: F1 - F10 Favoriten #1 - #10
     // TODO: show seperate window with remote control and clickable keys
     // TODO: make form sizable (correctly dock elements)
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
@@ -27,6 +26,7 @@ namespace iRadio
     // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
+    // DONE: F1 - F9 Favoriten #1 - #9, store new shortcut preset by Ctrl+Click
     // DONE: add radio hardware keys (stop, play, ...)
     // DONE: Favorites dialog (show, double click to play), class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list
     // DONE: avoid to freeze on XElement.ReadFrom(reader) if iRadio does not transmit any more - timeoutTimer.Start() only if "Nicht verfÃ¼gbar", ... ("browse" OK!)

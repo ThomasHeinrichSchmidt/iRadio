@@ -22,7 +22,7 @@ namespace iRadioConsole.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace iRadioConsole.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("iRadioConsole.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace iRadioConsole.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace iRadioConsole.Properties {
         /// <summary>
         ///   Looks up a localized string similar to ---- leer ----.
         /// </summary>
-        internal static string NoxonFavoritesEmpty {
+        public static string NoxonFavoritesEmpty {
             get {
                 return ResourceManager.GetString("NoxonFavoritesEmpty", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace iRadioConsole.Properties {
         /// <summary>
         ///   Looks up a localized string similar to 192.168.2.99.
         /// </summary>
-        internal static string NoxonIP {
+        public static string NoxonIP {
             get {
                 return ResourceManager.GetString("NoxonIP", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace iRadioConsole.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Nicht verfÃ¼gbar.
         /// </summary>
-        internal static string NoxonMessageToCloseStream {
+        public static string NoxonMessageToCloseStream {
             get {
                 return ResourceManager.GetString("NoxonMessageToCloseStream", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace iRadioConsole.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Favoriten.
         /// </summary>
-        internal static string NoxonTitleFavorites {
+        public static string NoxonTitleFavorites {
             get {
                 return ResourceManager.GetString("NoxonTitleFavorites", resourceCulture);
             }

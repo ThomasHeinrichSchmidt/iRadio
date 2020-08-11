@@ -30,16 +30,6 @@ namespace iRadio
             }
         }
 
-        private async void Button1_Click(object sender, EventArgs e)
-        {
-            if (Noxon.netStream != null)
-            {
-                Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync('1');
-                await ret;
-                toolTip1.Show(Noxon.currentArtist, button1);
-            }
-        }
-
         readonly System.Timers.Timer focusTimer = new System.Timers.Timer(5000);        // reset focus to listBoxDisplay
 
         private async void Form1_Load(object sender, EventArgs e)
@@ -49,7 +39,7 @@ namespace iRadio
             try
             {
                 await isOpen;
-                button1.Enabled = isOpen.Result;
+                for (int i = 1; i <= 9; i++) ((Button)this.Controls["button" + i.ToString()]).Enabled = isOpen.Result;  // enable buttons1..9
                 Program.formLogging.Text = "NOXON iRadio - " + Noxon.IP.ToString() + ":10100";
             }
             catch (SocketException exs)
@@ -144,10 +134,15 @@ namespace iRadio
             if (e.KeyCode == Keys.Up) command = 'U';
             if (e.KeyCode == Keys.Down) command = 'D';
             if (e.KeyCode == Keys.VolumeUp) command = '+';
+            if (e.KeyCode == Keys.Oemplus) { command = '+'; }
             if (e.KeyCode == Keys.VolumeDown) command = '-';
+            if (e.KeyCode == Keys.OemMinus) { command = '-'; }
             if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
             if (e.KeyCode == Keys.Home) command = 'H';
             if (e.KeyCode == Keys.F1) { command = ' '; }
+            if (e.KeyCode == Keys.Multiply) { command = '*'; }
+            if (e.KeyCode == Keys.PageDown) { command = '>'; }
+            if (e.KeyCode == Keys.PageUp) { command = '<'; }
             if (command == ' ' && isLetterOrDigit)
             {
                 KeysConverter kc = new KeysConverter();
@@ -166,6 +161,34 @@ namespace iRadio
         {
             if (Program.formLogging == null) Program.formLogging = new FormLogging();
             Program.formLogging.Show();
+        }
+
+        private async void Button1_Click(object sender, EventArgs e)
+        {
+            if (sender is Button b)
+            {
+                char command = b.Name.Last();  // button1, ... button9 
+                if (Noxon.netStream != null && ('1' <= command && command <= '9'))
+                {
+                    Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
+                    await ret;
+                    toolTip1.Show(Noxon.currentArtist, b);
+                }
+            }
+        }
+        private async void Button1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (sender is Button b && Control.ModifierKeys == Keys.Control)
+            {
+                char shortcut = b.Name.Last();  // button1, ... button9 
+                if (Noxon.netStream != null && ('1' <= shortcut && shortcut <= '9'))
+                {
+                    Macro m = new iRadio.Macro("Button1_MouseClick", new string[] { "C", shortcut.ToString() }); // (C)hannnel + key 0..9 to store new preset
+                    await Task.Run(() => m.Execute());
+                    toolTip1.Show(Noxon.currentArtist, b);
+                }
+            }
+
         }
 
         private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
@@ -346,6 +369,11 @@ namespace iRadio
             //............ .......@@@..................     }
             // 50  
             // Y
+        }
+
+        private async void PictureBoxShuffle_Click(object sender, EventArgs e)
+        {
+            await Noxon.netStream.GetNetworkStream().CommandAsync('X'); // toggle shuffle
         }
     }
 }                                                                            
