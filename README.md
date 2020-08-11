@@ -1,5 +1,6 @@
 # iRadio
 NOXON iRadio remote control including display 
+![iRadio screenshot](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Resources/NOXONiRadioScreenshot.png?raw=true)
 
 Preliminary version (pre-alpha)
 
