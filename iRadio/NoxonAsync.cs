@@ -17,7 +17,6 @@ namespace iRadio
         static int round = 0;
         public static async Task<bool> OpenAsync()
         {
-            NoxonAsync.timeoutTimer.Enabled = false;
             if (Noxon.tcpClient != null)
             {
                 Noxon.tcpClient.Close();
@@ -91,20 +90,18 @@ namespace iRadio
 
 
         private static XmlReader reader;
-        public static CancellationTokenSource cancellation = new CancellationTokenSource();
-        public static System.Timers.Timer timeoutTimer = new System.Timers.Timer(5000);        // check if ReadFrom(reader) times out
 
         public static IEnumerable<XElement> StreamiRadioNet(ITestableNetworkStream netStream)
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false, Async = true };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            System.Timers.Timer timeoutTimer = new System.Timers.Timer(10000);        // check if ReadFrom(reader) times out
             timeoutTimer.Elapsed += (sender, e) => ParseTimeout(sender, e, cancellation);
-            timeoutTimer.Enabled = true;
 
             using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---
             {
-                bool canceled = false;
-                while (!canceled)
+                while (true)
                 {
                     while (!reader.EOF)
                     {
@@ -124,36 +121,22 @@ namespace iRadio
                                 tex = t.Exception;
                                 if (!FormShow.Browsing) timeoutTimer.Stop();
                             }
-                            catch (AggregateException aex)
-                            {
-                                System.Diagnostics.Debug.WriteLine("StreamiRadioNet(): catched AggregateException, netStream = {0}", netStream.GetHashCode());
-                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails" + aex.Message);
-                                timeoutTimer.Stop();
-                            }
                             catch (Exception ex)
                             {
-                                el = new XElement("AbortStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + " " + tex?.Message);
-                                timeoutTimer.Stop();
+                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + "=" + tex?.Message);
                             }
                             if (el != null)
                                 yield return el;
                         }
                         else
                         {
-                            XElement el = null;
                             try
                             {
                                 reader.Read();
                             }
-                            catch (Exception ex)
+                            catch
                             {
-                                el = new XElement("AbortStream", "FormStreamiRadioExceptionReaderFails" + ex.Message);
-                            }
-                            if (el != null)
-                            {
-                                canceled = true;
-                                break;
-                                // yield return el;
+                                // continue
                             }
                         }
                     }
@@ -164,7 +147,6 @@ namespace iRadio
         private static void ParseTimeout(object sender, ElapsedEventArgs e, CancellationTokenSource cancellation)
         {
             System.Diagnostics.Debug.WriteLine("ParseTimeout: request cancellation.Cancel(), sender = {0}, raised at {1}", sender.GetHashCode(), e.SignalTime);
-            timeoutTimer.Stop();
             cancellation.Cancel();
         }
     }

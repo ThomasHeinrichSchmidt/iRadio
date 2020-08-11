@@ -212,10 +212,10 @@ namespace iRadio
             return;
         }
 
-        private async void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
+        private void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("ListBoxDisplay_DoubleClick: request cancellation.Cancel()");
-            await Task.Run(() => NoxonAsync.cancellation.Cancel());
+            // await Task.Run(() => NoxonAsync.cancellation.Cancel());
         }
 
         private async void ListBoxFavs_MouseDoubleClick(object sender, MouseEventArgs e)
