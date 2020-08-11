@@ -95,8 +95,8 @@ namespace iRadio
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false, Async = true };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            CancellationTokenSource cancellation = new CancellationTokenSource();
-            System.Timers.Timer timeoutTimer = new System.Timers.Timer(10000);        // check if ReadFrom(reader) times out
+            CancellationTokenSource cancellation = new CancellationTokenSource();    // must not be (static) class variable 
+            System.Timers.Timer timeoutTimer = new System.Timers.Timer(5000);        // check if ReadFrom(reader) times out
             timeoutTimer.Elapsed += (sender, e) => ParseTimeout(sender, e, cancellation);
 
             using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---

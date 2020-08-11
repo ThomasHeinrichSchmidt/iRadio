@@ -27,7 +27,7 @@ namespace iRadio
                     Noxon.textEntry = browsing && FormShow.SearchingPossible;
                     Program.form.button1.Enabled = ! (browsing && FormShow.SearchingPossible);
                 });
-                System.Diagnostics.Debug.WriteLine("FormShow.Browsing := {0}", browsing);
+                // System.Diagnostics.Debug.WriteLine("FormShow.Browsing := {0}", browsing);
             }
         }
 
@@ -189,7 +189,7 @@ namespace iRadio
                     }
                     else if (caption == "CloseStreamAndReturn")  // stream closed due to "Nicht verfÃ¼gbar"
                     {
-                        await Noxon.netStream.GetNetworkStream().CommandAsync('L');
+                        await Noxon.netStream?.GetNetworkStream().CommandAsync('L');
                     }
                     else if (caption == "CloseStream")  
                     {

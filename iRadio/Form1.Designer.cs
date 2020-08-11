@@ -53,6 +53,7 @@
             this.listBoxFavs = new System.Windows.Forms.ListBox();
             this.labelFavs = new System.Windows.Forms.Label();
             this.pictureBoxRefresh = new System.Windows.Forms.PictureBox();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -235,6 +236,7 @@
             this.pictureBoxStop.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxStop.TabIndex = 5;
             this.pictureBoxStop.TabStop = false;
+            this.pictureBoxStop.Click += new System.EventHandler(this.PictureBoxStop_Click);
             // 
             // pictureBoxPrevious
             // 
@@ -247,6 +249,7 @@
             this.pictureBoxPrevious.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxPrevious.TabIndex = 5;
             this.pictureBoxPrevious.TabStop = false;
+            this.pictureBoxPrevious.Click += new System.EventHandler(this.PictureBoxPrevious_Click);
             // 
             // pictureBoxPlayPause
             // 
@@ -259,6 +262,7 @@
             this.pictureBoxPlayPause.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxPlayPause.TabIndex = 5;
             this.pictureBoxPlayPause.TabStop = false;
+            this.pictureBoxPlayPause.Click += new System.EventHandler(this.PictureBoxPlayPause_Click);
             // 
             // pictureBoxNext
             // 
@@ -271,6 +275,7 @@
             this.pictureBoxNext.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxNext.TabIndex = 5;
             this.pictureBoxNext.TabStop = false;
+            this.pictureBoxNext.Click += new System.EventHandler(this.PictureBoxNext_Click);
             // 
             // pictureBoxAllDirections
             // 
@@ -283,6 +288,7 @@
             this.pictureBoxAllDirections.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxAllDirections.TabIndex = 5;
             this.pictureBoxAllDirections.TabStop = false;
+            this.pictureBoxAllDirections.Click += new System.EventHandler(this.PictureBoxAllDirections_Click);
             // 
             // trackBarVolume
             // 
@@ -302,6 +308,8 @@
             this.listBoxFavs.Name = "listBoxFavs";
             this.listBoxFavs.Size = new System.Drawing.Size(733, 154);
             this.listBoxFavs.TabIndex = 12;
+            this.listBoxFavs.SelectedIndexChanged += new System.EventHandler(this.ListBoxFavs_SelectedIndexChanged);
+            this.listBoxFavs.Enter += new System.EventHandler(this.ListBoxFavs_Enter);
             this.listBoxFavs.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListBoxFavs_KeyDown);
             this.listBoxFavs.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListBoxFavs_MouseDoubleClick);
             // 
@@ -317,6 +325,7 @@
             // 
             // pictureBoxRefresh
             // 
+            this.pictureBoxRefresh.BackColor = System.Drawing.SystemColors.Control;
             this.pictureBoxRefresh.ErrorImage = null;
             this.pictureBoxRefresh.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRefresh.Image")));
             this.pictureBoxRefresh.InitialImage = null;
@@ -328,11 +337,26 @@
             this.pictureBoxRefresh.TabStop = false;
             this.pictureBoxRefresh.Click += new System.EventHandler(this.PictureBoxRefresh_Click);
             // 
+            // button2
+            // 
+            this.button2.Enabled = false;
+            this.button2.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.button2.Location = new System.Drawing.Point(71, 388);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(32, 32);
+            this.button2.TabIndex = 0;
+            this.button2.Text = "&2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.Button1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.pictureBoxRefresh);
             this.Controls.Add(this.labelFavs);
             this.Controls.Add(this.listBoxFavs);
@@ -401,6 +425,7 @@
         private System.Windows.Forms.Label labelFavs;
         public System.Windows.Forms.ListBox listBoxFavs;
         private System.Windows.Forms.PictureBox pictureBoxRefresh;
+        private System.Windows.Forms.Button button2;
     }
 }
 

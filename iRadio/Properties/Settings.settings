@@ -14,9 +14,9 @@
     <Setting Name="FavoritesList" Description="List of Favorites as read from iRadio" Roaming="true" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
-  &lt;string&gt;InitialFav1&lt;/string&gt;
-  &lt;string&gt;InitialFav2&lt;/string&gt;
-  &lt;string&gt;InitialFav3&lt;/string&gt;
+  &lt;string&gt;Default favorite line 1 - click refresh ↻ to update&lt;/string&gt;
+  &lt;string&gt;Default favorite line 2 - click refresh ↻ to update&lt;/string&gt;
+  &lt;string&gt;Default favorite line 3 - click refresh ↻ to update&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
     <Setting Name="Volume" Roaming="true" Type="System.Int32" Scope="User">

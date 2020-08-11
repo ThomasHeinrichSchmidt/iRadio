@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -37,6 +39,8 @@ namespace iRadio
                 toolTip1.Show(Noxon.currentArtist, button1);
             }
         }
+
+        readonly System.Timers.Timer focusTimer = new System.Timers.Timer(5000);        // reset focus to listBoxDisplay
 
         private async void Form1_Load(object sender, EventArgs e)
         {
@@ -79,7 +83,8 @@ namespace iRadio
             this.KeyPreview = true;
             this.KeyDown += new KeyEventHandler(Form_KeyDown);
 
-            int round = 0;
+            focusTimer.Elapsed += (sender, e) => ParseFocus();
+
             do
             {
                 await Task.Run(() =>
@@ -90,14 +95,20 @@ namespace iRadio
 
                     Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
                 });
-                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now, round {0}", round++);
-
-                // Noxon.Close();
-                // Noxon.Open();
-                // await NoxonAsync.OpenAsync();
+                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now");
                 await Task.Run(() => NoxonAsync.OpenAsync());
             } while (true);
 
+        }
+        private static void ParseFocus()
+        {
+            System.Diagnostics.Debug.WriteLine("ParseFocus: reset focus");
+            Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate
+            {
+                Program.form.listBoxFavs.ClearSelected();
+                Program.form.listBoxDisplay.Focus();
+                Program.form.pictureBoxRefresh.BackColor = System.Drawing.SystemColors.Control;
+            });
         }
         private async void Form_KeyDown(object sender, KeyEventArgs e)
         {
@@ -110,9 +121,9 @@ namespace iRadio
                 textBox1.Text += kc.ConvertToString(e.KeyCode)[0];
                 return;
             }
-            if (Noxon.netStream == null 
+            if (Noxon.netStream == null
                 || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter))
-                || listBoxFavs.Focused)  
+                || listBoxFavs.Focused)
             {   // if nothing is received or text entry instead of local hotkeys
                 return;
             }
@@ -136,13 +147,7 @@ namespace iRadio
             if (e.KeyCode == Keys.VolumeDown) command = '-';
             if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
             if (e.KeyCode == Keys.Home) command = 'H';
-            if (e.KeyCode == Keys.F1) {
-                command = ' ';
-                //Task<bool> get = Task.Run(() => Favorites.Get()); 
-                //await get;
-                //Properties.Settings.Default.FavoritesList = Favorites.List();
-                //return;
-            }
+            if (e.KeyCode == Keys.F1) { command = ' '; }
             if (command == ' ' && isLetterOrDigit)
             {
                 KeysConverter kc = new KeysConverter();
@@ -198,6 +203,8 @@ namespace iRadio
 
         private async void PictureBoxRefresh_Click(object sender, EventArgs e)
         {
+            pictureBoxRefresh.BackColor = System.Drawing.Color.LawnGreen;  // TODO: rotate refresh picture: Image img = pictureBox1.Image; img.RotateFlip(RotateFlipType.Rotate90FlipNone);  pictureBox1.Image = img;
+            focusTimer.Start();
             Task<bool> get = Task.Run(() => Favorites.Get());
             await get;
             if (Favorites.List() != null)
@@ -215,7 +222,7 @@ namespace iRadio
         private void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("ListBoxDisplay_DoubleClick: request cancellation.Cancel()");
-            // await Task.Run(() => NoxonAsync.cancellation.Cancel());
+            // TODO: await Task.Run(() => NoxonAsync.cancellation.Cancel());  // but how to access cancellation?
         }
 
         private async void ListBoxFavs_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -223,6 +230,8 @@ namespace iRadio
             int index = this.listBoxFavs.IndexFromPoint(e.Location);
             if (index != System.Windows.Forms.ListBox.NoMatches)
             {
+                focusTimer.Stop();
+                focusTimer.Start();
                 await SelectFavorite(listBoxFavs.SelectedIndex);
                 return;
             }
@@ -232,6 +241,8 @@ namespace iRadio
         {
             if (e.KeyCode == Keys.Enter)
             {
+                focusTimer.Stop();
+                focusTimer.Start();
                 await SelectFavorite(listBoxFavs.SelectedIndex);
                 return;
             }
@@ -240,10 +251,101 @@ namespace iRadio
         private async Task SelectFavorite(int selectedIndex)
         {
             List<string> down = new List<string> { "F" };   // goto favorites
-            for (int i = 0; i < selectedIndex; i++) down.Add("D");  // go down as often as necessary
+            // choose the least number of steps
+            string direction = "D";
+            int steps = selectedIndex;
+            if (selectedIndex > Program.form.listBoxFavs.Items.Count / 2)
+            {
+                direction = "U";
+                steps = Program.form.listBoxFavs.Items.Count - selectedIndex;
+            }
+            for (int i = 0; i < steps; i++) down.Add(direction);  // step as often as necessary
             down.Add("R");  // choose station
             Macro m = new iRadio.Macro("listBoxFavs_KeyDown/MouseDoubleClick", down.ToArray());
             await Task.Run(() => m.Execute());
         }
+
+        private void ListBoxFavs_Enter(object sender, EventArgs e)
+        {
+            focusTimer.Stop();
+            focusTimer.Start();
+        }
+
+        private void ListBoxFavs_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            focusTimer.Stop();
+            focusTimer.Start();
+        }
+
+        private async void PictureBoxStop_Click(object sender, EventArgs e)
+        {
+            await Noxon.netStream.GetNetworkStream().CommandAsync('S');
+        }
+
+        private async void PictureBoxPlayPause_Click(object sender, EventArgs e)
+        {
+            await Noxon.netStream.GetNetworkStream().CommandAsync('P');
+        }
+
+        private async void PictureBoxPrevious_Click(object sender, EventArgs e)
+        {
+            await Noxon.netStream.GetNetworkStream().CommandAsync('<');
+        }
+
+        private async void PictureBoxNext_Click(object sender, EventArgs e)
+        {
+            await Noxon.netStream.GetNetworkStream().CommandAsync('>');
+        }
+
+        private async void PictureBoxAllDirections_Click(object sender, EventArgs e)
+        {
+            MouseEventArgs me = (MouseEventArgs)e;
+            Point coordinates = me.Location;
+            System.Diagnostics.Debug.WriteLine("pictureBoxAllDirections_Click: coordinates = {0}, size = {1}", coordinates, pictureBoxAllDirections.Size);
+
+            int minY = 1;
+            int maxY = 18;
+            int minX = 18;
+            int maxX = 32;
+            int H = pictureBoxAllDirections.Size.Height;
+            int W = pictureBoxAllDirections.Size.Width;
+            char command = ' ';
+            if (minX <= coordinates.X && coordinates.X <= maxX)
+            {
+                if (minY <= coordinates.Y && coordinates.Y < maxY)
+                    command = 'U';
+                else if (Size.Height - minY >= coordinates.Y && coordinates.Y >= H - maxY)
+                    command = 'D';
+            }
+            else if (maxY <= coordinates.Y && coordinates.Y < H - maxY)
+            {
+                if (1 <= coordinates.X && coordinates.X < minX)
+                    command = 'L';
+                else if (W - 1 >= coordinates.X && coordinates.X >= W - minX)
+                    command = 'R';
+            }
+            System.Diagnostics.Debug.WriteLine("pictureBoxAllDirections_Click: command = {0}", command);
+            if (command != ' ') await Noxon.netStream.GetNetworkStream().CommandAsync(command);
+
+            //                                       50  X
+            // ........................................                      1
+            // ................../@@@..................                      
+            // ................@@@@@@@@@...............
+            // ..............@@@..@@@..@@@.............
+            // ...................@@@..................                      18
+            // ...................@@@..................                  18 ...  32
+            // ......@@@.......................@@@.....
+            // ....@@@...........................@@@...
+            // ..@@@@@@@@@@@@.............@@@@@@@@@@@@.    
+            // ....@@@...........................@@@@..
+            // ......@@@.......................@@@.....
+            // ...................@@@..................
+            // ...................@@@..................
+            //........... ...@@@..@@@..@@@.............
+            //.......... ......@@@@@@@@@...............
+            //............ .......@@@..................     }
+            // 50  
+            // Y
+        }
     }
-}
+}                                                                            
