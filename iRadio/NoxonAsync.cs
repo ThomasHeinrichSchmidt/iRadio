@@ -7,12 +7,44 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Linq;
+using System.Net;
 
 
 namespace iRadio
 {
     public static class NoxonAsync
     {
+        static int round = 0;
+        public static async Task<bool> OpenAsync()
+        {
+            NoxonAsync.timeoutTimer.Enabled = false;
+            if (Noxon.tcpClient != null)
+            {
+                Noxon.tcpClient.Close();
+                round--;
+            }
+            Noxon.tcpClient = new TcpClient();
+            IPAddress ip = Noxon.IP;
+            try
+            {
+                await Noxon.tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
+                if (Noxon.netStream != null) Noxon.netStream.Close();
+                Noxon.netStream = new TestableNetworkStream(Noxon.tcpClient.GetStream());
+                round++;
+                System.Diagnostics.Debug.WriteLine("OpenAsync(), round = {0}", round);
+                return true;
+            }
+            catch (SocketException se)
+            {
+                Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1}), now try all IPs on gateway", se.SocketErrorCode, se.Message);
+            }
+            if (Noxon.PingHosts()) ip = Noxon.IP;
+            await Noxon.tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
+            Noxon.netStream = new TestableNetworkStream(Noxon.tcpClient.GetStream());
+            Noxon.tcpClient.Client.LingerState = new LingerOption(false, 0);
+            return true;
+        }
+
         public async static Task<int> CommandAsync(this NetworkStream netStream, char commandkey)
         {
             try
@@ -32,7 +64,7 @@ namespace iRadio
             {
                 System.Diagnostics.Debug.WriteLine("\t\tTransmit CommandAsync() failed ({0})", e.Message);
                 Noxon.Close();
-                Task<bool> isOPen = Noxon.OpenAsync();
+                Task<bool> isOPen = NoxonAsync.OpenAsync();
                 await isOPen;
                 if (netStream != null && netStream.CanWrite) await netStream.WriteAsync(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key), 0, sizeof(int));
                 return 0;
@@ -59,18 +91,20 @@ namespace iRadio
 
 
         private static XmlReader reader;
+        public static CancellationTokenSource cancellation = new CancellationTokenSource();
+        public static System.Timers.Timer timeoutTimer = new System.Timers.Timer(5000);        // check if ReadFrom(reader) times out
 
         public static IEnumerable<XElement> StreamiRadioNet(ITestableNetworkStream netStream)
         {
             var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CheckCharacters = false, Async = true };
             XmlParserContext context = new XmlParserContext(null, null, null, XmlSpace.None, Encoding.GetEncoding("ISO-8859-1"));  // needed to avoid exception "WDR 3 zum Nachhören"
-            CancellationTokenSource cancellation = new CancellationTokenSource();
-            System.Timers.Timer timeoutTimer = new System.Timers.Timer(5000);        // check if ReadFrom(reader) times out
             timeoutTimer.Elapsed += (sender, e) => ParseTimeout(sender, e, cancellation);
+            timeoutTimer.Enabled = true;
 
             using (reader = XmlReader.Create(netStream.GetStream(), settings, context))                                             //                                           ^---
             {
-                while (true)
+                bool canceled = false;
+                while (!canceled)
                 {
                     while (!reader.EOF)
                     {
@@ -90,22 +124,36 @@ namespace iRadio
                                 tex = t.Exception;
                                 if (!FormShow.Browsing) timeoutTimer.Stop();
                             }
+                            catch (AggregateException aex)
+                            {
+                                System.Diagnostics.Debug.WriteLine("StreamiRadioNet(): catched AggregateException, netStream = {0}", netStream.GetHashCode());
+                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails" + aex.Message);
+                                timeoutTimer.Stop();
+                            }
                             catch (Exception ex)
                             {
-                                el = new XElement("CloseStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + "=" + tex?.Message);
+                                el = new XElement("AbortStream", "FormStreamiRadioExceptionXElementAfterReadFromFails"+ ex.Message + " " + tex?.Message);
+                                timeoutTimer.Stop();
                             }
                             if (el != null)
                                 yield return el;
                         }
                         else
                         {
+                            XElement el = null;
                             try
                             {
                                 reader.Read();
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                // continue
+                                el = new XElement("AbortStream", "FormStreamiRadioExceptionReaderFails" + ex.Message);
+                            }
+                            if (el != null)
+                            {
+                                canceled = true;
+                                break;
+                                // yield return el;
                             }
                         }
                     }
@@ -115,8 +163,8 @@ namespace iRadio
         }
         private static void ParseTimeout(object sender, ElapsedEventArgs e, CancellationTokenSource cancellation)
         {
-            sender.ToString();
-            e.ToString();
+            System.Diagnostics.Debug.WriteLine("ParseTimeout: request cancellation.Cancel(), sender = {0}, raised at {1}", sender.GetHashCode(), e.SignalTime);
+            timeoutTimer.Stop();
             cancellation.Cancel();
         }
     }

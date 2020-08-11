@@ -41,7 +41,7 @@ namespace iRadio
         private async void Form1_Load(object sender, EventArgs e)
         {
             Noxon.IP = IPAddress.Parse(Settings.Default.NoxonIP);  // use previous IP first
-            Task<bool> isOpen = Task.Run(() => Noxon.OpenAsync()); // https://stackoverflow.com/questions/14962969/how-can-i-use-async-to-increase-winforms-performance
+            Task<bool> isOpen = Task.Run(() => NoxonAsync.OpenAsync()); // https://stackoverflow.com/questions/14962969/how-can-i-use-async-to-increase-winforms-performance
             try
             {
                 await isOpen;
@@ -79,6 +79,7 @@ namespace iRadio
             this.KeyPreview = true;
             this.KeyDown += new KeyEventHandler(Form_KeyDown);
 
+            int round = 0;
             do
             {
                 await Task.Run(() =>
@@ -89,8 +90,12 @@ namespace iRadio
 
                     Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
                 });
-                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now");
-                await Task.Run(() => Noxon.OpenAsync()); 
+                System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now, round {0}", round++);
+
+                // Noxon.Close();
+                // Noxon.Open();
+                // await NoxonAsync.OpenAsync();
+                await Task.Run(() => NoxonAsync.OpenAsync());
             } while (true);
 
         }
@@ -105,7 +110,9 @@ namespace iRadio
                 textBox1.Text += kc.ConvertToString(e.KeyCode)[0];
                 return;
             }
-            if (Noxon.netStream == null || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter)))  
+            if (Noxon.netStream == null 
+                || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter))
+                || listBoxFavs.Focused)  
             {   // if nothing is received or text entry instead of local hotkeys
                 return;
             }
@@ -158,22 +165,6 @@ namespace iRadio
 
         private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // System.Diagnostics.Debug.WriteLine("LBDisplay_SelIxChngd(), Browsing = {0}, LBDisplay.SelIx = {1}, FormShow.selIx = {2}, FormShow.srchPossbl = {3}", FormShow.Browsing, listBoxDisplay.SelectedIndex, FormShow.selectedIndex, FormShow.SearchingPossible);
-
-            //Macro m;   // TODO: click on listBoxDisplay updates NOXON using commands UP/DOWN - does not work (so simply)
-            //if (listBoxDisplay.SelectedIndex > FormShow.selectedIndex)
-            //{
-            //    m = new iRadio.Macro("Favorites.Get.D", new string[] { "D" }); // scroll down 
-            //}
-            //else
-            //{
-            //    m = new iRadio.Macro("Favorites.Get.D", new string[] { "U" }); // scroll up
-
-            //}
-            //Task<bool> xcq = Task.Run(() => m.Execute()); 
-            //await xcq;
-            //return;
-
             if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)
             {
                 listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
@@ -219,6 +210,40 @@ namespace iRadio
                 }
             }
             return;
+        }
+
+        private async void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("ListBoxDisplay_DoubleClick: request cancellation.Cancel()");
+            await Task.Run(() => NoxonAsync.cancellation.Cancel());
+        }
+
+        private async void ListBoxFavs_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            int index = this.listBoxFavs.IndexFromPoint(e.Location);
+            if (index != System.Windows.Forms.ListBox.NoMatches)
+            {
+                await SelectFavorite(listBoxFavs.SelectedIndex);
+                return;
+            }
+        }
+
+        private async void ListBoxFavs_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                await SelectFavorite(listBoxFavs.SelectedIndex);
+                return;
+            }
+        }
+
+        private async Task SelectFavorite(int selectedIndex)
+        {
+            List<string> down = new List<string> { "F" };   // goto favorites
+            for (int i = 0; i < selectedIndex; i++) down.Add("D");  // go down as often as necessary
+            down.Add("R");  // choose station
+            Macro m = new iRadio.Macro("listBoxFavs_KeyDown/MouseDoubleClick", down.ToArray());
+            await Task.Run(() => m.Execute());
         }
     }
 }

@@ -209,6 +209,7 @@
             this.listBoxDisplay.Size = new System.Drawing.Size(733, 68);
             this.listBoxDisplay.TabIndex = 9;
             this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
+            this.listBoxDisplay.DoubleClick += new System.EventHandler(this.ListBoxDisplay_DoubleClick);
             // 
             // textBox1
             // 
@@ -301,6 +302,8 @@
             this.listBoxFavs.Name = "listBoxFavs";
             this.listBoxFavs.Size = new System.Drawing.Size(733, 154);
             this.listBoxFavs.TabIndex = 12;
+            this.listBoxFavs.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListBoxFavs_KeyDown);
+            this.listBoxFavs.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListBoxFavs_MouseDoubleClick);
             // 
             // labelFavs
             // 

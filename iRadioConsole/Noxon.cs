@@ -183,7 +183,7 @@ namespace iRadio
         private static readonly List<string> IPsFound = new List<string>();
         public static IPAddress IP = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
 
-        private static bool PingHosts()
+        public static bool PingHosts()
         {
             string gateway = GetDefaultGateway().ToString();
             if (gateway != null) {
@@ -263,7 +263,17 @@ namespace iRadio
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.connect?view=netcore-3.1
             // Uses a remote endpoint to establish a socket connection.
             tcpClient = new TcpClient();
-            IPAddress ip = IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
+            IPAddress ip = Noxon.IP; // IPAddress.Parse(iRadioConsole.Properties.Resources.NoxonIP);
+            try
+            {
+                tcpClient.Connect(ip, 10100); // connect to iRadio server port
+                netStream = new TestableNetworkStream(tcpClient.GetStream());
+                return true;
+            }
+            catch (SocketException se)
+            {
+                Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1}), now try all IPs on gateway", se.SocketErrorCode, se.Message);
+            }
             if (PingHosts()) ip = IP;
             IPEndPoint ipEndPoint = new IPEndPoint(ip, 10100);  // using iRadio Telnet port 10100
             while (!tcpClient.Connected)
@@ -280,32 +290,17 @@ namespace iRadio
             // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient.getstream?view=netcore-3.1
             // Uses the GetStream public method to return the NetworkStream.
             netStream = new TestableNetworkStream(tcpClient.GetStream());
-            return true;
-        }
-
-        public static async Task<bool> OpenAsync()
-        {
-            tcpClient = new TcpClient();
-            IPAddress ip = Noxon.IP;
-            try
-            {
-                await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
-                netStream = new TestableNetworkStream(tcpClient.GetStream());
-                return true;
-            }
-            catch (SocketException se)
-            {
-                Console.WriteLine("Connect to NOXON iRadio failed ({0}, {1}), now try all IPs on gateway", se.SocketErrorCode, se.Message);
-            }
-            if (Noxon.PingHosts()) ip = Noxon.IP;
-            await tcpClient.ConnectAsync(ip, 10100); // connect to iRadio server port
-            netStream = new TestableNetworkStream(tcpClient.GetStream());
+            tcpClient.Client.LingerState = new LingerOption(false, 0);
             return true;
         }
 
         public static bool Close()
         {
+            tcpClient.Client.Shutdown(SocketShutdown.Both);
+            // tcpClient.GetStream().Close();
+            tcpClient.Client.Disconnect(true);
             netStream.Close();
+            tcpClient.Client.Close();
             tcpClient.Close();
             netStream = null;
             tcpClient = null;
