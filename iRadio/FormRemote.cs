@@ -48,12 +48,18 @@ namespace iRadio
         {
             InitializeComponent();
         }
-
+        private void FormRemote_Load(object sender, EventArgs e)
+        {
+            if ((lastPos.X > 0 && lastPos.Y > 0) && (sender is Form c))
+            {
+                c.Location = lastPos;
+            }
+        }
         private void FormRemote_FormClosed(object sender, FormClosedEventArgs e)
         {
             Program.formRemote = null;
+            _dragging = false;
         }
-
         private async void PictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
             Color color = zoneMap.GetPixel(e.X, e.Y);
@@ -63,6 +69,38 @@ namespace iRadio
                 System.Diagnostics.Debug.WriteLine("Remote: key {0} detected for color {1}", command, color);
                 if (command != ' ') await Noxon.netStream.GetNetworkStream().CommandAsync(command);
             }
+        }
+
+        private int _xPos = -1;
+        private int _yPos = -1;
+        private bool _dragging = false;
+        private static Point lastPos = new Point(-1, -1);
+        // https://stackoverflow.com/questions/570582/move-a-picturebox-with-mouse
+        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left) return;
+            _dragging = true;
+            _xPos = e.X;
+            _yPos = e.Y;
+        }
+        private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_dragging || !(sender is PictureBox c)) return;
+            Point delta = new Point(c.TopLevelControl.Location.X + e.X - _xPos, c.TopLevelControl.Location.Y + e.Y - _yPos);
+            c.TopLevelControl.Location = delta;
+        }
+
+        private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (!(sender is PictureBox c)) return;
+            _dragging = false;
+            if (c.TopLevelControl != null) lastPos = new Point(c.TopLevelControl.Location.X, c.TopLevelControl.Location.Y);
+        }
+
+        private void PictureBox1_DoubleClick(object sender, EventArgs e)
+        {
+            if (!(sender is PictureBox)) return;
+            ((Form)this.TopLevelControl).Close();
         }
     }
 }

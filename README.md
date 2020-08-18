@@ -7,6 +7,7 @@ Preliminary version (pre-alpha)
 Hints:
 * shortcut keys 1 - 9 (also present on device and remote) can be preset to current station by Ctrl+Click on buttons [1] .. [9]
 * double click on status bar opens iRadio message listbox with the last 100 messages
+* double click on remote closes it
 * use PC keys as remote (arrow keys, +/- or volume keys)
 	| Key  | Effect |
 	|:------------: |-----   |
