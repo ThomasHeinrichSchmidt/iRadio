@@ -11,10 +11,9 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: re-think keyboard keys (N <--> I) - re-enable search box for 'Favoriten', because NOXON does it also - disable 1,2,3 if search box is present
-    // TODO: show seperate window with remote control and clickable keys (allow moving, remember position)
-    // TODO: make form sizable (correctly dock elements)
-    // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
+    // TODO: if search box is present: disable preselect keys 1,2,3,...,9 - pass remote digit keys (detect 2 = abc, ...?) - delete NOXON search (x times "<" + "L") if textBox1 is cleared
+    // TODO: make form sizable (correctly dock elements), replace  Program.form.Invoke with this.Invoke
+    // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],...
     // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
     // TODO: add more tests, using moq
     // TODO: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing - but what do you want to test then?
@@ -27,6 +26,8 @@ namespace iRadio
     // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
+    // DONE: re-think keyboard keys (N <--> I) - re-enable search box for 'Favoriten', because NOXON does it also 
+    // DONE: show seperate window with remote control and clickable keys (allow moving, remember position)
     // DONE: F1 - F9 Favoriten #1 - #9, store new shortcut preset by Ctrl+Click
     // DONE: add radio hardware keys (stop, play, ...)
     // DONE: Favorites dialog (show, double click to play), class Favorites remembers 'flags' p, ps, d, ds -- show in separate console list

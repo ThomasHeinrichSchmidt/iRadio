@@ -37,7 +37,7 @@ namespace iRadio
             { 
                 searchingPossible = value;
                 if (Program.form.labelTitle.Text == "NOXON") searchingPossible = false;
-                if (Program.form.labelTitle.Text == iRadioConsole.Properties.Resources.NoxonTitleFavorites) searchingPossible = false;
+                if (Program.form.labelTitle.Text == iRadioConsole.Properties.Resources.NoxonTitleFavorites) searchingPossible = value;  // search active also in Favorites
             }
         }
 
