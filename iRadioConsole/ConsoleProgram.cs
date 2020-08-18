@@ -12,7 +12,7 @@ using System.Xml.Linq;
 namespace iRadio
 {
     // TODO: re-think keyboard keys (N <--> I) - re-enable search box for 'Favoriten', because NOXON does it also - disable 1,2,3 if search box is present
-    // TODO: show seperate window with remote control and clickable keys
+    // TODO: show seperate window with remote control and clickable keys (allow moving, remember position)
     // TODO: make form sizable (correctly dock elements)
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
     // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
