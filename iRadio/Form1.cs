@@ -121,7 +121,7 @@ namespace iRadio
 
             if (e.Control && e.KeyCode == Keys.S)       // Ctrl-S Save
             {
-                // Do what you want here
+                // TODO: Do what you want here
             }
             if (e.KeyCode == Keys.D1) command = '1';
             if (e.KeyCode == Keys.D2) command = '2';
@@ -374,6 +374,19 @@ namespace iRadio
         private async void PictureBoxShuffle_Click(object sender, EventArgs e)
         {
             await Noxon.netStream.GetNetworkStream().CommandAsync('X'); // toggle shuffle
+        }
+
+        private void PictureBoxRemote_Click(object sender, EventArgs e)
+        {
+            if (Program.formRemote == null)
+            {
+                Program.formRemote = new FormRemote();
+                Program.formRemote.Show();
+            }
+            else
+            {
+                Program.formRemote.Close();
+            }
         }
     }
 }                                                                            

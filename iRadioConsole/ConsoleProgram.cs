@@ -11,6 +11,7 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: re-think keyboard keys (N <--> I) - re-enable search box for 'Favoriten', because NOXON does it also - disable 1,2,3 if search box is present
     // TODO: show seperate window with remote control and clickable keys
     // TODO: make form sizable (correctly dock elements)
     // TODO: iRadio: add tool tips with id="artist" to buttons [1], [2],...
@@ -225,7 +226,7 @@ namespace iRadio
                         ch = ' ';
                         int sel = 7;
                         switch (sel) {
-                            case 6: Noxon.Macro = new iRadio.Macro("F1", new string[] { "N", "R", "R", "@hr3", "R", "R" }); break;  // macro executed in Noxon.Parse(), i.e. Internetradio ... hr3  
+                            case 6: Noxon.Macro = new iRadio.Macro("F1", new string[] { "I", "R", "R", "@hr3", "R", "R" }); break;  // macro executed in Noxon.Parse(), i.e. Internetradio ... hr3  
                             case 7: Favorites.Get(); break;
                             default: break;
                         }

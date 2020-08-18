@@ -14,7 +14,7 @@ namespace iRadio
         private static Macro runningInstance = null;
 
         public Macro(string name, string[] command)   // command = Noxon.Commands.Key  -OR-  "@input-string"   
-        {                                             // e.g. new iRadioConsole.Macro("F1", new string [] { "N", "R", "R", "@hr3", "R", "R"});  
+        {                                             // e.g. new iRadioConsole.Macro("F1", new string [] { "I", "R", "R", "@hr3", "R", "R"});  
             steps = command.Length;
             if (steps > 0)
             {

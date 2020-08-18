@@ -147,7 +147,7 @@ namespace UnitTesting
             Noxon.netStream = new DebugNetworkStream();
             string[] m1s = new string[] { "L", "U", "R", "D" };
             Macro m1 = new iRadio.Macro("Test-m1", m1s);
-            Macro m2 = new iRadio.Macro("Test-m2", new string[] { "N", "R", "R", "@hr3", "U", "D" });
+            Macro m2 = new iRadio.Macro("Test-m2", new string[] { "I", "R", "R", "@hr3", "U", "D" });
 
             // run the two macros 'concurrently'
             bool ok = m1.Step();
@@ -157,7 +157,7 @@ namespace UnitTesting
             Assert.IsTrue(ok);
             Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
-            Assert.IsFalse(ok);  // must ignore Step() as macro m1 is still running, LastWrite still 'R', not 'N' (= first command of m2)
+            Assert.IsFalse(ok);  // must ignore Step() as macro m1 is still running, LastWrite still 'R', not 'I' (= first command of m2)
             Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['U'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsFalse(ok);  // must ignore Step() for m2
@@ -172,7 +172,7 @@ namespace UnitTesting
 
             ok = m2.Step();
             Assert.IsTrue(ok);  // must now process Step() for m2
-            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['N'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
+            Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['I'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);
             ok = m2.Step();
             Assert.IsTrue(ok);  
             Assert.AreEqual(BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands['R'].Key)), ((DebugNetworkStream)Noxon.netStream).LastWrite);

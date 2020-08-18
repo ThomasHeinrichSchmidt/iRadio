@@ -17,13 +17,13 @@ Hints:
 	| *             | Repeat (key pad multiply |
 	| X             | Shuffle |
 	| H             | (H)ome |
-	| N             | I(N)ternetradio |
+	| I             | (I)nternetradio |
 	| M             | (M)enu |
 	| F             | (F)avorites |
 	| C             | (C)hannnel + key 0..9 to store current channel/station as new preset  |
 	| A             | (A)dd favourite while channel/station playing |
-	| E             | (E)rase favourite if entry in favourites list selected  |
-	| I             | (I)nfo - toggles device screen, but not visible in iRadio app |
+	| E             | (E)rase favourite if entry in list of favourites selected  |
+	| I             | I(N)fo - toggles device screen, but not visible in iRadio app |
 
 
 ## Acknowledgments

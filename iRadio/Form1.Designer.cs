@@ -61,6 +61,7 @@
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
+            this.pictureBoxRemote = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -73,6 +74,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRemote)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
@@ -465,11 +467,24 @@
             this.button9.Click += new System.EventHandler(this.Button1_Click);
             this.button9.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Button1_MouseClick);
             // 
+            // pictureBoxRemote
+            // 
+            this.pictureBoxRemote.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRemote.Image")));
+            this.pictureBoxRemote.InitialImage = null;
+            this.pictureBoxRemote.Location = new System.Drawing.Point(736, 11);
+            this.pictureBoxRemote.Name = "pictureBoxRemote";
+            this.pictureBoxRemote.Size = new System.Drawing.Size(29, 51);
+            this.pictureBoxRemote.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxRemote.TabIndex = 13;
+            this.pictureBoxRemote.TabStop = false;
+            this.pictureBoxRemote.Click += new System.EventHandler(this.PictureBoxRemote_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.pictureBoxRemote);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
@@ -517,6 +532,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAllDirections)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRemote)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -554,6 +570,7 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.PictureBox pictureBoxRemote;
     }
 }
 

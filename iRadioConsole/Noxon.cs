@@ -80,7 +80,7 @@ namespace iRadio
             { 'C', new Command { Key = 0x2B, Desc = "KEY_PRESET" } },          // (C)hannnel  + key 0..9 to store new preset       0x2D="KEY_DELFAV"  
             { 'A', new Command { Key = 0x2D, Desc = "KEY_ADDFAV" } },          // (A)dd favourite if channel/station playing 
             { 'E', new Command { Key = 0x2E, Desc = "KEY_DELFAV" } },          // (E)rase favourite if entry in favourites list selected 
-            { 'N', new Command { Key = 0xAA, Desc = "KEY_INTERNETRADIO" } },   // I(N)ternetradio
+            { 'I', new Command { Key = 0xAA, Desc = "KEY_INTERNETRADIO" } },   // (I)nternetradio
             { 'F', new Command { Key = 0xAB, Desc = "KEY_FAVORITES" } },       // (F)avorites
             { 'H', new Command { Key = 0xAC, Desc = "KEY_HOME" } },            // (H)ome
             { '-', new Command { Key = 0xAE, Desc = "KEY_VOL_DOWN" } },
@@ -89,7 +89,7 @@ namespace iRadio
             { '<', new Command { Key = 0xB1, Desc = "KEY_PREVIOUS" } },
             { 'S', new Command { Key = 0xB2, Desc = "KEY_STOP" } },
             { 'P', new Command { Key = 0xB3, Desc = "KEY_PLAY" } },
-            { 'I', new Command { Key = 0xBA, Desc = "KEY_INFO" } },
+            { 'N', new Command { Key = 0xBA, Desc = "KEY_INFO" } },            // I(N)fo
             { '*', new Command { Key = 0xC0, Desc = "KEY_REPEAT" } },
             { 'M', new Command { Key = 0xDB, Desc = "KEY_SETTINGS" } },        // (M)enu
             { 'X', new Command { Key = 0xDC, Desc = "KEY_SHUFFLE" } },

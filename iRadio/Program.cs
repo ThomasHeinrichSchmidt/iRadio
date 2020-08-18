@@ -15,6 +15,7 @@ namespace iRadio
         public static FormShow FormShow = new FormShow();
         public static Form1 form;
         public static FormLogging formLogging = new FormLogging();
+        public static FormRemote formRemote = null;
 
         [STAThread]
         static void Main()
