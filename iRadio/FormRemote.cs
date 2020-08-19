@@ -51,11 +51,7 @@ namespace iRadio
         }
         private void FormRemote_Load(object sender, EventArgs e)
         {
-            if ((lastPos.X > 0 && lastPos.Y > 0) && (sender is Form c))
-            {
-                c.Location = lastPos;
-            }
-            stopwatch.Stop();
+
         }
         private void FormRemote_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -68,12 +64,15 @@ namespace iRadio
         private async void PictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
             if (dragging) return;
+            if (e.Button == MouseButtons.Right) ((Form)this.TopLevelControl).Close();  // close remote if clicked right 
+
+            double elapsed = stopwatch.Elapsed.TotalMilliseconds;
 
             if (stopwatch.IsRunning)
             {
-                if (stopwatch.Elapsed.TotalMilliseconds > Noxon.MultiPressDelayForNextKey)
+                if (elapsed > Noxon.MultiPressDelayForNextKey)
                 {
-                    System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): restart stopwatch, Elapsed.TotalMilliseconds = {0} > {1}", stopwatch.Elapsed.TotalMilliseconds, Noxon.MultiPressDelayForNextKey);
+                    System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): restart stopwatch, elapsed ms = {0} > {1}", elapsed, Noxon.MultiPressDelayForNextKey);
                     stopwatch.Restart();
                     numberOfClicks = 0;
                 }
@@ -88,25 +87,30 @@ namespace iRadio
             if (RemoteKeys.ContainsKey(color))
             {
                 char command = RemoteKeys[color];
-                System.Diagnostics.Debug.WriteLine("Remote: key {0} detected for color {1}", command, color);
+                // System.Diagnostics.Debug.WriteLine("Remote: key {0} detected for color {1}", command, color);
                 if (command != ' ')
                 {
                     if (Noxon.textEntry)
                     {
                         if ('0' <= command && command <= '9')
                         {
-                            if (stopwatch.Elapsed.TotalMilliseconds < Noxon.MultiPressDelayForSameKey)
+                            System.Diagnostics.Debug.WriteLine("Remote: digit {0} detected, elapsed = {1}, numberOfClicks = {2}", command, elapsed, numberOfClicks);
+                            if (elapsed < 3 * Noxon.MultiPressDelayForSameKey)
                             {
                                 numberOfClicks++;
                                 string current = Program.form.textBox1.TextLength > 0 ? Program.form.textBox1.Text.Substring(0, (Program.form.textBox1.TextLength - 1)) : "";
                                 Program.form.textBox1.Text = current + MultiPress.Encoding(command, numberOfClicks);
+                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): replaced last search box char by '{0}' (numberOfClicks={1}, elapsed ms = {2} < {3})", MultiPress.Encoding(command, numberOfClicks), numberOfClicks, elapsed, Noxon.MultiPressDelayForSameKey);
                                 stopwatch.Restart();
-                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): replaced last search box char by '{0}' (numberOfClicks={1})", MultiPress.Encoding(command, numberOfClicks), numberOfClicks);
                             }
                             else
                             {
-                                Program.form.textBox1.Text += MultiPress.Encoding(command, 1);
-                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): added '{0}' to search box", MultiPress.Encoding(command, 1));
+                                if (Program.form.textBox1.Text.Length < Program.form.textBox1.MaxLength)
+                                {
+                                    Program.form.textBox1.Text += MultiPress.Encoding(command, 1);
+                                    System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): added '{0}' to search box", MultiPress.Encoding(command, 1));
+                                }
+                                stopwatch.Restart();
                             }
                         }
                         else if (command == '<')
@@ -167,13 +171,6 @@ namespace iRadio
             if (!(sender is PictureBox c)) return;
             dragging = draggingStarted = false;
             if (c.TopLevelControl != null) lastPos = new Point(c.TopLevelControl.Location.X, c.TopLevelControl.Location.Y);
-        }
-
-        private void PictureBox1_DoubleClick(object sender, EventArgs e)
-        {
-            if (!(sender is PictureBox)) return;
-            if (numberOfClicks > 0) return;
-            ((Form)this.TopLevelControl).Close();
         }
     }
 }
