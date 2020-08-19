@@ -22,12 +22,11 @@ namespace iRadio
                 browsing = value;
                 Program.form.Invoke((MethodInvoker)delegate
                 {
-                    Program.form.textBox1.Enabled = browsing && FormShow.SearchingPossible;
-                    Program.form.textBox1.Visible = browsing && FormShow.SearchingPossible;
                     Noxon.textEntry = browsing && FormShow.SearchingPossible;
-                    Program.form.button1.Enabled = ! (browsing && FormShow.SearchingPossible);
+                    Program.form.textBox1.Enabled = Noxon.textEntry;
+                    Program.form.textBox1.Visible = Noxon.textEntry;
+                    for (int i = 1; i <= 9; i++) ((Button)Program.form.Controls["button" + i.ToString()]).Enabled = !Noxon.textEntry;  // dis- or enable buttons1..9
                 });
-                // System.Diagnostics.Debug.WriteLine("FormShow.Browsing := {0}", browsing);
             }
         }
 

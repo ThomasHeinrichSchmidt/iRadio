@@ -208,7 +208,7 @@ namespace iRadio
             Properties.Settings.Default.Save();
         }
 
-        private async void TextBox1_KeyDown(object sender, KeyEventArgs e)
+        public async void TextBox1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {

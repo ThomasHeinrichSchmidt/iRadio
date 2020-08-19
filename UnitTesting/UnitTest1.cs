@@ -85,8 +85,64 @@ namespace UnitTesting
             TestContext.WriteLine("CreateMultiPressCommands('ABC')");
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands("ABC");
             Assert.IsTrue(mpc.Length == 3);
-            mpc.Should().BeEquivalentTo(Expected5);
             for (int i = 0; i < mpc.Length; i++) TestContext.WriteLine("{0}", mpc[i]);
+            mpc.Should().BeEquivalentTo(Expected5);
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding1()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('0',1)");
+            char c = MultiPress.Encoding('0', 1);
+            TestContext.WriteLine("TestMultiPressEncoding('0',1) returned '{0}'", c);
+            Assert.IsTrue(c == '0');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding2()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('0',2)");
+            char c = MultiPress.Encoding('0', 2);
+            TestContext.WriteLine("TestMultiPressEncoding('0',2) returned '{0}'", c);
+            Assert.IsTrue(c == ' ');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding3()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('0',3)");
+            char c = MultiPress.Encoding('0', 3);
+            TestContext.WriteLine("TestMultiPressEncoding('0',3) returned '{0}'", c);
+            Assert.IsTrue(c == '0');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding4()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('1',4)");
+            char c = MultiPress.Encoding('1', 4);
+            TestContext.WriteLine("TestMultiPressEncoding('1',4) returned '{0}'", c);
+            Assert.IsTrue(c == '?');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding5()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('9',4)");
+            char c = MultiPress.Encoding('9', 4);
+            TestContext.WriteLine("TestMultiPressEncoding('9',4) returned '{0}'", c);
+            Assert.IsTrue(c == 'z');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding6()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('X',1)");
+            char c = MultiPress.Encoding('X', 1);
+            TestContext.WriteLine("TestMultiPressEncoding('X',1) returned '{0}'", c);
+            Assert.IsTrue(c == ' ');
+        }
+        [TestMethod]
+        public void TestMultiPressEncoding7()    // 
+        {
+            TestContext.WriteLine("TestMultiPressEncoding('0',0)");
+            char c = MultiPress.Encoding('0', 0);
+            TestContext.WriteLine("TestMultiPressEncoding('0',0) returned '{0}'", c);
+            Assert.IsTrue(c == ' ');
         }
 
 

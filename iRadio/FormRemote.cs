@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Numerics;
 using System.Text;
 using System.Windows.Forms;
 
@@ -54,52 +55,124 @@ namespace iRadio
             {
                 c.Location = lastPos;
             }
+            stopwatch.Stop();
         }
         private void FormRemote_FormClosed(object sender, FormClosedEventArgs e)
         {
             Program.formRemote = null;
-            _dragging = false;
+            dragging = false;
+            stopwatch.Stop();
         }
+        private readonly System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        private int numberOfClicks = 0;
         private async void PictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
+            if (dragging) return;
+
+            if (stopwatch.IsRunning)
+            {
+                if (stopwatch.Elapsed.TotalMilliseconds > Noxon.MultiPressDelayForNextKey)
+                {
+                    System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): restart stopwatch, Elapsed.TotalMilliseconds = {0} > {1}", stopwatch.Elapsed.TotalMilliseconds, Noxon.MultiPressDelayForNextKey);
+                    stopwatch.Restart();
+                    numberOfClicks = 0;
+                }
+            }
+            else
+            {
+                stopwatch.Start();
+                numberOfClicks = 0;
+                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): Start stopwatch");
+            }
             Color color = zoneMap.GetPixel(e.X, e.Y);
             if (RemoteKeys.ContainsKey(color))
             {
                 char command = RemoteKeys[color];
                 System.Diagnostics.Debug.WriteLine("Remote: key {0} detected for color {1}", command, color);
-                if (command != ' ') await Noxon.netStream.GetNetworkStream().CommandAsync(command);
+                if (command != ' ')
+                {
+                    if (Noxon.textEntry)
+                    {
+                        if ('0' <= command && command <= '9')
+                        {
+                            if (stopwatch.Elapsed.TotalMilliseconds < Noxon.MultiPressDelayForSameKey)
+                            {
+                                numberOfClicks++;
+                                string current = Program.form.textBox1.TextLength > 0 ? Program.form.textBox1.Text.Substring(0, (Program.form.textBox1.TextLength - 1)) : "";
+                                Program.form.textBox1.Text = current + MultiPress.Encoding(command, numberOfClicks);
+                                stopwatch.Restart();
+                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): replaced last search box char by '{0}' (numberOfClicks={1})", MultiPress.Encoding(command, numberOfClicks), numberOfClicks);
+                            }
+                            else
+                            {
+                                Program.form.textBox1.Text += MultiPress.Encoding(command, 1);
+                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): added '{0}' to search box", MultiPress.Encoding(command, 1));
+                            }
+                        }
+                        else if (command == '<')
+                        {
+                            if (Program.form.textBox1.TextLength > 0)
+                            {
+                                Program.form.textBox1.Text = Program.form.textBox1.Text.Substring(0, (Program.form.textBox1.TextLength - 1));
+                            }
+                            stopwatch.Stop();
+                        }
+                        else if (command == 'R')
+                        {
+                            Program.form.TextBox1_KeyDown(this, new KeyEventArgs(Keys.Enter));
+                            stopwatch.Stop();
+                        }
+                    }
+                    else 
+                    { 
+                        await Noxon.netStream.GetNetworkStream().CommandAsync(command);
+                    }
+                }
             }
         }
 
-        private int _xPos = -1;
-        private int _yPos = -1;
-        private bool _dragging = false;
+        private int xPos = -1;
+        private int yPos = -1;
+        private bool dragging = false;
+        private bool draggingStarted = false;
+        private static readonly double DragThreshold = 5;
         private static Point lastPos = new Point(-1, -1);
         // https://stackoverflow.com/questions/570582/move-a-picturebox-with-mouse
         private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left) return;
-            _dragging = true;
-            _xPos = e.X;
-            _yPos = e.Y;
+            draggingStarted = true;
+            xPos = e.X;
+            yPos = e.Y;
         }
         private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (!_dragging || !(sender is PictureBox c)) return;
-            Point delta = new Point(c.TopLevelControl.Location.X + e.X - _xPos, c.TopLevelControl.Location.Y + e.Y - _yPos);
-            c.TopLevelControl.Location = delta;
+            if (!(sender is PictureBox c)) return;
+            if (draggingStarted)
+            {
+                Point dragDelta = e.Location - new Size(xPos, yPos);
+                double dragDistance = Math.Sqrt(dragDelta.X * dragDelta.X + dragDelta.Y * dragDelta.Y);
+                if (dragDistance > DragThreshold) dragging = true;
+                else return;
+            }
+            if (dragging)
+            {
+                Point delta = new Point(c.TopLevelControl.Location.X + e.X - xPos, c.TopLevelControl.Location.Y + e.Y - yPos);
+                c.TopLevelControl.Location = delta;
+            }
         }
 
         private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
             if (!(sender is PictureBox c)) return;
-            _dragging = false;
+            dragging = draggingStarted = false;
             if (c.TopLevelControl != null) lastPos = new Point(c.TopLevelControl.Location.X, c.TopLevelControl.Location.Y);
         }
 
         private void PictureBox1_DoubleClick(object sender, EventArgs e)
         {
             if (!(sender is PictureBox)) return;
+            if (numberOfClicks > 0) return;
             ((Form)this.TopLevelControl).Close();
         }
     }
