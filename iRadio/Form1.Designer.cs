@@ -43,7 +43,7 @@
             this.pictureBoxShuffle = new System.Windows.Forms.PictureBox();
             this.pictureBoxRepeat = new System.Windows.Forms.PictureBox();
             this.listBoxDisplay = new System.Windows.Forms.ListBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBoxSearch = new System.Windows.Forms.TextBox();
             this.pictureBoxStop = new System.Windows.Forms.PictureBox();
             this.pictureBoxPrevious = new System.Windows.Forms.PictureBox();
             this.pictureBoxPlayPause = new System.Windows.Forms.PictureBox();
@@ -62,6 +62,7 @@
             this.button8 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
             this.pictureBoxRemote = new System.Windows.Forms.PictureBox();
+            this.pictureBoxFind = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxAntenna)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBuffer)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -75,6 +76,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRemote)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFind)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
@@ -222,18 +224,19 @@
             this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
             this.listBoxDisplay.DoubleClick += new System.EventHandler(this.ListBoxDisplay_DoubleClick);
             // 
-            // textBox1
+            // textBoxSearch
             // 
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(311, 39);
-            this.textBox1.MaxLength = 10;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.PlaceholderText = "Search ...";
-            this.textBox1.Size = new System.Drawing.Size(161, 23);
-            this.textBox1.TabIndex = 10;
-            this.textBox1.Visible = false;
-            this.textBox1.WordWrap = false;
-            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBox1_KeyDown);
+            this.textBoxSearch.Enabled = false;
+            this.textBoxSearch.Location = new System.Drawing.Point(505, 39);
+            this.textBoxSearch.MaxLength = 10;
+            this.textBoxSearch.Name = "textBoxSearch";
+            this.textBoxSearch.PlaceholderText = "Search ...";
+            this.textBoxSearch.Size = new System.Drawing.Size(76, 23);
+            this.textBoxSearch.TabIndex = 10;
+            this.textBoxSearch.Visible = false;
+            this.textBoxSearch.WordWrap = false;
+            this.textBoxSearch.TextChanged += new System.EventHandler(this.TextBoxSearch_TextChanged);
+            this.textBoxSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBoxSearch_KeyDown);
             // 
             // pictureBoxStop
             // 
@@ -479,11 +482,27 @@
             this.pictureBoxRemote.TabStop = false;
             this.pictureBoxRemote.Click += new System.EventHandler(this.PictureBoxRemote_Click);
             // 
+            // pictureBoxFind
+            // 
+            this.pictureBoxFind.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pictureBoxFind.Enabled = false;
+            this.pictureBoxFind.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxFind.Image")));
+            this.pictureBoxFind.Location = new System.Drawing.Point(580, 39);
+            this.pictureBoxFind.Margin = new System.Windows.Forms.Padding(0);
+            this.pictureBoxFind.Name = "pictureBoxFind";
+            this.pictureBoxFind.Size = new System.Drawing.Size(23, 23);
+            this.pictureBoxFind.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxFind.TabIndex = 14;
+            this.pictureBoxFind.TabStop = false;
+            this.pictureBoxFind.Visible = false;
+            this.pictureBoxFind.Click += new System.EventHandler(this.PictureBoxFind_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.pictureBoxFind);
             this.Controls.Add(this.pictureBoxRemote);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.button8);
@@ -504,7 +523,7 @@
             this.Controls.Add(this.pictureBoxStop);
             this.Controls.Add(this.pictureBoxRepeat);
             this.Controls.Add(this.pictureBoxShuffle);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.textBoxSearch);
             this.Controls.Add(this.listBoxDisplay);
             this.Controls.Add(this.labelTitle);
             this.Controls.Add(this.statusStrip1);
@@ -533,6 +552,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRefresh)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRemote)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFind)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -549,7 +569,7 @@
         public System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.ToolTip toolTip1;
         public System.Windows.Forms.ListBox listBoxDisplay;
-        public System.Windows.Forms.TextBox textBox1;
+        public System.Windows.Forms.TextBox textBoxSearch;
         public System.Windows.Forms.Button button1;
         public System.Windows.Forms.PictureBox pictureBoxShuffle;
         public System.Windows.Forms.PictureBox pictureBoxRepeat;
@@ -571,6 +591,7 @@
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.PictureBox pictureBoxRemote;
+        public System.Windows.Forms.PictureBox pictureBoxFind;
     }
 }
 

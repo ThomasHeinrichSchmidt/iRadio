@@ -5,7 +5,7 @@ NOXON iRadio remote control including display
 Preliminary version (pre-alpha)
 
 Hints:
-* shortcut keys 1 - 9 (also present on device and remote) can be preset to current station by Ctrl+Click on buttons [1] .. [9]
+* station/channel keys 1 - 9 (present on device and remote) can be preset to current station by Ctrl+Click on buttons [1] .. [9]
 * double click on status bar opens iRadio message listbox with the last 100 messages
 * click right on remote to close it
 * use PC keys as remote (arrow keys, +/- or volume keys)

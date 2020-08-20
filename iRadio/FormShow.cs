@@ -23,9 +23,11 @@ namespace iRadio
                 Program.form.Invoke((MethodInvoker)delegate
                 {
                     Noxon.textEntry = browsing && FormShow.SearchingPossible;
-                    Program.form.textBox1.Enabled = Noxon.textEntry;
-                    Program.form.textBox1.Visible = Noxon.textEntry;
-                    for (int i = 1; i <= 9; i++) ((Button)Program.form.Controls["button" + i.ToString()]).Enabled = !Noxon.textEntry;  // dis- or enable buttons1..9
+                    Program.form.textBoxSearch.Enabled = Noxon.textEntry;
+                    Program.form.textBoxSearch.Visible = Noxon.textEntry;
+                    Program.form.pictureBoxFind.Enabled = Noxon.textEntry;
+                    Program.form.pictureBoxFind.Visible = Noxon.textEntry;
+                    // for (int i = 1; i <= 9; i++) ((Button)Program.form.Controls["button" + i.ToString()]).Enabled = !Noxon.textEntry;  // dis- or enable buttons1..9
                 });
             }
         }

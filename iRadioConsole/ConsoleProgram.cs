@@ -11,21 +11,23 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: if search box is present: disable preselect keys 1,2,3,...,9 - pass remote digit keys (detect 2 = abc, ...?) - delete NOXON search (x times "<" + "L") if textBox1 is cleared
-    // TODO: make form sizable (correctly dock elements), replace  Program.form.Invoke with this.Invoke
-    // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],...
-    // TODO: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
-    // TODO: add more tests, using moq
-    // TODO: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing - but what do you want to test then?
+    // TODO: delete NOXON search (x times "<" + "L") if textBox1 is cleared - allow non-letter/digit keys during NOXON search 
+    // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],... see toolTip1.Show(Noxon.currentArtist, b);
     // TODO: blank/invalidate listBoxDisplay on <update id="config">  <text id = "title" > Netzwerkassistent </ text > </ update >
+    // TODO: add settings to app.config (timeout for timeoutTimer (5000), last IP address used)
+    // TODO: make form sizable (correctly dock elements), replace  Program.form.Invoke with this.Invoke
+    // TODO: add more tests, using moq
     // TODO: README.md: add NoxonRemoteLetters.jpg (updated with current keys)
     //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
     // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
     // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
-    // TODO: add settings to app.config (timeout for timeoutTimer, last IP address used)
     // TODO: ILRepack/ILMerge iRadio.exe
 
     // ========================
+    // TODO: pass remote digit keys (detect 2 = abc, ...?) 
+    // NONE: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
+    // NONE: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing - but what do you want to test then?
+    // DONE: do not disable preset keys 1,2,3,...,9 but enforce channel selection using (H)ome + digit
     // DONE: re-think keyboard keys (N <--> I) - re-enable search box for 'Favoriten', because NOXON does it also 
     // DONE: show seperate window with remote control and clickable keys (allow moving, remember position)
     // DONE: F1 - F9 Favoriten #1 - #9, store new shortcut preset by Ctrl+Click

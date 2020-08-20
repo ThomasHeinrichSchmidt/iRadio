@@ -51,7 +51,11 @@ namespace iRadio
         }
         private void FormRemote_Load(object sender, EventArgs e)
         {
-
+            if ((lastPos.X > 0 && lastPos.Y > 0) && (sender is Form c))
+            {
+                c.Location = lastPos;
+            }
+            stopwatch.Stop();
         }
         private void FormRemote_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -97,17 +101,20 @@ namespace iRadio
                             System.Diagnostics.Debug.WriteLine("Remote: digit {0} detected, elapsed = {1}, numberOfClicks = {2}", command, elapsed, numberOfClicks);
                             if (elapsed < 3 * Noxon.MultiPressDelayForSameKey)
                             {
-                                numberOfClicks++;
-                                string current = Program.form.textBox1.TextLength > 0 ? Program.form.textBox1.Text.Substring(0, (Program.form.textBox1.TextLength - 1)) : "";
-                                Program.form.textBox1.Text = current + MultiPress.Encoding(command, numberOfClicks);
-                                System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): replaced last search box char by '{0}' (numberOfClicks={1}, elapsed ms = {2} < {3})", MultiPress.Encoding(command, numberOfClicks), numberOfClicks, elapsed, Noxon.MultiPressDelayForSameKey);
+                                numberOfClicks += e.Clicks;
+                                if (Program.form.textBoxSearch.Text.Length < Program.form.textBoxSearch.MaxLength)
+                                {
+                                    string current = Program.form.textBoxSearch.TextLength > 0 ? Program.form.textBoxSearch.Text.Substring(0, (Program.form.textBoxSearch.TextLength - 1)) : "";
+                                    Program.form.textBoxSearch.Text = current + MultiPress.Encoding(command, numberOfClicks);
+                                    System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): replaced last search box char by '{0}' (numberOfClicks={1}, elapsed ms = {2} < {3})", MultiPress.Encoding(command, numberOfClicks), numberOfClicks, elapsed, Noxon.MultiPressDelayForSameKey);
+                                }
                                 stopwatch.Restart();
                             }
                             else
                             {
-                                if (Program.form.textBox1.Text.Length < Program.form.textBox1.MaxLength)
+                                if (Program.form.textBoxSearch.Text.Length < Program.form.textBoxSearch.MaxLength)
                                 {
-                                    Program.form.textBox1.Text += MultiPress.Encoding(command, 1);
+                                    if (Program.form.textBoxSearch.Text.Length < Program.form.textBoxSearch.MaxLength) Program.form.textBoxSearch.Text += MultiPress.Encoding(command, 1);
                                     System.Diagnostics.Debug.WriteLine("PictureBox1_MouseClick(): added '{0}' to search box", MultiPress.Encoding(command, 1));
                                 }
                                 stopwatch.Restart();
@@ -115,16 +122,20 @@ namespace iRadio
                         }
                         else if (command == '<')
                         {
-                            if (Program.form.textBox1.TextLength > 0)
+                            if (Program.form.textBoxSearch.TextLength > 0)
                             {
-                                Program.form.textBox1.Text = Program.form.textBox1.Text.Substring(0, (Program.form.textBox1.TextLength - 1));
+                                Program.form.textBoxSearch.Text = Program.form.textBoxSearch.Text.Substring(0, (Program.form.textBoxSearch.TextLength - 1));
                             }
                             stopwatch.Stop();
                         }
                         else if (command == 'R')
                         {
-                            Program.form.TextBox1_KeyDown(this, new KeyEventArgs(Keys.Enter));
+                            Program.form.TextBoxSearch_KeyDown(this, new KeyEventArgs(Keys.Enter));
                             stopwatch.Stop();
+                        }
+                        else
+                        {
+                            await Noxon.netStream.GetNetworkStream().CommandAsync(command);
                         }
                     }
                     else 

@@ -92,7 +92,7 @@ namespace iRadio
         }
         private static void ParseFocus()
         {
-            System.Diagnostics.Debug.WriteLine("ParseFocus: reset focus");
+            System.Diagnostics.Debug.WriteLine("ParseFocus: reset focus to iRadio display");
             Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate
             {
                 Program.form.listBoxFavs.ClearSelected();
@@ -102,17 +102,25 @@ namespace iRadio
         }
         private async void Form_KeyDown(object sender, KeyEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("KeyDown: {0}", e.KeyCode);
+            System.Diagnostics.Debug.WriteLine("Form_KeyDown: {0}", e.KeyCode);
 
-            bool isLetterOrDigit = char.IsLetterOrDigit((char)e.KeyCode);
-            if (Noxon.netStream != null && isLetterOrDigit && Noxon.textEntry && textBox1.Visible)
+            bool isLetterOrDigit = char.IsLetterOrDigit((char)e.KeyCode) && !e.Control;
+            if (Noxon.netStream != null && Noxon.textEntry && textBoxSearch.Visible)
             {
-                KeysConverter kc = new KeysConverter();
-                textBox1.Text += kc.ConvertToString(e.KeyCode)[0];
+                if (isLetterOrDigit)
+                {
+                    KeysConverter kc = new KeysConverter();
+                    if (textBoxSearch.Text.Length < textBoxSearch.MaxLength) textBoxSearch.Text += kc.ConvertToString(e.KeyCode)[0];
+                    return;
+                }
+                else if (Noxon.Commands.ContainsKey(GetChar(e)))
+                {
+                    // continue below
+                }
                 return;
             }
             if (Noxon.netStream == null
-                || (Noxon.textEntry && textBox1.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter))
+                || (Noxon.textEntry && textBoxSearch.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter))
                 || listBoxFavs.Focused)
             {   // if nothing is received or text entry instead of local hotkeys
                 return;
@@ -145,8 +153,7 @@ namespace iRadio
             if (e.KeyCode == Keys.PageUp) { command = '<'; }
             if (command == ' ' && isLetterOrDigit)
             {
-                KeysConverter kc = new KeysConverter();
-                char c = kc.ConvertToString(e.KeyCode)[0];  // first char in keyboard string, e.g. (F)avorites, (H)ome, (M)enu, ... 
+                char c = GetChar(e);
                 if (Noxon.Commands.ContainsKey(c)) command = c;
             }
             if (command != ' ')
@@ -155,6 +162,13 @@ namespace iRadio
                 await ret;
                 e.SuppressKeyPress = true;  // Stops other controls on the form receiving event.
             }
+        }
+
+        private static char GetChar(KeyEventArgs e)
+        {
+            KeysConverter kc = new KeysConverter();
+            char c = kc.ConvertToString(e.KeyCode)[0];  // first char in keyboard string, e.g. (F)avorites, (H)ome, (M)enu, ... 
+            return c;
         }
 
         private void StatusStrip1_DoubleClick(object sender, EventArgs e)
@@ -170,8 +184,17 @@ namespace iRadio
                 char command = b.Name.Last();  // button1, ... button9 
                 if (Noxon.netStream != null && ('1' <= command && command <= '9'))
                 {
-                    Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
-                    await ret;
+                    if (Noxon.textEntry)
+                    {
+                        char shortcut = b.Name.Last();  // button1, ... button9 
+                        Macro m = new iRadio.Macro("Button1_Click", new string[] { "H", shortcut.ToString() }); // (H)ome + key 0..9 to enforce new channel (even if searching was active)
+                        await Task.Run(() => m.Execute());
+                    }
+                    else
+                    {
+                        Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
+                        await ret;
+                    }
                     toolTip1.Show(Noxon.currentArtist, b);
                 }
             }
@@ -208,19 +231,41 @@ namespace iRadio
             Properties.Settings.Default.Save();
         }
 
-        public async void TextBox1_KeyDown(object sender, KeyEventArgs e)
+        public async void TextBoxSearch_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            System.Diagnostics.Debug.WriteLine("TextBoxSearch_KeyDown: {0}, Ctrl={1}", e.KeyCode, e.Control);
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Down)
             {
+                if (textBoxSearch.Text.Length == 0) return;
                 // await Task.Run(() => Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text));
-                await Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text);
+                await Noxon.netStream.GetNetworkStream().StringAsync(textBoxSearch.Text);
                 await Noxon.netStream.GetNetworkStream().CommandAsync('R');
                 while (Noxon.Busy) Thread.Sleep(100);
                 await Noxon.netStream.GetNetworkStream().CommandAsync('D');  // refresh display
                 await Noxon.netStream.GetNetworkStream().CommandAsync('U');
-                textBox1.Text = null;
+                textBoxSearch.Text = null;
                 listBoxDisplay.Focus();
                 Noxon.textEntry = false;
+            }
+            else if (char.IsLetterOrDigit((char)e.KeyCode) && !e.Control)
+            {
+                e.SuppressKeyPress = true;
+            }
+            else if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.End || e.KeyCode == Keys.Home)
+            {
+                // let textBox handle this
+            }
+            else if (e.Control && e.KeyCode == Keys.C)  // Ctrl-C copies to clipboard
+            {
+                System.Text.StringBuilder copy_buffer = new System.Text.StringBuilder();
+                copy_buffer.AppendLine(textBoxSearch.Text);
+                if (copy_buffer.Length > 0) Clipboard.SetDataObject(copy_buffer.ToString());
+            }
+            else if (e.Control && e.KeyCode == Keys.V)  // Ctrl-V pastes from clipboard
+            {
+                string text = Clipboard.GetText();
+                text = text.Substring(0, Math.Min(text.Length, textBoxSearch.TextLength));
+                textBoxSearch.Text = text;
             }
         }
 
@@ -387,6 +432,18 @@ namespace iRadio
             {
                 Program.formRemote.Close();
             }
+        }
+
+        private void PictureBoxFind_Click(object sender, EventArgs e)
+        {
+            Program.form.TextBoxSearch_KeyDown(this, new KeyEventArgs(Keys.Enter));
+        }
+
+        private void TextBoxSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (!(sender is TextBox t)) return;
+            t.SelectionStart = t.Text.Length;
+            t.SelectionLength = 0;
         }
     }
 }                                                                            
