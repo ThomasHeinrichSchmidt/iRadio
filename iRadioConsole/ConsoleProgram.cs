@@ -11,9 +11,9 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
+    // TODO: add listBoxDisplay for <update id="config">  <text id = "title" > Netzwerkassistent </ text > </ update > - try to refresh display (due to NOXON Shortcomings)
     // TODO: delete NOXON search (x times "<" + "L") if textBox1 is cleared - allow non-letter/digit keys during NOXON search 
     // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],... see toolTip1.Show(Noxon.currentArtist, b);
-    // TODO: blank/invalidate listBoxDisplay on <update id="config">  <text id = "title" > Netzwerkassistent </ text > </ update >
     // TODO: add settings to app.config (timeout for timeoutTimer (5000), last IP address used)
     // TODO: make form sizable (correctly dock elements), replace  Program.form.Invoke with this.Invoke
     // TODO: add more tests, using moq

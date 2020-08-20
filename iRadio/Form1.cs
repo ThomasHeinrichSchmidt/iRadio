@@ -240,9 +240,7 @@ namespace iRadio
                 // await Task.Run(() => Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text));
                 await Noxon.netStream.GetNetworkStream().StringAsync(textBoxSearch.Text);
                 await Noxon.netStream.GetNetworkStream().CommandAsync('R');
-                while (Noxon.Busy) Thread.Sleep(100);
-                await Noxon.netStream.GetNetworkStream().CommandAsync('D');  // refresh display
-                await Noxon.netStream.GetNetworkStream().CommandAsync('U');
+                await RefreshNoxonDisplay();
                 textBoxSearch.Text = null;
                 listBoxDisplay.Focus();
                 Noxon.textEntry = false;
@@ -267,6 +265,13 @@ namespace iRadio
                 text = text.Substring(0, Math.Min(text.Length, textBoxSearch.TextLength));
                 textBoxSearch.Text = text;
             }
+        }
+
+        public static async Task RefreshNoxonDisplay()
+        {
+            while (Noxon.Busy) Thread.Sleep(100);
+            await Noxon.netStream.GetNetworkStream().CommandAsync('D');  // refresh display
+            await Noxon.netStream.GetNetworkStream().CommandAsync('U');
         }
 
         private async void PictureBoxRefresh_Click(object sender, EventArgs e)

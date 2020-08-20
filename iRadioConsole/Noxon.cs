@@ -425,6 +425,20 @@ namespace iRadio
                                 Show.Line(caption, Lines.Status, el, true);
                             }
                         }
+                        else if (el.Attribute("id").Value == "config")  // <update id="config">
+                        {
+                            foreach (XElement e in el.Elements())
+                            {
+                                if (e.Name == "text" && e.Attribute("id").Value == "title")
+                                {
+                                    Show.Line("Title", Lines.Title, e);
+                                }
+                                else if (e.Name == "text" && e.Attribute("id").Value.Contains("line"))
+                                {
+                                    Show.Browse(el, Lines.line0, false);
+                                }
+                            }
+                        }
                         else if (el.Attribute("id").Value == "welcome")  // <update id="welcome">
                         {
                             //   <icon id="welcome" text="wlan@ths / wlan@t-h-schmidt.de">welcome</icon>

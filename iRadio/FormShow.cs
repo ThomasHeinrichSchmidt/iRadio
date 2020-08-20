@@ -14,6 +14,7 @@ namespace iRadio
         private static bool browsing = false;
         private static bool searchingPossible = false;
         public static int selectedIndex = -1;
+        private static string lastBrowsedTitle = "";
 
         public static bool Browsing { 
             get => browsing;
@@ -38,11 +39,12 @@ namespace iRadio
             { 
                 searchingPossible = value;
                 if (Program.form.labelTitle.Text == "NOXON") searchingPossible = false;
+                if (Program.form.labelTitle.Text == "Netzwerkassistent") searchingPossible = false;
                 if (Program.form.labelTitle.Text == iRadioConsole.Properties.Resources.NoxonTitleFavorites) searchingPossible = value;  // search active also in Favorites
             }
         }
 
-        public void Browse(XElement e, Lines line0, bool searchingPossible)
+        public async void Browse(XElement e, Lines line0, bool searchingPossible)
         {
             XElement elem;   // loop <text id="line0"> ...  <text id="line3">
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
@@ -54,6 +56,14 @@ namespace iRadio
             }
             FormShow.SearchingPossible = searchingPossible;
             Browsing = true;
+
+            if (e.Attribute("id")?.Value == "config" && lastBrowsedTitle != Show.lastBrowsedTitle)
+            {
+                await Form1.RefreshNoxonDisplay();
+                lastBrowsedTitle = Show.lastBrowsedTitle;
+                System.Diagnostics.Debug.WriteLine("Browse(): config, lastBrowsedTitle = {0}, Show.lastBrowsedTitle = {1}", lastBrowsedTitle, Show.lastBrowsedTitle);
+            }
+
 
             bool clearnotusedlines = false;
             if ((e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "scrid").FirstOrDefault()) != null)
@@ -122,6 +132,16 @@ namespace iRadio
                     }
                 }
             }
+            bool needRefresh = true;
+            for (int i = 0; i < Noxon.ListLines; i++)
+            {
+                if (Show.lastBrowsedLines[i] != "")
+                {
+                    needRefresh = false;
+                    break;
+                }
+            }
+            if (needRefresh) await Form1.RefreshNoxonDisplay();
         }
         public void Header()
         {
@@ -140,6 +160,7 @@ namespace iRadio
             switch (line)
             {
                 case Lines.Title:
+                    Show.lastBrowsedTitle = Tools.Normalize(e);
                     Program.form.progressWifi.Invoke((MethodInvoker)delegate {
                         Program.form.labelTitle.Text = Tools.Normalize(e);
                     });
