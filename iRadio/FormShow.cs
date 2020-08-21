@@ -60,8 +60,8 @@ namespace iRadio
             if (e.Attribute("id")?.Value == "config" && lastBrowsedTitle != Show.lastBrowsedTitle)
             {
                 await Form1.RefreshNoxonDisplay();
-                lastBrowsedTitle = Show.lastBrowsedTitle;
                 System.Diagnostics.Debug.WriteLine("Browse(): config, lastBrowsedTitle = {0}, Show.lastBrowsedTitle = {1}", lastBrowsedTitle, Show.lastBrowsedTitle);
+                lastBrowsedTitle = Show.lastBrowsedTitle;
             }
 
 
@@ -80,7 +80,7 @@ namespace iRadio
             {
                 if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "line" + i).FirstOrDefault()) != null)
                 {
-                    printline[i] = true;
+                    printline[i] = true;  // only those lines listed in e 
                     // Console.CursorTop = (int)line0 + i;
                     Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
@@ -132,16 +132,13 @@ namespace iRadio
                     }
                 }
             }
-            bool needRefresh = true;
-            for (int i = 0; i < Noxon.ListLines; i++)
+            bool needRefresh = printline.All(p => p == true);  // refresh only if all lines 0..3 listed 
+            if (!Show.lastBrowsedLines.All(l => l == "")) needRefresh = false;  // don't refresh if not all lines are empty
+            if (needRefresh)
             {
-                if (Show.lastBrowsedLines[i] != "")
-                {
-                    needRefresh = false;
-                    break;
-                }
+                await Form1.RefreshNoxonDisplay();
+                System.Diagnostics.Debug.WriteLine("Browse(): config, needRefresh");
             }
-            if (needRefresh) await Form1.RefreshNoxonDisplay();
         }
         public void Header()
         {

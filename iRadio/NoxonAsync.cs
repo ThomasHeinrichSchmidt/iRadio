@@ -51,6 +51,7 @@ namespace iRadio
                 if (netStream.CanWrite && Noxon.Commands.ContainsKey(commandkey))
                 {
                     System.Diagnostics.Debug.WriteLine("\t\tTransmit CommandAsync('{0}'): ASC({1} --> 0x{2})", commandkey, Noxon.Commands[commandkey].Key, BitConverter.ToString(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key)));
+                    if (Properties.Settings.Default.LogCommands) Program.FormShow.Log(Form1.ParsedElementsWriter, Form1.StdOut, new XElement("CommandAsync", commandkey));
                     await netStream.WriteAsync(Noxon.IntToByteArray(Noxon.Commands[commandkey].Key), 0, sizeof(int));
                     return 0;
                 }
@@ -73,9 +74,10 @@ namespace iRadio
                 return -1;
             }
         }
-        public async static Task<int> StringAsync(this NetworkStream netStream, string str)
+        public async static Task<int> CommandStringAsync(this NetworkStream netStream, string str)
         {
             MultiPressCommand[] mpc = MultiPress.CreateMultiPressCommands(str);
+            if (Properties.Settings.Default.LogCommands) Program.FormShow.Log(Form1.ParsedElementsWriter, Form1.StdOut, new XElement("CommandStringAsync", str));
             foreach (MultiPressCommand m in mpc)
             {
                 for (int i = 0; i < m.Times; i++)

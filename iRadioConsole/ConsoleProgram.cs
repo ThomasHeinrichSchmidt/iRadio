@@ -11,20 +11,22 @@ using System.Xml.Linq;
 
 namespace iRadio
 {
-    // TODO: add listBoxDisplay for <update id="config">  <text id = "title" > Netzwerkassistent </ text > </ update > - try to refresh display (due to NOXON Shortcomings)
-    // TODO: delete NOXON search (x times "<" + "L") if textBox1 is cleared - allow non-letter/digit keys during NOXON search 
-    // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],... see toolTip1.Show(Noxon.currentArtist, b);
-    // TODO: add settings to app.config (timeout for timeoutTimer (5000), last IP address used)
+    // TODO: allow non-letter/digit keys (on Remote) during NOXON search (textBoxSearch.Visible, Noxon.textEntry)
+    // TODO: iRadio: add tool tips with id="artist" to preselect keys [1], [2],... see toolTip1.Show(Noxon.currentArtist, b); - probably needs some delay to be reliable
+    // TODO: add settings to user.config (timeout for timeoutTimer (5000), last IP address used)
     // TODO: make form sizable (correctly dock elements), replace  Program.form.Invoke with this.Invoke
+    // TODO: adapt to all 6 languages (FormShow.SearchingPossible, ...)
+    // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
     // TODO: add more tests, using moq
     // TODO: README.md: add NoxonRemoteLetters.jpg (updated with current keys)
     //                  ![NOXON Remote Keymap](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadioConsole/Properties/NoxonRemoteLetters.jpg?raw=true "NOXON Remote Keymap")
     // TODO: enable scripting/macros: record, play sequence of remote control keys (check NOXON feedback and/or busy to keep in sync) - e.g. for quick selection of some playlist 
-    // TODO: localize NOXON resource strings https://stackoverflow.com/questions/1142802/how-to-use-localization-in-c-sharp
-    // TODO: ILRepack/ILMerge iRadio.exe
+    // TODO: set version ILRepack/ILMerge iRadio.exe
 
     // ========================
-    // TODO: pass remote digit keys (detect 2 = abc, ...?) 
+    // DONE delete NOXON search (x times "<" + "L") if textBoxSearch is cleared - not necessary as textBoxSearch.Text is transmitted only after some Enter. Before, you may clear at any time
+    // DONE: add listBoxDisplay for <update id="config">  <text id = "title" > Netzwerkassistent </ text > </ update > - try to refresh display (due to NOXON Shortcomings)
+    // DONE: pass remote digit keys (detect 2 = abc, ...?) 
     // NONE: iRadio: add tool tips to listBoxDisplay (only if text longer than box?)
     // NONE: add commands (<key> <pause> <comment>) to Telnet.xml for 'interactive' testing - but what do you want to test then?
     // DONE: do not disable preset keys 1,2,3,...,9 but enforce channel selection using (H)ome + digit

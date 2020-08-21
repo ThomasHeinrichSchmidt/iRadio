@@ -24,11 +24,11 @@ namespace iRadio.Properties {
         }
         
         /// <summary>
-        /// Use timestamps when logging XML elements to log file, makes file unusable as testing input
+        /// Use timestamps when logging XML elements to log file (makes file unusable as testing input)
         /// </summary>
         [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Configuration.SettingsDescriptionAttribute("Use timestamps when logging XML elements to log file, makes file unusable as test" +
-            "ing input")]
+        [global::System.Configuration.SettingsDescriptionAttribute("Use timestamps when logging XML elements to log file (makes file unusable as test" +
+            "ing input)")]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
@@ -107,6 +107,24 @@ namespace iRadio.Properties {
             }
             set {
                 this["Volume"] = value;
+            }
+        }
+        
+        /// <summary>
+        /// Add NOXON commands when logging XML elements to log file (makes file unusable as testing input)
+        /// </summary>
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.SettingsDescriptionAttribute("Add NOXON commands when logging XML elements to log file (makes file unusable as " +
+            "testing input)")]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
+        public bool LogCommands {
+            get {
+                return ((bool)(this["LogCommands"]));
+            }
+            set {
+                this["LogCommands"] = value;
             }
         }
     }

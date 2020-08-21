@@ -128,7 +128,7 @@ namespace iRadio
                             }
                             stopwatch.Stop();
                         }
-                        else if (command == 'R')
+                        else if (command == 'R' && Program.form.textBoxSearch.Text.Length > 0)
                         {
                             Program.form.TextBoxSearch_KeyDown(this, new KeyEventArgs(Keys.Enter));
                             stopwatch.Stop();

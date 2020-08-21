@@ -1,14 +1,13 @@
 ﻿using iRadio.Properties;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -27,10 +26,31 @@ namespace iRadio
                 Settings.Default.Upgrade();
                 Settings.Default.UpgradeRequired = false;
                 Settings.Default.Save();
+                ReloadSettings(); // force new settings to be added to user.config - increment version to enforce
             }
+            System.Diagnostics.Debug.WriteLine("Settings.Default.LogCommands = {0}", Settings.Default.LogCommands);
+            System.Diagnostics.Debug.WriteLine("Settings.Default.LogTimestamps = {0}", Settings.Default.LogTimestamps);
+        }
+
+        private void ReloadSettings()
+        {
+            // Settings.Default.Reload();  // needed to read actual values from user.config - but prevents to add new settings to file
+            foreach (SettingsPropertyValue p in Settings.Default.PropertyValues)
+            {
+                p.IsDirty = true;
+                System.Diagnostics.Debug.WriteLine("ReloadSettings: {0}={1}, dirty={2}", p.Name, p.SerializedValue, p.IsDirty);
+            }
+            Settings.Default.Save();
         }
 
         readonly System.Timers.Timer focusTimer = new System.Timers.Timer(5000);        // reset focus to listBoxDisplay
+        private static StreamWriter parsedElementsWriter;
+        private static StreamWriter nonParsedElementsWriter;
+        private static TextWriter stdOut;
+
+        public static StreamWriter NonParsedElementsWriter { get => nonParsedElementsWriter; set => nonParsedElementsWriter = value; }
+        public static StreamWriter ParsedElementsWriter { get => parsedElementsWriter; set => parsedElementsWriter = value; }
+        public static TextWriter StdOut { get => stdOut; set => stdOut = value; }
 
         private async void Form1_Load(object sender, EventArgs e)
         {
@@ -53,14 +73,13 @@ namespace iRadio
             {
                 Program.form.listBoxFavs.Items.Add(entry);
             }
-            StreamWriter nonParsedElementsWriter, parsedElementsWriter;
-            TextWriter stdOut = Console.Out;
+            StdOut = Console.Out;
             Console.WriteLine("Console.WriteLine()");
 
             try
             {
-                nonParsedElementsWriter = new StreamWriter(new FileStream("./iRadio-non-parsed-elements.txt", FileMode.Create, FileAccess.Write));
-                parsedElementsWriter = new StreamWriter(new FileStream("./iRadio-logging.txt", FileMode.Create, FileAccess.Write));
+                NonParsedElementsWriter = new StreamWriter(new FileStream("./iRadio-non-parsed-elements.txt", FileMode.Create, FileAccess.Write));
+                ParsedElementsWriter = new StreamWriter(new FileStream("./iRadio-logging.txt", FileMode.Create, FileAccess.Write));
             }
             catch (Exception ex)
             {
@@ -83,7 +102,7 @@ namespace iRadio
                     from el in NoxonAsync.StreamiRadioNet(Noxon.netStream)
                     select el;
 
-                    Noxon.Parse(iRadioNetData, parsedElementsWriter, nonParsedElementsWriter, stdOut, Program.FormShow);
+                    Noxon.Parse(iRadioNetData, ParsedElementsWriter, NonParsedElementsWriter, StdOut, Program.FormShow);
                 });
                 System.Diagnostics.Debug.WriteLine("Parse canceled, due to 'Nicht verfÃ¼gbar' - restarting Parse() now");
                 await Task.Run(() => NoxonAsync.OpenAsync());
@@ -226,9 +245,9 @@ namespace iRadio
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Properties.Settings.Default.NoxonIP = Noxon.IP.ToString();
-            Properties.Settings.Default.Volume = Program.form.trackBarVolume.Value;
-            Properties.Settings.Default.Save();
+            Settings.Default.NoxonIP = Noxon.IP.ToString();
+            Settings.Default.Volume = Program.form.trackBarVolume.Value;
+            Settings.Default.Save();
         }
 
         public async void TextBoxSearch_KeyDown(object sender, KeyEventArgs e)
@@ -238,7 +257,7 @@ namespace iRadio
             {
                 if (textBoxSearch.Text.Length == 0) return;
                 // await Task.Run(() => Noxon.netStream.GetNetworkStream().StringAsync(textBox1.Text));
-                await Noxon.netStream.GetNetworkStream().StringAsync(textBoxSearch.Text);
+                await Noxon.netStream.GetNetworkStream().CommandStringAsync(textBoxSearch.Text);
                 await Noxon.netStream.GetNetworkStream().CommandAsync('R');
                 await RefreshNoxonDisplay();
                 textBoxSearch.Text = null;
@@ -267,9 +286,23 @@ namespace iRadio
             }
         }
 
+        private static readonly System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        private const int delayBeforeNextRefreshNoxonDisplay = 500;
         public static async Task RefreshNoxonDisplay()
         {
             while (Noxon.Busy) Thread.Sleep(100);
+            if (stopwatch.IsRunning)
+            {
+                if (stopwatch.Elapsed.TotalMilliseconds < delayBeforeNextRefreshNoxonDisplay)
+                {
+                    return;
+                }
+                stopwatch.Restart();
+            }
+            else
+            {
+                stopwatch.Start();
+            }
             await Noxon.netStream.GetNetworkStream().CommandAsync('D');  // refresh display
             await Noxon.netStream.GetNetworkStream().CommandAsync('U');
         }
