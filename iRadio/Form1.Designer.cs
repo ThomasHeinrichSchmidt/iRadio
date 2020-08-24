@@ -221,6 +221,7 @@
             this.listBoxDisplay.Name = "listBoxDisplay";
             this.listBoxDisplay.Size = new System.Drawing.Size(733, 68);
             this.listBoxDisplay.TabIndex = 9;
+            this.listBoxDisplay.Click += new System.EventHandler(this.ListBoxDisplay_Click);
             this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
             this.listBoxDisplay.DoubleClick += new System.EventHandler(this.ListBoxDisplay_DoubleClick);
             // 

@@ -21,7 +21,7 @@ namespace iRadio
             set
             {
                 browsing = value;
-                Program.form.Invoke((MethodInvoker)delegate
+                Program.form?.Invoke((MethodInvoker)delegate
                 {
                     Noxon.textEntry = browsing && FormShow.SearchingPossible;
                     Program.form.textBoxSearch.Enabled = Noxon.textEntry;
@@ -150,10 +150,10 @@ namespace iRadio
             {
                 Browsing = false;
                 FormShow.selectedIndex = -1;
+                Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form.listBoxDisplay.SelectedIndex = -1;
+                });
             }
-            Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
-                Program.form.listBoxDisplay.SelectedIndex = -1;
-            });
             switch (line)
             {
                 case Lines.Title:
@@ -245,7 +245,7 @@ namespace iRadio
                     {
                         Program.form.Invoke((MethodInvoker)delegate {
                             Settings.Default.Volume = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
-                            Program.form.trackBarVolume.Enabled = true;
+                            // Program.form.trackBarVolume.Enabled = true;
                             Program.form.trackBarVolume.Value = Settings.Default.Volume;
                         });
 

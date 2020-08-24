@@ -416,7 +416,7 @@ namespace iRadio
                             {
                                 string min = el.Element("value").Attribute("min").Value;  // <value id="listpos" min="1" max="26">23</value> 
                                 string max = el.Element("value").Attribute("max").Value;
-                                string caption = "From (" + min + ".." + max + ") @ ";
+                                string caption = "  " + Tools.Normalize(el.Element("value")) + " [" + min + "..." + max + "]"; 
                                 int.TryParse(min, out listposmin);
                                 int.TryParse(max, out listposmax);
                                 // System.Diagnostics.Debug.WriteLine("<update id='status'>< value id = 'listpos' min = {0} max = {1}>", listposmin, listposmax);

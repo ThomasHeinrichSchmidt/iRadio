@@ -18,6 +18,8 @@ namespace iRadio
 {
     public partial class Form1 : Form
     {
+        readonly bool allowDirectDisplayControl = false;
+
         public Form1()
         {
             InitializeComponent();
@@ -119,6 +121,32 @@ namespace iRadio
                 Program.form.pictureBoxRefresh.BackColor = System.Drawing.SystemColors.Control;
             });
         }
+
+        static readonly Dictionary<Keys, char> KeyCommands = new Dictionary<Keys, char>()
+        {
+            { Keys.D1, '1' },
+            { Keys.D2, '2' },
+            { Keys.D3, '3' },
+            { Keys.D4, '4' },
+            { Keys.D5, '5' },
+            { Keys.Left, 'L' },
+            { Keys.Right, 'R' },
+            { Keys.Enter, 'R' },
+            { Keys.Up, 'U' },
+            { Keys.Down, 'D' },
+            { Keys.VolumeUp, '+' },
+            { Keys.Add, '+' },
+            { Keys.Oemplus, '+' },
+            { Keys.VolumeDown, '-' },
+            { Keys.Subtract, '-' },
+            { Keys.OemMinus, '-' },
+            { Keys.BrowserFavorites, 'F' },
+            { Keys.Home, 'H' },                // h --> KeyDown: H  // H -->   KeyDown: ShiftKey, KeyDown: H
+            { Keys.F1, ' ' },
+            { Keys.Multiply, '*' },
+            { Keys.PageDown, '>' },
+            { Keys.PageUp, '<' }
+        };
         private async void Form_KeyDown(object sender, KeyEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("Form_KeyDown: {0}", e.KeyCode);
@@ -132,11 +160,19 @@ namespace iRadio
                     if (textBoxSearch.Text.Length < textBoxSearch.MaxLength) textBoxSearch.Text += kc.ConvertToString(e.KeyCode)[0];
                     return;
                 }
-                else if (Noxon.Commands.ContainsKey(GetChar(e)))
+                else if (e.KeyCode == Keys.Back)
+                {
+                    if (textBoxSearch.Text.Length > 0) textBoxSearch.Text = textBoxSearch.Text[0..^1];
+                    return;
+                }
+                else if (Noxon.Commands.ContainsKey(GetChar(e)) || KeyCommands.ContainsKey(e.KeyCode))
                 {
                     // continue below
                 }
-                return;
+                else
+                {
+                    return;
+                }
             }
             if (Noxon.netStream == null
                 || (Noxon.textEntry && textBoxSearch.Focused && (isLetterOrDigit || e.KeyCode == Keys.Enter))
@@ -145,31 +181,7 @@ namespace iRadio
                 return;
             }
             char command = ' ';
-
-            if (e.Control && e.KeyCode == Keys.S)       // Ctrl-S Save
-            {
-                // TODO: Do what you want here
-            }
-            if (e.KeyCode == Keys.D1) command = '1';
-            if (e.KeyCode == Keys.D2) command = '2';
-            if (e.KeyCode == Keys.D3) command = '3';
-            if (e.KeyCode == Keys.D4) command = '4';
-            if (e.KeyCode == Keys.D5) command = '5';  // h --> KeyDown: H  // H -->   KeyDown: ShiftKey, KeyDown: H
-            if (e.KeyCode == Keys.Left) command = 'L';
-            if (e.KeyCode == Keys.Right) command = 'R';
-            if (e.KeyCode == Keys.Enter) command = 'R';
-            if (e.KeyCode == Keys.Up) command = 'U';
-            if (e.KeyCode == Keys.Down) command = 'D';
-            if (e.KeyCode == Keys.VolumeUp) command = '+';
-            if (e.KeyCode == Keys.Oemplus) { command = '+'; }
-            if (e.KeyCode == Keys.VolumeDown) command = '-';
-            if (e.KeyCode == Keys.OemMinus) { command = '-'; }
-            if (e.KeyCode == Keys.BrowserFavorites) command = 'F';
-            if (e.KeyCode == Keys.Home) command = 'H';
-            if (e.KeyCode == Keys.F1) { command = ' '; }
-            if (e.KeyCode == Keys.Multiply) { command = '*'; }
-            if (e.KeyCode == Keys.PageDown) { command = '>'; }
-            if (e.KeyCode == Keys.PageUp) { command = '<'; }
+            if (KeyCommands.ContainsKey(e.KeyCode)) command = KeyCommands[e.KeyCode];
             if (command == ' ' && isLetterOrDigit)
             {
                 char c = GetChar(e);
@@ -177,8 +189,7 @@ namespace iRadio
             }
             if (command != ' ')
             {
-                Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
-                await ret;
+                await Noxon.netStream.GetNetworkStream().CommandAsync(command);
                 e.SuppressKeyPress = true;  // Stops other controls on the form receiving event.
             }
         }
@@ -216,6 +227,8 @@ namespace iRadio
                     }
                     toolTip1.Show(Noxon.currentArtist, b);
                 }
+                focusTimer.Stop();
+                focusTimer.Start();
             }
         }
         private async void Button1_MouseClick(object sender, MouseEventArgs e)
@@ -233,14 +246,56 @@ namespace iRadio
 
         }
 
-        private void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
+        private async void ListBoxDisplay_Click(object sender, EventArgs e)
         {
-            if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)
+            if (sender is ListBox box)
+            {
+                if (allowDirectDisplayControl)
+                {
+                    int index = box.SelectedIndex;
+                    await AdjustNoxonDisplay(index);
+                }
+            }
+        }
+        private async void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
+        {
+            if (sender is ListBox)
+            {
+                await Noxon.netStream.GetNetworkStream().CommandAsync('R');
+            }
+            // TODO: await Task.Run(() => NoxonAsync.cancellation.Cancel());  // but how to access cancellation?
+            //       System.Diagnostics.Debug.WriteLine("ListBoxDisplay_DoubleClick: would be nice to request cancellation.Cancel()");
+        }
+        private async void ListBoxDisplay_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (allowDirectDisplayControl)
+            {
+                System.Diagnostics.Debug.WriteLine("ListBoxDisplay_SelectedIndexChanged: listBoxDisplay.SelectedIndex = {0}, FormShow.selectedIndex = {1}", listBoxDisplay.SelectedIndex, FormShow.selectedIndex);
+                if (listBoxDisplay.SelectedIndex != FormShow.selectedIndex)   // ignore selection changes 
+                {
+                    await AdjustNoxonDisplay(listBoxDisplay.SelectedIndex);
+                }
+            }
+            else
             {
                 listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
                 listBoxDisplay.SelectedIndex = FormShow.selectedIndex;
                 listBoxDisplay.SelectedIndexChanged += new EventHandler(ListBoxDisplay_SelectedIndexChanged);
             }
+        }
+        private async Task AdjustNoxonDisplay(int index)
+        {
+            listBoxDisplay.SelectedIndexChanged -= new EventHandler(ListBoxDisplay_SelectedIndexChanged);
+
+            string direction = "D";
+            int steps = index - FormShow.selectedIndex;
+            if (steps < 0) direction = "U";
+            List<string> mstrings = new List<string>();
+            for (int i = 0; i < Math.Abs(steps); i++) mstrings.Add(direction);
+            Macro m = new iRadio.Macro("ListBoxDisplay_Click", mstrings.ToArray());
+            await Task.Run(() => m.Execute());
+
+            listBoxDisplay.SelectedIndexChanged += new EventHandler(ListBoxDisplay_SelectedIndexChanged);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -268,7 +323,7 @@ namespace iRadio
             {
                 e.SuppressKeyPress = true;
             }
-            else if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.End || e.KeyCode == Keys.Home)
+            else if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.End || e.KeyCode == Keys.Home || e.KeyCode == Keys.Back)
             {
                 // let textBox handle this
             }
@@ -324,13 +379,6 @@ namespace iRadio
             }
             return;
         }
-
-        private void ListBoxDisplay_DoubleClick(object sender, EventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("ListBoxDisplay_DoubleClick: request cancellation.Cancel()");
-            // TODO: await Task.Run(() => NoxonAsync.cancellation.Cancel());  // but how to access cancellation?
-        }
-
         private async void ListBoxFavs_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             int index = this.listBoxFavs.IndexFromPoint(e.Location);
