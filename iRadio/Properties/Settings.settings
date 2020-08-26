@@ -25,5 +25,8 @@
     <Setting Name="LogCommands" Description="Add NOXON commands when logging XML elements to log file (makes file unusable as testing input)" Roaming="true" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="ReadTimeout" Roaming="true" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">5000</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

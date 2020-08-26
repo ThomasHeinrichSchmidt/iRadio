@@ -183,5 +183,10 @@ namespace iRadio
             dragging = draggingStarted = false;
             if (c.TopLevelControl != null) lastPos = new Point(c.TopLevelControl.Location.X, c.TopLevelControl.Location.Y);
         }
+
+        private void FormRemote_KeyDown(object sender, KeyEventArgs e)
+        {
+            Program.form.Form_KeyDown(sender, e);  // pass key press to main form so that keyboard control works even if remote has focus
+        }
     }
 }

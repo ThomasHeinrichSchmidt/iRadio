@@ -127,5 +127,18 @@ namespace iRadio.Properties {
                 this["LogCommands"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5000")]
+        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
+        public int ReadTimeout {
+            get {
+                return ((int)(this["ReadTimeout"]));
+            }
+            set {
+                this["ReadTimeout"] = value;
+            }
+        }
     }
 }

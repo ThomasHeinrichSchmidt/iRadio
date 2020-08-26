@@ -85,7 +85,7 @@
             this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button1.Location = new System.Drawing.Point(33, 388);
+            this.button1.Location = new System.Drawing.Point(33, 373);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(32, 32);
             this.button1.TabIndex = 0;
@@ -97,7 +97,7 @@
             // progressWifi
             // 
             this.progressWifi.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.progressWifi.Location = new System.Drawing.Point(630, 145);
+            this.progressWifi.Location = new System.Drawing.Point(613, 145);
             this.progressWifi.Name = "progressWifi";
             this.progressWifi.Size = new System.Drawing.Size(100, 8);
             this.progressWifi.TabIndex = 4;
@@ -106,7 +106,7 @@
             // 
             this.pictureBoxAntenna.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxAntenna.Image")));
             this.pictureBoxAntenna.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxAntenna.InitialImage")));
-            this.pictureBoxAntenna.Location = new System.Drawing.Point(736, 139);
+            this.pictureBoxAntenna.Location = new System.Drawing.Point(720, 138);
             this.pictureBoxAntenna.Name = "pictureBoxAntenna";
             this.pictureBoxAntenna.Size = new System.Drawing.Size(30, 20);
             this.pictureBoxAntenna.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -126,7 +126,7 @@
             // progressBuffer
             // 
             this.progressBuffer.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.progressBuffer.Location = new System.Drawing.Point(630, 172);
+            this.progressBuffer.Location = new System.Drawing.Point(613, 172);
             this.progressBuffer.Name = "progressBuffer";
             this.progressBuffer.Size = new System.Drawing.Size(100, 8);
             this.progressBuffer.TabIndex = 4;
@@ -135,7 +135,7 @@
             // 
             this.pictureBoxBuffer.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxBuffer.Image")));
             this.pictureBoxBuffer.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxBuffer.InitialImage")));
-            this.pictureBoxBuffer.Location = new System.Drawing.Point(736, 165);
+            this.pictureBoxBuffer.Location = new System.Drawing.Point(720, 164);
             this.pictureBoxBuffer.Name = "pictureBoxBuffer";
             this.pictureBoxBuffer.Size = new System.Drawing.Size(30, 20);
             this.pictureBoxBuffer.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -146,9 +146,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 428);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 419);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(784, 22);
             this.statusStrip1.TabIndex = 7;
             this.statusStrip1.Text = "statusStrip1";
             this.statusStrip1.DoubleClick += new System.EventHandler(this.StatusStrip1_DoubleClick);
@@ -208,6 +208,8 @@
             // 
             // listBoxDisplay
             // 
+            this.listBoxDisplay.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.listBoxDisplay.BackColor = System.Drawing.SystemColors.GradientInactiveCaption;
             this.listBoxDisplay.Font = new System.Drawing.Font("Lucida Console", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.listBoxDisplay.FormattingEnabled = true;
@@ -219,7 +221,7 @@
             "00:00"});
             this.listBoxDisplay.Location = new System.Drawing.Point(33, 65);
             this.listBoxDisplay.Name = "listBoxDisplay";
-            this.listBoxDisplay.Size = new System.Drawing.Size(733, 68);
+            this.listBoxDisplay.Size = new System.Drawing.Size(717, 68);
             this.listBoxDisplay.TabIndex = 9;
             this.listBoxDisplay.Click += new System.EventHandler(this.ListBoxDisplay_Click);
             this.listBoxDisplay.SelectedIndexChanged += new System.EventHandler(this.ListBoxDisplay_SelectedIndexChanged);
@@ -244,7 +246,7 @@
             this.pictureBoxStop.ErrorImage = null;
             this.pictureBoxStop.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxStop.Image")));
             this.pictureBoxStop.InitialImage = null;
-            this.pictureBoxStop.Location = new System.Drawing.Point(191, 154);
+            this.pictureBoxStop.Location = new System.Drawing.Point(179, 155);
             this.pictureBoxStop.Name = "pictureBoxStop";
             this.pictureBoxStop.Size = new System.Drawing.Size(25, 25);
             this.pictureBoxStop.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -257,7 +259,7 @@
             this.pictureBoxPrevious.ErrorImage = null;
             this.pictureBoxPrevious.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxPrevious.Image")));
             this.pictureBoxPrevious.InitialImage = null;
-            this.pictureBoxPrevious.Location = new System.Drawing.Point(251, 154);
+            this.pictureBoxPrevious.Location = new System.Drawing.Point(239, 155);
             this.pictureBoxPrevious.Name = "pictureBoxPrevious";
             this.pictureBoxPrevious.Size = new System.Drawing.Size(25, 25);
             this.pictureBoxPrevious.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -270,7 +272,7 @@
             this.pictureBoxPlayPause.ErrorImage = null;
             this.pictureBoxPlayPause.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxPlayPause.Image")));
             this.pictureBoxPlayPause.InitialImage = null;
-            this.pictureBoxPlayPause.Location = new System.Drawing.Point(311, 154);
+            this.pictureBoxPlayPause.Location = new System.Drawing.Point(299, 155);
             this.pictureBoxPlayPause.Name = "pictureBoxPlayPause";
             this.pictureBoxPlayPause.Size = new System.Drawing.Size(25, 25);
             this.pictureBoxPlayPause.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -283,7 +285,7 @@
             this.pictureBoxNext.ErrorImage = null;
             this.pictureBoxNext.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxNext.Image")));
             this.pictureBoxNext.InitialImage = null;
-            this.pictureBoxNext.Location = new System.Drawing.Point(371, 154);
+            this.pictureBoxNext.Location = new System.Drawing.Point(359, 155);
             this.pictureBoxNext.Name = "pictureBoxNext";
             this.pictureBoxNext.Size = new System.Drawing.Size(25, 25);
             this.pictureBoxNext.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -296,7 +298,7 @@
             this.pictureBoxAllDirections.ErrorImage = null;
             this.pictureBoxAllDirections.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxAllDirections.Image")));
             this.pictureBoxAllDirections.InitialImage = null;
-            this.pictureBoxAllDirections.Location = new System.Drawing.Point(557, 139);
+            this.pictureBoxAllDirections.Location = new System.Drawing.Point(526, 140);
             this.pictureBoxAllDirections.Name = "pictureBoxAllDirections";
             this.pictureBoxAllDirections.Size = new System.Drawing.Size(50, 50);
             this.pictureBoxAllDirections.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -307,7 +309,7 @@
             // trackBarVolume
             // 
             this.trackBarVolume.Enabled = false;
-            this.trackBarVolume.Location = new System.Drawing.Point(431, 154);
+            this.trackBarVolume.Location = new System.Drawing.Point(403, 145);
             this.trackBarVolume.Maximum = 100;
             this.trackBarVolume.Name = "trackBarVolume";
             this.trackBarVolume.Size = new System.Drawing.Size(117, 45);
@@ -316,11 +318,13 @@
             // 
             // listBoxFavs
             // 
+            this.listBoxFavs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.listBoxFavs.FormattingEnabled = true;
             this.listBoxFavs.ItemHeight = 15;
-            this.listBoxFavs.Location = new System.Drawing.Point(33, 221);
+            this.listBoxFavs.Location = new System.Drawing.Point(33, 213);
             this.listBoxFavs.Name = "listBoxFavs";
-            this.listBoxFavs.Size = new System.Drawing.Size(733, 154);
+            this.listBoxFavs.Size = new System.Drawing.Size(717, 154);
             this.listBoxFavs.TabIndex = 12;
             this.listBoxFavs.SelectedIndexChanged += new System.EventHandler(this.ListBoxFavs_SelectedIndexChanged);
             this.listBoxFavs.Enter += new System.EventHandler(this.ListBoxFavs_Enter);
@@ -331,7 +335,7 @@
             // 
             this.labelFavs.AutoSize = true;
             this.labelFavs.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.labelFavs.Location = new System.Drawing.Point(33, 197);
+            this.labelFavs.Location = new System.Drawing.Point(33, 189);
             this.labelFavs.Name = "labelFavs";
             this.labelFavs.Size = new System.Drawing.Size(79, 21);
             this.labelFavs.TabIndex = 8;
@@ -343,7 +347,7 @@
             this.pictureBoxRefresh.ErrorImage = null;
             this.pictureBoxRefresh.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRefresh.Image")));
             this.pictureBoxRefresh.InitialImage = null;
-            this.pictureBoxRefresh.Location = new System.Drawing.Point(123, 197);
+            this.pictureBoxRefresh.Location = new System.Drawing.Point(123, 189);
             this.pictureBoxRefresh.Name = "pictureBoxRefresh";
             this.pictureBoxRefresh.Size = new System.Drawing.Size(25, 25);
             this.pictureBoxRefresh.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -357,7 +361,7 @@
             this.button2.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button2.Location = new System.Drawing.Point(71, 388);
+            this.button2.Location = new System.Drawing.Point(71, 373);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(32, 32);
             this.button2.TabIndex = 0;
@@ -372,7 +376,7 @@
             this.button3.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button3.Location = new System.Drawing.Point(109, 388);
+            this.button3.Location = new System.Drawing.Point(109, 373);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(32, 32);
             this.button3.TabIndex = 0;
@@ -387,7 +391,7 @@
             this.button4.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button4.Location = new System.Drawing.Point(147, 388);
+            this.button4.Location = new System.Drawing.Point(147, 373);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(32, 32);
             this.button4.TabIndex = 0;
@@ -402,7 +406,7 @@
             this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button5.Location = new System.Drawing.Point(185, 388);
+            this.button5.Location = new System.Drawing.Point(185, 373);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(32, 32);
             this.button5.TabIndex = 0;
@@ -417,7 +421,7 @@
             this.button6.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button6.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button6.Location = new System.Drawing.Point(223, 388);
+            this.button6.Location = new System.Drawing.Point(223, 373);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(32, 32);
             this.button6.TabIndex = 0;
@@ -432,7 +436,7 @@
             this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button7.Location = new System.Drawing.Point(261, 388);
+            this.button7.Location = new System.Drawing.Point(261, 373);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(32, 32);
             this.button7.TabIndex = 0;
@@ -447,7 +451,7 @@
             this.button8.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button8.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button8.Location = new System.Drawing.Point(299, 388);
+            this.button8.Location = new System.Drawing.Point(299, 373);
             this.button8.Name = "button8";
             this.button8.Size = new System.Drawing.Size(32, 32);
             this.button8.TabIndex = 0;
@@ -462,7 +466,7 @@
             this.button9.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightBlue;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button9.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button9.Location = new System.Drawing.Point(337, 388);
+            this.button9.Location = new System.Drawing.Point(337, 373);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(32, 32);
             this.button9.TabIndex = 0;
@@ -473,9 +477,10 @@
             // 
             // pictureBoxRemote
             // 
+            this.pictureBoxRemote.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBoxRemote.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxRemote.Image")));
             this.pictureBoxRemote.InitialImage = null;
-            this.pictureBoxRemote.Location = new System.Drawing.Point(736, 11);
+            this.pictureBoxRemote.Location = new System.Drawing.Point(720, 11);
             this.pictureBoxRemote.Name = "pictureBoxRemote";
             this.pictureBoxRemote.Size = new System.Drawing.Size(29, 51);
             this.pictureBoxRemote.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -502,7 +507,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(784, 441);
             this.Controls.Add(this.pictureBoxFind);
             this.Controls.Add(this.pictureBoxRemote);
             this.Controls.Add(this.button9);
@@ -535,6 +540,7 @@
             this.Controls.Add(this.progressWifi);
             this.Controls.Add(this.button1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(800, 480);
             this.Name = "Form1";
             this.Text = "NOXON iRadio";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
@@ -568,7 +574,6 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         public System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         public System.Windows.Forms.Label labelTitle;
-        private System.Windows.Forms.ToolTip toolTip1;
         public System.Windows.Forms.ListBox listBoxDisplay;
         public System.Windows.Forms.TextBox textBoxSearch;
         public System.Windows.Forms.Button button1;
@@ -593,6 +598,7 @@
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.PictureBox pictureBoxRemote;
         public System.Windows.Forms.PictureBox pictureBoxFind;
+        public System.Windows.Forms.ToolTip toolTip1;
     }
 }
 

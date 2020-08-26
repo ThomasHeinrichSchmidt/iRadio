@@ -28,7 +28,7 @@ namespace iRadio
                 Settings.Default.Upgrade();
                 Settings.Default.UpgradeRequired = false;
                 Settings.Default.Save();
-                ReloadSettings(); // force new settings to be added to user.config - increment version to enforce
+                ReloadSettings(); // force new settings to be added to user.config - increment version to enforce (see <Version> in iRadio.csproj)
             }
             System.Diagnostics.Debug.WriteLine("Settings.Default.LogCommands = {0}", Settings.Default.LogCommands);
             System.Diagnostics.Debug.WriteLine("Settings.Default.LogTimestamps = {0}", Settings.Default.LogTimestamps);
@@ -114,7 +114,7 @@ namespace iRadio
         private static void ParseFocus()
         {
             System.Diagnostics.Debug.WriteLine("ParseFocus: reset focus to iRadio display");
-            Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate
+            Program.form?.Invoke((MethodInvoker)delegate
             {
                 Program.form.listBoxFavs.ClearSelected();
                 Program.form.listBoxDisplay.Focus();
@@ -147,7 +147,7 @@ namespace iRadio
             { Keys.PageDown, '>' },
             { Keys.PageUp, '<' }
         };
-        private async void Form_KeyDown(object sender, KeyEventArgs e)
+        public async void Form_KeyDown(object sender, KeyEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("Form_KeyDown: {0}", e.KeyCode);
 
@@ -157,13 +157,18 @@ namespace iRadio
                 if (isLetterOrDigit)
                 {
                     KeysConverter kc = new KeysConverter();
-                    if (textBoxSearch.Text.Length < textBoxSearch.MaxLength) textBoxSearch.Text += kc.ConvertToString(e.KeyCode)[0];
+                    if (textBoxSearch.Text.Length < textBoxSearch.MaxLength) textBoxSearch.Text += kc.ConvertToString(e.KeyCode).ToLower()[0];
                     return;
                 }
                 else if (e.KeyCode == Keys.Back)
                 {
                     if (textBoxSearch.Text.Length > 0) textBoxSearch.Text = textBoxSearch.Text[0..^1];
                     return;
+                }
+                else if (e.KeyCode == Keys.Enter && textBoxSearch.Text.Length > 0)
+                {
+                    TextBoxSearch_KeyDown(this, new KeyEventArgs(Keys.Enter));
+                    return;  
                 }
                 else if (Noxon.Commands.ContainsKey(GetChar(e)) || KeyCommands.ContainsKey(e.KeyCode))
                 {
@@ -225,7 +230,7 @@ namespace iRadio
                         Task<int> ret = Noxon.netStream.GetNetworkStream().CommandAsync(command);
                         await ret;
                     }
-                    toolTip1.Show(Noxon.currentArtist, b);
+                    FormShow.lastPresetPressed = b;  // remember last preset button pressed to later toolTip1.Show(Noxon.currentArtist, button);
                 }
                 focusTimer.Stop();
                 focusTimer.Start();
@@ -240,7 +245,7 @@ namespace iRadio
                 {
                     Macro m = new iRadio.Macro("Button1_MouseClick", new string[] { "C", shortcut.ToString() }); // (C)hannnel + key 0..9 to store new preset
                     await Task.Run(() => m.Execute());
-                    toolTip1.Show(Noxon.currentArtist, b);
+                    FormShow.lastPresetPressed = b;  // remember last preset button pressed to later toolTip1.Show(Noxon.currentArtist, button);
                 }
             }
 

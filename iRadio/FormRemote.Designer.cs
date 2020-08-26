@@ -74,6 +74,7 @@
             this.TransparencyKey = System.Drawing.Color.White;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormRemote_FormClosed);
             this.Load += new System.EventHandler(this.FormRemote_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FormRemote_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

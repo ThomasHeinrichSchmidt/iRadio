@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Properties\iRadio.ico</ApplicationIcon>
+    <Version>1.0.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="bin\**" />

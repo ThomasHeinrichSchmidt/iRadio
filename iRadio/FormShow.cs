@@ -15,13 +15,14 @@ namespace iRadio
         private static bool searchingPossible = false;
         public static int selectedIndex = -1;
         private static string lastBrowsedTitle = "";
+        public static Button lastPresetPressed = null;
 
         public static bool Browsing { 
             get => browsing;
             set
             {
                 browsing = value;
-                Program.form?.Invoke((MethodInvoker)delegate
+                if (Program.form != null && Program.form.IsHandleCreated) Program.form?.Invoke((MethodInvoker)delegate
                 {
                     Noxon.textEntry = browsing && FormShow.SearchingPossible;
                     Program.form.textBoxSearch.Enabled = Noxon.textEntry;
@@ -50,7 +51,7 @@ namespace iRadio
             if ((elem = e.DescendantsAndSelf("text").Where(r => r.Attribute("id").Value == "title").FirstOrDefault()) != null)
             {
                 Show.lastBrowsedTitle = Tools.Normalize(elem);
-                Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                Program.form?.Invoke((MethodInvoker)delegate {
                     Program.form.labelTitle.Text = Tools.Normalize(elem);
                 });
             }
@@ -82,7 +83,7 @@ namespace iRadio
                 {
                     printline[i] = true;  // only those lines listed in e 
                     // Console.CursorTop = (int)line0 + i;
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
                     });
                     Fav.flag lineflag = Fav.flag.Nothing;
@@ -96,7 +97,7 @@ namespace iRadio
                             case "ds":    //                      <text id="line0" flag="ds">History</text>)
                                 lineflag = Fav.flag.Folder;
                                 selectedIndex = i;
-                                Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                                Program.form?.Invoke((MethodInvoker)delegate {
                                     Program.form.listBoxDisplay.SelectedIndex = i;
                                 });
                                 break;
@@ -106,7 +107,7 @@ namespace iRadio
                             case "ps":    //  ps - song   ♪ ♪     < text id = "line0" flag = "ps" > Radio Efimera </ text >
                                 lineflag = Fav.flag.Songs;
                                 selectedIndex = i;
-                                Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                                Program.form?.Invoke((MethodInvoker)delegate {
                                     Program.form.listBoxDisplay.SelectedIndex = i;
                                 });
                                 break;
@@ -114,7 +115,7 @@ namespace iRadio
                     }
                     Show.lastBrowsedLines[i] = Tools.Normalize(elem);
                     Show.lastBrowsedFlags[i] = lineflag;
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[i] = Tools.Normalize(elem);
                     });
                 }
@@ -126,7 +127,7 @@ namespace iRadio
                     if (!printline[i])
                     {
                         Show.lastBrowsedLines[i] = "";
-                        Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.listBoxDisplay.Items[i] = "";  // ClearLine()
                         });
                     }
@@ -150,7 +151,7 @@ namespace iRadio
             {
                 Browsing = false;
                 FormShow.selectedIndex = -1;
-                Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                Program.form?.Invoke((MethodInvoker)delegate {
                     Program.form.listBoxDisplay.SelectedIndex = -1;
                 });
             }
@@ -158,30 +159,30 @@ namespace iRadio
             {
                 case Lines.Title:
                     Show.lastBrowsedTitle = Tools.Normalize(e);
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.labelTitle.Text = Tools.Normalize(e);
                     });
                     break;
                 case Lines.WiFi:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.progressWifi.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
                 case Lines.Buffer:
-                    Program.form.progressWifi.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.progressBuffer.Value = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     });
                     break;
                 case Lines.Icon:
                     if (caption == "Welcome")
                     {
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
                         });
                     }
                     if (caption == "Icon-Play")
                     {
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.play;
                         });
                     }
@@ -189,7 +190,7 @@ namespace iRadio
                     {
                         // <update id="status">  < icon id = "shuffle" >  empty  |  shuffle  </ icon >  </ update >
                         bool shuffle = Tools.Normalize(e) == "shuffle";
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.pictureBoxShuffle.Visible = shuffle;
                         });
                     }
@@ -201,7 +202,7 @@ namespace iRadio
                         bool all = false;                                   
                         if (e.Element("icon") != null && e.Element("icon").Attribute("text") != null && e.Element("icon").Attribute("text").Value == "all") all = true;
                         if (e.Attribute("text") != null && e.Attribute("text").Value == "all") all = true;  //   <icon id="repeat" text="all">repeat</icon> 
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             if (all) Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.RepeatAll;
                             else Program.form.pictureBoxRepeat.Image = iRadio.Properties.Resources.Repeat;
                             Program.form.pictureBoxRepeat.Visible = repeat;
@@ -213,25 +214,30 @@ namespace iRadio
                     }
                     else if (caption == "CloseStream")  
                     {
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.hand;
                         });
                     }
                     break;
                 case Lines.Artist:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[0] = Tools.Normalize(e);
                         Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
+                        if (FormShow.lastPresetPressed != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine("FormShow.Line (Artist): set tooltip of {0} to {1}", lastPresetPressed.Name, Tools.Normalize(e));
+                            Program.form.toolTip1.SetToolTip(FormShow.lastPresetPressed, Tools.Normalize(e));
+                        }
                     });
                     break;
                 case Lines.Album:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[1] = Tools.Normalize(e);
                         Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
                     break;
                 case Lines.Track:
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Program.form.listBoxDisplay.Items[2] = Tools.Normalize(e);
                         Program.form.listBoxDisplay.Items[3] = "";  // last line not used 
                     });
@@ -243,7 +249,7 @@ namespace iRadio
                     }
                     else if (caption == "Volume")
                     {
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Settings.Default.Volume = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                             // Program.form.trackBarVolume.Enabled = true;
                             Program.form.trackBarVolume.Value = Settings.Default.Volume;
@@ -252,7 +258,7 @@ namespace iRadio
                     }
                     else
                     {
-                        Program.form.Invoke((MethodInvoker)delegate {
+                        Program.form?.Invoke((MethodInvoker)delegate {
                             Program.form.toolStripStatusLabel1.Image = iRadio.Properties.Resources.ListImg;
                             Program.form.toolStripStatusLabel1.Text = caption;
                         });
@@ -262,7 +268,7 @@ namespace iRadio
                     Cursor c = Cursors.Default;
                     int busy = int.TryParse(Tools.Normalize(e), out int result) ? result : 0;
                     if (busy == 1) c = Cursors.WaitCursor;
-                    Program.form.listBoxDisplay.Invoke((MethodInvoker)delegate {
+                    Program.form?.Invoke((MethodInvoker)delegate {
                         Cursor.Current = c;
                     });
                     break;
@@ -284,7 +290,7 @@ namespace iRadio
                 int h = s / (60 * 60);
                 int m = s / 60 - h * 60;
                 string hms = s < 60 * 60 ? String.Format("{0:00}:{1:00}", s / 60, s % 60) : String.Format("{0:00}:{1:00}:{2:00}", h, m, s % 60);
-                Program.form.labelPlaying.Invoke((MethodInvoker)delegate {
+                Program.form?.Invoke((MethodInvoker)delegate {
                     Program.form.labelPlaying.Text = hms;
                 });
             }
@@ -301,8 +307,10 @@ namespace iRadio
             {
                 statusImage = iRadio.Properties.Resources.hand;
             }
-            Program.form.Invoke((MethodInvoker)delegate {
-                Program.form.toolStripStatusLabel1.Text = "\t" + Tools.Normalize(e);
+            string text = Tools.Normalize(e);
+            if (text == "empty" || text == "play") text = "";
+            Program.form?.Invoke((MethodInvoker)delegate {
+                Program.form.toolStripStatusLabel1.Text = "\t" + text;
                 Program.form.toolStripStatusLabel1.Image = statusImage;
             });
         }
@@ -312,9 +320,9 @@ namespace iRadio
             {
                 if (Program.formLogging != null && !Program.form.Disposing)
                 {
-                    Program.form.Invoke((MethodInvoker)delegate
+                    Program.form?.Invoke((MethodInvoker)delegate
                     {
-                        if (Program.formLogging.listBox1.Items.Count < 100)  // Running on the UI thread
+                        if (Program.formLogging.listBox1.Items.Count < 1001)  // Running on the UI thread
                     {
                             Program.formLogging.listBox1.Items.Add(el.ToString());
                         }
@@ -334,7 +342,11 @@ namespace iRadio
             if (parsedElementsWriter != null && stdOut != null && el != null)
             {
                 Console.SetOut(parsedElementsWriter); // re-direct
-                if (Properties.Settings.Default.LogTimestamps) Console.WriteLine("[{0}] {1}", DateTime.Now.ToString("hh: mm:ss.fff"), el.ToString());
+                if (Properties.Settings.Default.LogTimestamps)
+                {
+                    Console.WriteLine("{0}", new XElement("Time", DateTime.Now.ToString("hh:mm:ss.fff")));
+                    Console.WriteLine("{0}", el.ToString());
+                }
                 else Console.WriteLine("{0}", el.ToString());
                 Console.SetOut(stdOut); // stop re-direct
                 parsedElementsWriter.Flush();

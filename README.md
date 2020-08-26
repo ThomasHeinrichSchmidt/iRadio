@@ -1,14 +1,13 @@
 # iRadio
 NOXON iRadio remote control including display
-![iRadio screenshot](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Resources/NOXONiRadioScreenshot.png?raw=true)
-
-![iRadio remote control](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Properties/iRadio-Remote-Control.png?raw=true?size=100x100)
 
 | GUI  | Remote |
 |:------------: |-----   |
-| ![iRadio screenshot](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Resources/NOXONiRadioScreenshot.png?raw=true)             | ![iRadio remote control](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Properties/iRadio-Remote-Control.png?raw=true?size=136x482) |
+| ![iRadio screenshot](https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Resources/NOXONiRadioScreenshot.png?raw=true)             | <img src="https://github.com/ThomasHeinrichSchmidt/iRadio/blob/master/iRadio/Properties/iRadio-Remote-Control.png?raw=true"  height="400"> |
 
-Preliminary version (pre-alpha)
+
+
+Preliminary version (beta)
 
 Hints:
 * station/channel keys 1 - 9 (present on device and remote) can be preset to current station by Ctrl+Click on buttons [1] .. [9]
